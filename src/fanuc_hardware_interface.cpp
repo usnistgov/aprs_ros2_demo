@@ -13,7 +13,17 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 
   CallbackReturn FanucHardwareInterface::on_init(const hardware_interface::HardwareInfo& info)
   {
-    (void)info;
+  
+    if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
+      return CallbackReturn::ERROR;
+    }
+
+    if (info_.joints.size() != number_of_joints_) {
+      RCLCPP_FATAL(get_logger(), "Got %ld joints. Expected %ld.", info_.joints.size(), number_of_joints_);
+      return CallbackReturn::ERROR;
+    }
+
+    // TODO: Connect to socket 
 
     return CallbackReturn::SUCCESS;
   }
@@ -48,14 +58,22 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
 
+    for (int i=0; i < info_.joints.size(); i++) {
+      state_interfaces.emplace_back(hardware_interface::StateInterface(info_.joints[i].name));
+    }
+
     return state_interfaces;
   }
 
-  std::vector<hardware_interface::CommandInterface> export_command_interfaces() 
+  std::vector<hardware_interface::CommandInterface> FanucHardwareInterface::export_command_interfaces() 
   {
     std::vector<hardware_interface::CommandInterface> command_interfaces;
 
     return command_interfaces;
+  }
+
+  rclcpp::Logger FanucHardwareInterface::get_logger() {
+    return rclcpp::get_logger("FanucHardwareInterface");
   }
 
 }

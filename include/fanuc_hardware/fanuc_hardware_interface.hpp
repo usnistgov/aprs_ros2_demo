@@ -30,6 +30,11 @@ namespace fanuc_hardware {
 
     std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
+
+  private:
+    rclcpp::Logger get_logger();
+
+    int number_of_joints_ = 6;
   };
 
 }
