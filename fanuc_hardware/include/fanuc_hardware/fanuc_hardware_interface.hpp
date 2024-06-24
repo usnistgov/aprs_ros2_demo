@@ -14,9 +14,9 @@ namespace fanuc_hardware {
   class FanucHardwareInterface : public hardware_interface::SystemInterface {
 
   public:
-    FanucHardwareInterface();
-
     CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
+
+    CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
 
     CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
 
@@ -35,6 +35,9 @@ namespace fanuc_hardware {
     rclcpp::Logger get_logger();
 
     int number_of_joints_ = 6;
+
+    std::vector<double> hw_commands_;
+    std::vector<double> hw_states_;
   };
 
 }
