@@ -7,7 +7,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 #include <hardware_interface/visibility_control.h>
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
@@ -42,10 +41,17 @@ namespace fanuc_hardware {
 
     std::pair<bool, std::vector<float>> read_joints();
 
+    int get_packet_length();
+
+    int bin_to_int(char* data);
+    
+    float bin_to_float(char* data);
+
     int number_of_joints_ = 6;
 
     std::vector<double> hw_commands_;
     std::vector<double> hw_states_;
+    std::vector<double> prev_hw_states_;
 
     const char *robot_ip_ = "192.168.1.34";
     const int state_port_ = 11002;

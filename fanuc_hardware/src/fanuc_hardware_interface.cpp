@@ -63,7 +63,7 @@ namespace fanuc_hardware {
     auto ret = read_joints();
 
     if (!ret.first){
-      return hardware_interface::CallbackReturn::SUCCESS;
+      return hardware_interface::CallbackReturn::FAILURE;
     }
 
     std::vector<float> current_positions = ret.second;
@@ -107,10 +107,10 @@ namespace fanuc_hardware {
     (void)time;
     (void)period;
 
-     auto ret = read_joints();
+    auto ret = read_joints();
 
     if (!ret.first){
-      return hardware_interface::return_type::ERROR;
+      return hardware_interface::return_type::OK;
     }
 
     std::vector<float> current_positions = ret.second;
@@ -119,8 +119,6 @@ namespace fanuc_hardware {
     {
       hw_states_[i] = current_positions[i];
     }
-
-    // TODO: Read data from state socket
 
     return hardware_interface::return_type::OK;
   }
@@ -167,83 +165,103 @@ namespace fanuc_hardware {
 
   std::pair<bool, std::vector<float>> FanucHardwareInterface::read_joints(){
 
-    RCLCPP_ERROR(get_logger(), "reading joint states");
-    std::vector<float> joint_positions;
+    RCLCPP_ERROR(get_logger(), "Reading joint states");
+    std::vector<float> joint_positions = {0, 0, 0, 0, 0, 0};;
 
-    int start = 0;
-    float joint_value = 0.0;
+    // Read 4 bytes from socket to length of next packet 
+    int length = get_packet_length();
 
-    
-    char *length_buffer = new char[4];
+    if (length < 0){
+      return std::make_pair(false, joint_positions);
+    }
 
-    // Read message 
-    // Read 1 byte to get length
+    if (length == 40){
+      RCLCPP_WARN(get_logger(), "Received status packet");
 
+      char *status_packet = new char[40];
+      
+      socket_read::read_socket(sock_, status_packet, 40);
 
-    ssize_t packet = socket_read::read_socket(sock_, length_buffer, 4);
+      delete[] status_packet;
 
-    int packet_length;
+      return std::make_pair(false, joint_positions);
+    }
 
-    char length_bytes[4] = {length_buffer[3], length_buffer[2], length_buffer[1], length_buffer[0]};
+    if (length == state_buffer_length_){
 
-    std::memcpy(&packet_length, length_bytes, sizeof(int));
+      char *state_packet = new char[state_buffer_length_];
+      
+      socket_read::read_socket(sock_, state_packet, state_buffer_length_);
 
-    if (packet_length != 56 || packet == -1) {
-      RCLCPP_ERROR(get_logger(), "Issue with package");
-      char *status_buffer = new char[40];
+      // Check that the message type is correct
+      char msg_type[4] = {state_packet[0], state_packet[1], state_packet[2], state_packet[3]};
 
-      ssize_t status_packet = socket_read::read_socket(sock_, status_buffer, 40);
-      delete[] status_buffer;
+      if (bin_to_int(msg_type) != 10){
+        RCLCPP_INFO(get_logger(), "Message type is not Joint Position");
+        return std::make_pair(false, joint_positions);
+      }
 
-      joint_positions = {0, 0, 0, 0, 0, 0};
+      int start = 0;
+      float joint_value = 0.0;
+
+      for (int i=0; i<6; i++){
+        start = 16 + (4*i);
+        
+        char joint_bytes[4] = {state_packet[start], state_packet[start+1], state_packet[start+2], state_packet[start+3]};
+
+        joint_positions.push_back(bin_to_float(joint_bytes));
+
+        RCLCPP_INFO_STREAM(get_logger(), "Joint " << std::to_string(i+1).c_str()  << ": " << std::to_string(joint_value));
+      }
+
+      delete[] state_packet;
 
       return std::make_pair(true, joint_positions);
     }
+  }
 
-    delete[] length_buffer;
+  int FanucHardwareInterface::get_packet_length()
+  {
+    char *length_packet = new char[4];
 
-    char *state_buffer = new char[state_buffer_length_];
-    ssize_t read_buffer = socket_read::read_socket(sock_, state_buffer, state_buffer_length_);
-    
-    // int length = 0;
-    // char test_bytes[4] = {state_buffer[3], state_buffer[2], state_buffer[1], state_buffer[0]};
-    // std::memcpy(&length, test_bytes, sizeof(int));
-    // RCLCPP_INFO_STREAM(get_logger(), "buffer : " << std::to_string(length));
-    
-    // if(length != 56)
-    // {
-    //   RCLCPP_ERROR(get_logger(), "Socket message error");
-    //   // joint_positions = {0, 0, 0, 0, 0, 0};
-    //   // delete[] state_buffer;
-    //   // return std::make_pair(true, joint_positions);
-    // }
+    ssize_t ret = socket_read::read_socket(sock_, length_packet, 4);
 
-    for ( int i = 0; i < state_buffer_length_; i++) 
-    {
-      std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)state_buffer[i];
-
-      if (i%4==0){
-        std::cout << std::endl;
-      }
+    if (ret < 0){
+      RCLCPP_ERROR(get_logger(), "Unable to read from socket");
+      return -1;
     }
 
+    // Reverse packet 
+    int length =  bin_to_int(length_packet);
 
-    for (int i=0; i<6; i++){
-      start = 20 + (4*i);
-      
-      char joint_bytes[4] = {state_buffer[start+3], state_buffer[start+2], state_buffer[start+1], state_buffer[start]};
+    delete[] length_packet;
 
-      std::memcpy(&joint_value, joint_bytes, sizeof(float));
-      joint_positions.push_back(joint_value);
+    return length;
+  }
 
-      RCLCPP_INFO_STREAM(get_logger(), "Joint " << std::to_string(i+1).c_str()  << ": " << std::to_string(joint_value));
-    }
+  int FanucHardwareInterface::bin_to_int(char* data)
+  {
+    int result;
 
-    delete[] state_buffer;
+    char reversed[4] = {data[3], data[2], data[1], data[0]};
 
-    return std::make_pair(true, joint_positions);
+    std::memcpy(&result, reversed, sizeof(int));
+
+    return result;
+  }
+
+  float FanucHardwareInterface::bin_to_float(char* data)
+  {
+    float result;
+
+    char reversed[4] = {data[3], data[2], data[1], data[0]};
+
+    std::memcpy(&result, reversed, sizeof(float));
+
+    return result;
   }
 }
+
 
 ssize_t socket_read::read_socket(int __fd, void *__buf, size_t __nbytes) {
   return read(__fd, __buf, __nbytes);
