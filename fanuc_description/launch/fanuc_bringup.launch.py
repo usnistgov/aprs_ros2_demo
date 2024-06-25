@@ -39,9 +39,29 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
+    joint_state_broadcaster = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=['joint_state_broadcaster'],
+    )
+
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("fanuc_description"), "config", "fanuc.rviz"]
+    )
+
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="robot_viz",
+        output="log",
+        arguments=["-d", rviz_config_file],
+    )
+
     nodes_to_start = [
         control_node,
         robot_state_publisher,
+        joint_state_broadcaster,
+        rviz_node
     ]
 
     return nodes_to_start
