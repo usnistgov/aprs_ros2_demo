@@ -63,7 +63,7 @@ namespace fanuc_hardware {
     auto ret = read_joints();
 
     if (!ret.first){
-      return hardware_interface::CallbackReturn::FAILURE;
+      return hardware_interface::CallbackReturn::SUCCESS;
     }
 
     std::vector<float> current_positions = ret.second;
@@ -173,28 +173,60 @@ namespace fanuc_hardware {
     int start = 0;
     float joint_value = 0.0;
 
-    char *state_buffer= new char[state_buffer_length_];
+    
+    char *length_buffer = new char[4];
 
     // Read message 
-    ssize_t read_buffer = socket_read::read_socket(sock_, state_buffer, state_buffer_length_);
+    // Read 1 byte to get length
 
-    if(read_buffer == -1){
-      RCLCPP_ERROR(get_logger(), "Unable to read from socket");
+
+    ssize_t packet = socket_read::read_socket(sock_, length_buffer, 4);
+
+    int packet_length;
+
+    char length_bytes[4] = {length_buffer[3], length_buffer[2], length_buffer[1], length_buffer[0]};
+
+    std::memcpy(&packet_length, length_bytes, sizeof(int));
+
+    if (packet_length != 56 || packet == -1) {
+      RCLCPP_ERROR(get_logger(), "Issue with package");
+      char *status_buffer = new char[40];
+
+      ssize_t status_packet = socket_read::read_socket(sock_, status_buffer, 40);
+      delete[] status_buffer;
+
       joint_positions = {0, 0, 0, 0, 0, 0};
-      delete[] state_buffer;
-      return std::make_pair(false, joint_positions);
+
+      return std::make_pair(true, joint_positions);
     }
 
-  
-    char test_bytes[4] = {state_buffer[3], state_buffer[2], state_buffer[1], state_buffer[0]};
-    RCLCPP_INFO_STREAM(get_logger(), "buffer : " << std::to_string(test_bytes[4]));
-    /*if(test_bytes[4] != 38)
+    delete[] length_buffer;
+
+    char *state_buffer = new char[state_buffer_length_];
+    ssize_t read_buffer = socket_read::read_socket(sock_, state_buffer, state_buffer_length_);
+    
+    // int length = 0;
+    // char test_bytes[4] = {state_buffer[3], state_buffer[2], state_buffer[1], state_buffer[0]};
+    // std::memcpy(&length, test_bytes, sizeof(int));
+    // RCLCPP_INFO_STREAM(get_logger(), "buffer : " << std::to_string(length));
+    
+    // if(length != 56)
+    // {
+    //   RCLCPP_ERROR(get_logger(), "Socket message error");
+    //   // joint_positions = {0, 0, 0, 0, 0, 0};
+    //   // delete[] state_buffer;
+    //   // return std::make_pair(true, joint_positions);
+    // }
+
+    for ( int i = 0; i < state_buffer_length_; i++) 
     {
-      RCLCPP_ERROR(get_logger(), "Socket message erro");
-      joint_positions = {0, 0, 0, 0, 0, 0};
-      delete[] state_buffer;
-      return std::make_pair(false, joint_positions);
-    }*/
+      std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)state_buffer[i];
+
+      if (i%4==0){
+        std::cout << std::endl;
+      }
+    }
+
 
     for (int i=0; i<6; i++){
       start = 20 + (4*i);

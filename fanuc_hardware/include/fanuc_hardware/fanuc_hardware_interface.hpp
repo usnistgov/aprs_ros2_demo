@@ -49,7 +49,7 @@ namespace fanuc_hardware {
 
     const char *robot_ip_ = "192.168.1.34";
     const int state_port_ = 11002;
-    const int state_buffer_length_ = 60;
+    const int state_buffer_length_ = 56;
 
     struct sockaddr_in state_socket_;
 
