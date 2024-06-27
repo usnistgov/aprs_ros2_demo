@@ -16,6 +16,8 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(rclpy)
+find_package(ament_cmake_python REQUIRED)
 
 add_library(fanuc_hardware
   SHARED
@@ -60,6 +62,11 @@ ament_export_dependencies(
   hardware_interface
   pluginlib
   rclcpp
+)
+
+install(PROGRAMS
+  nodes/command_publisher.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()

@@ -29,7 +29,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/robot_description", "/robot_description"),
         ],
     )
-
+    
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -43,6 +43,13 @@ def launch_setup(context, *args, **kwargs):
         package="controller_manager",
         executable="spawner",
         arguments=['joint_state_broadcaster'],
+    )
+    
+    forward_position_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=['forward_position_controller',],
+        
     )
 
     rviz_config_file = PathJoinSubstitution(
@@ -61,6 +68,7 @@ def launch_setup(context, *args, **kwargs):
         control_node,
         robot_state_publisher,
         joint_state_broadcaster,
+        forward_position_controller,
         rviz_node
     ]
 
