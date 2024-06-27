@@ -5,13 +5,6 @@
 
 
 namespace fanuc_hardware {
-  FanucHardwareInterface::~FanucHardwareInterface()
-  {
-    if (socket_created_){
-      close(sock_);
-    }
-  }
-
   hardware_interface::CallbackReturn FanucHardwareInterface::on_init(const hardware_interface::HardwareInfo& info)
   {
   
@@ -41,15 +34,6 @@ namespace fanuc_hardware {
       return hardware_interface::CallbackReturn::FAILURE;
     }
 
-    // Connect to the server
-    if(connect(sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_)) < 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "Connection failed");
-      return hardware_interface::CallbackReturn::FAILURE;
-    }
-
-    socket_created_ = true;
-
     hw_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
@@ -60,17 +44,9 @@ namespace fanuc_hardware {
   {
     (void)previous_state;
 
-    auto ret = read_joints();
-
-    if (!ret.first){
-      return hardware_interface::CallbackReturn::FAILURE;
-    }
-
-    std::vector<float> current_positions = ret.second;
-
     for (uint i = 0; i < hw_states_.size(); i++)
     {
-      hw_states_[i] = current_positions[i];
+      hw_states_[i] = 0;
       hw_commands_[i] = 0;
     }
 
@@ -83,8 +59,26 @@ namespace fanuc_hardware {
   {
     (void)previous_state;
 
+    // Connect to the server
+    if(connect(sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_)) < 0) 
+    {
+      RCLCPP_ERROR(get_logger(), "Connection failed");
+      return hardware_interface::CallbackReturn::FAILURE;
+    }
+
+    socket_created_ = true;
+
+    auto ret = read_joints();
+
+    if (!ret.first){
+      return hardware_interface::CallbackReturn::FAILURE;
+    }
+
+    std::vector<float> current_positions = ret.second;
+
     for (uint i = 0; i < hw_states_.size(); i++)
     {
+      hw_states_[i] = current_positions[i];
       hw_commands_[i] = hw_states_[i];
     }
 
@@ -96,6 +90,10 @@ namespace fanuc_hardware {
   hardware_interface::CallbackReturn FanucHardwareInterface::on_deactivate(const rclcpp_lifecycle::State& previous_state)
   {
     (void)previous_state;
+
+    if (socket_created_){
+      close(sock_);
+    }
 
     RCLCPP_INFO(get_logger(), "Successfully deactivated!");
 
@@ -165,26 +163,30 @@ namespace fanuc_hardware {
 
   std::pair<bool, std::vector<float>> FanucHardwareInterface::read_joints(){
 
-    RCLCPP_ERROR(get_logger(), "Reading joint states");
-    std::vector<float> joint_positions = {0, 0, 0, 0, 0, 0};;
+    std::vector<float> joint_positions = {0, 0, 0, 0, 0, 0};
 
+    // RCLCPP_INFO(get_logger(), "Reading joint states");
+    
     // Read 4 bytes from socket to length of next packet 
     int length = get_packet_length();
 
     if (length < 0){
-      return std::make_pair(false, joint_positions);
+      RCLCPP_ERROR(get_logger(), "Issue with socket...reconnecting");
+
+      close(sock_);
+      sock_ = socket(AF_INET, SOCK_STREAM, 0);
+      connect(sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_));
+      length = get_packet_length();
     }
 
     if (length == 40){
-      RCLCPP_WARN(get_logger(), "Received status packet");
-
       char *status_packet = new char[40];
       
       socket_read::read_socket(sock_, status_packet, 40);
 
       delete[] status_packet;
 
-      return std::make_pair(false, joint_positions);
+      length = get_packet_length();
     }
 
     if (length == state_buffer_length_){
@@ -203,21 +205,27 @@ namespace fanuc_hardware {
 
       int start = 0;
       float joint_value = 0.0;
+      joint_positions.clear();
 
       for (int i=0; i<6; i++){
         start = 16 + (4*i);
         
         char joint_bytes[4] = {state_packet[start], state_packet[start+1], state_packet[start+2], state_packet[start+3]};
 
-        joint_positions.push_back(bin_to_float(joint_bytes));
+        joint_value = bin_to_float(joint_bytes);
 
-        RCLCPP_INFO_STREAM(get_logger(), "Joint " << std::to_string(i+1).c_str()  << ": " << std::to_string(joint_value));
+        joint_positions.push_back(joint_value);
+
+        // RCLCPP_INFO_STREAM(get_logger(), "Joint " << std::to_string(i+1).c_str()  << ": " << std::to_string(joint_value));
       }
 
       delete[] state_packet;
 
       return std::make_pair(true, joint_positions);
     }
+
+    RCLCPP_WARN_STREAM(get_logger(), "Packet length: " << std::to_string(length).c_str());
+    return std::make_pair(false, joint_positions);
   }
 
   int FanucHardwareInterface::get_packet_length()
