@@ -37,7 +37,7 @@ namespace fanuc_hardware {
   private:
     rclcpp::Logger get_logger();
 
-    bool flag;
+    bool flag = false;
 
     std::pair<bool, std::vector<float>> read_joints();
     std::pair<bool, const std::vector<uint8_t>> write_joints();

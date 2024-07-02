@@ -110,7 +110,7 @@ namespace fanuc_hardware {
     for (uint i = 0; i < hw_states_.size(); i++)
     {
       hw_states_[i] = current_positions[i];
-      hw_commands_[i] = hw_states_[i];
+      hw_commands_[i] = current_positions[i];
     }
 
     prev_hw_commands_ = hw_commands_;

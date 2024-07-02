@@ -49,7 +49,12 @@ def launch_setup(context, *args, **kwargs):
         package="controller_manager",
         executable="spawner",
         arguments=['forward_position_controller',],
-        
+    )
+
+    fanuc_gripper_control = Node(
+        package="fanuc_hardware",
+        executable="fanuc_gripper_control.py",
+        output = 'screen'
     )
 
     rviz_config_file = PathJoinSubstitution(
@@ -69,6 +74,7 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher,
         joint_state_broadcaster,
         forward_position_controller,
+        fanuc_gripper_control,
         rviz_node
     ]
 

@@ -17,6 +17,7 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclpy)
+find_package(example_interfaces)
 find_package(ament_cmake_python REQUIRED)
 
 add_library(fanuc_hardware
@@ -66,6 +67,7 @@ ament_export_dependencies(
 
 install(PROGRAMS
   nodes/command_publisher.py
+  nodes/fanuc_gripper_control.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
