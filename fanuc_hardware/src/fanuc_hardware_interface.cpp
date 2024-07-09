@@ -281,6 +281,10 @@ namespace fanuc_hardware {
         // RCLCPP_INFO_STREAM(get_logger(), "Joint " << std::to_string(i+1).c_str()  << ": " << std::to_string(joint_value));
       }
 
+      // Correct for J2/J3 Interaction
+
+      joint_positions[2] += joint_positions[1];
+
       delete[] state_packet;
 
       return std::make_pair(true, joint_positions);

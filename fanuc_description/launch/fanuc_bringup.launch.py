@@ -10,6 +10,8 @@ from launch_ros.substitutions import FindPackageShare
 
 from ament_index_python.packages import get_package_share_directory
 
+from moveit_configs_utils import MoveItConfigsBuilder
+
 def launch_setup(context, *args, **kwargs):
 
     urdf = os.path.join(get_package_share_directory('fanuc_description'), 'urdf', 'fanuc.urdf.xacro')
@@ -61,13 +63,25 @@ def launch_setup(context, *args, **kwargs):
         [FindPackageShare("fanuc_description"), "config", "fanuc.rviz"]
     )
 
+    moveit_config = (
+        MoveItConfigsBuilder("fanuc", package_name="fanuc_moveit_config")
+        .robot_description(urdf)
+        .robot_description_semantic(file_path="config/fanuc.srdf")
+        .trajectory_execution(file_path="config/controllers.yaml")
+        .planning_pipelines(pipelines=["ompl"])
+        .to_moveit_configs()
+    )
+
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
-        name="robot_viz",
         output="log",
         arguments=["-d", rviz_config_file],
+        parameters=[
+            moveit_config.to_dict(),
+        ],
     )
+    
 
     nodes_to_start = [
         control_node,
