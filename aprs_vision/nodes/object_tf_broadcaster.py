@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from aprs_vision.tf_broadcaster import TFBroadcaster
-from aprs_interfaces.msg import Objects
+from aprs_interfaces.msg import Object, Objects
 
 class ObjectTFBroadcaster(Node):
     def __init__(self):
@@ -10,12 +10,12 @@ class ObjectTFBroadcaster(Node):
         self.tf_broadcaster = TFBroadcaster("objects_tf_broadcaster")
         self.subscription = self.create_subscription(Objects, 'object_locations', self.listener_callback, 10)
 
-    def listener_callback(self, msg):
-        for object_pose in msg.objects:
-            self.tf_broadcaster.generate_transform(object_pose.pose_stamped.header.frame_id, object_pose.name, object_pose.pose_stamped.pose)
+    def listener_callback(self, msg: Objects):
+        for object in msg.objects:
+            object: Object
+            self.tf_broadcaster.generate_transform(object.pose_stamped.header.frame_id, object.name, object.pose_stamped.pose)
 
         self.tf_broadcaster.send_transforms()
-        self.get_logger().info("Published Transforms")
 
 def main(args=None):
     rclpy.init(args=args)

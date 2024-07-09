@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+from numpy import object0
 import rclpy
 from rclpy.node import Node
 
+from typing import Optional
+
 from aprs_vision.antvision_read import AntVisionUtility
 from aprs_interfaces.msg import Object, Objects
-from geometry_msgs.msg import PoseStamped
 
 import math
 from time import sleep
@@ -14,41 +16,40 @@ class ObjectLocationNode(Node):
         super().__init__('object_location_node')
         self.publisher_ = self.create_publisher(Objects, 'object_locations', 10)
         self.object_counters = {}
+        self.objects: Optional[Objects] = None
+        self.build_objects_msg()
+        self.timer = self.create_timer(0.5, self.publish)
 
-    def publish_parts(self):
+    def publish(self):
+        if self.objects:
+            self.publisher_.publish(self.objects)
+
+    def build_objects_msg(self):
         object_locations = AntVisionUtility().get_object_locations()
+        if not object_locations:
+            return
 
-        objects_msg = Objects()
-        for obj in object_locations:
-            name, rotation, x, y, type_ = obj
-            object_identifier = self.get_object_identifier(name)
-            unique_name = self.generate_unique_name(object_identifier)
-            
-            object_pose = Object()
-            object_pose.name = unique_name
-            object_pose.object_type = self.get_object_type(type_)
-            object_pose.object_identifier = object_identifier
-            
-            pose_stamped = PoseStamped()
-            pose_stamped.header.frame_id = "fanuc_base_link"
-            pose_stamped.pose.position.x = x
-            pose_stamped.pose.position.y = y
-            pose_stamped.pose.position.z = 0.220
+        self.objects = Objects()
+        for name, rotation, x, y, type_ in object_locations:
+            object = Object()
+            object.object_identifier = self.get_object_identifier(name)
+            object.name = self.generate_unique_name(object.object_identifier )
+            object.object_type = self.get_object_type(type_)
+
+            object.pose_stamped.header.frame_id = "fanuc_base_link"
+            object.pose_stamped.pose.position.x = x
+            object.pose_stamped.pose.position.y = y
+            object.pose_stamped.pose.position.z = 0.220
             
             quaternion = self.euler_to_quaternion(0, 0, rotation)
-            pose_stamped.pose.orientation.x = quaternion[0]
-            pose_stamped.pose.orientation.y = quaternion[1]
-            pose_stamped.pose.orientation.z = quaternion[2]
-            pose_stamped.pose.orientation.w = quaternion[3]
+            object.pose_stamped.pose.orientation.x = quaternion[0]
+            object.pose_stamped.pose.orientation.y = quaternion[1]
+            object.pose_stamped.pose.orientation.z = quaternion[2]
+            object.pose_stamped.pose.orientation.w = quaternion[3]
             
-            object_pose.pose_stamped = pose_stamped
-            
-            objects_msg.objects.append(object_pose)
-        sleep(2)
-        self.publisher_.publish(objects_msg)
-        self.get_logger().info(f'Published objects: {[obj.name for obj in objects_msg.objects]}')
+            self.objects.objects.append(object) # type: ignore
 
-    def generate_unique_name(self, object_identifier):
+    def generate_unique_name(self, object_identifier) -> str:
         mappings = {
             Object.SMALL_GEAR: 'small_gear',
             Object.MEDIUM_GEAR: 'medium_gear',
@@ -66,13 +67,15 @@ class ObjectLocationNode(Node):
             self.object_counters[object_identifier] += 1
         return f'{object_identifier}_{self.object_counters[object_identifier]}'
 
-    def get_object_type(self, type_):
+    def get_object_type(self, type_) -> int:
         if type_ == 'KT':
             return Object.KIT_TRAY
         elif type_ == 'PT':
             return Object.PART_TRAY
         elif type_ == 'P':
             return Object.PART
+        else:
+            return -1
 
     def get_object_identifier(self, name):
         mapping = {
@@ -98,7 +101,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = ObjectLocationNode()
     try:
-        node.publish_parts()
+        rclpy.spin(node)
     except KeyboardInterrupt:
         node.destroy_node()
     finally:
