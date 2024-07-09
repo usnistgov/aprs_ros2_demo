@@ -39,7 +39,10 @@ class ObjectLocationNode(Node):
             object.pose_stamped.header.frame_id = "fanuc_base_link"
             object.pose_stamped.pose.position.x = x
             object.pose_stamped.pose.position.y = y
-            object.pose_stamped.pose.position.z = 0.220
+            if object.object_type == Object.PART:
+                object.pose_stamped.pose.position.z = 0.03
+            else:
+                object.pose_stamped.pose.position.z = 0.0
             
             quaternion = self.euler_to_quaternion(0, 0, rotation)
             object.pose_stamped.pose.orientation.x = quaternion[0]

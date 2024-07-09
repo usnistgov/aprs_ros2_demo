@@ -143,9 +143,14 @@ bool FanucDemo::BuildTarget(){
 
   RCLCPP_INFO_STREAM(get_logger(),"The current Robot Pose is X: " << robot_pose.position.x << " Y: " << robot_pose.position.y << " Z: " << robot_pose.position.z);
 
-  robot_pose.position.z -= 0.1;
+  robot_pose.position.z = 0.2;
+  robot_pose.position.x = -0.087;
+  robot_pose.position.y = 0.547;
 
-  RCLCPP_INFO_STREAM(get_logger(),"The New Target Robot Pose is X: " << robot_pose.position.x << " Y: " << robot_pose.position.y << " Z: " << robot_pose.position.z);
+  RCLCPP_INFO_STREAM(get_logger(), "The New Target Robot Pose is X: "
+                                           << robot_pose.position.x
+                                           << " Y: " << robot_pose.position.y
+                                           << " Z: " << robot_pose.position.z);
 
   fanuc_arm_.setPoseTarget(robot_pose);
   auto plan = FanucPlantoTarget();

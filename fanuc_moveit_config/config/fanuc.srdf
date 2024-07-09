@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="fanuc">
     <group name="fanuc_arm">
-      <chain base_link="fanuc_base_link" tip_link="link_6" />
+      <chain base_link="fanuc_base_link" tip_link="tool0" />
     </group>
 
     <group_state name="home" group="fanuc_arm">
