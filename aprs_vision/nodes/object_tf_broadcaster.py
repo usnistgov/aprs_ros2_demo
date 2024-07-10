@@ -11,7 +11,7 @@ class ObjectTFBroadcaster(Node):
         self.tf_broadcaster = TFBroadcaster("objects_tf_broadcaster")
         self.subscription = self.create_subscription(Objects, 'object_locations', self.listener_callback, 10)
         self.slot_offsets = {
-            Object.M2L1_KIT_TRAY: {
+            Object.S2L2_KIT_TRAY: {
                 'lg_1': self.create_pose(-0.054000, -0.028000),
                 'lg_2': self.create_pose(0.054000, -0.028000),
                 'sg_1': self.create_pose(-0.037, 0.055000),
@@ -27,7 +27,7 @@ class ObjectTFBroadcaster(Node):
                 'slot_3': self.create_pose(-0.037500, -0.037500),
                 'slot_4': self.create_pose(0.037500, -0.037500),
             },
-            Object.S2L2_KIT_TRAY: {
+            Object.M2L1_KIT_TRAY: {
                 'lg_1': self.create_pose(0.038970, 0.007460),
                 'mg_1': self.create_pose(-0.051710, 0.038460),
                 'mg_2': self.create_pose(-0.051710, -0.038460),
@@ -44,7 +44,7 @@ class ObjectTFBroadcaster(Node):
         pose = Pose()
         pose.position.x = x
         pose.position.y = y
-        pose.position.z = 0.015
+        pose.position.z = 0.03
         pose.orientation.x = 0.0
         pose.orientation.y = 0.0
         pose.orientation.z = 0.0
