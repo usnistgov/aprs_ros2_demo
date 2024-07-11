@@ -44,10 +44,3 @@ class AntVisionUtility():
         s.close()
 
         return part_locations
-
-
-if __name__ == '__main__':
-    avu = AntVisionUtility()
-    parts = avu.get_object_locations()
-    for p in parts:
-        print(p)

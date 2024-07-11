@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-from numpy import object0
 import rclpy
 from rclpy.node import Node
 
@@ -11,10 +9,10 @@ from aprs_interfaces.msg import Object, Objects
 import math
 from time import sleep
 
-class ObjectLocationNode(Node):
+class AntVisionPublisher(Node):
     def __init__(self):
-        super().__init__('object_location_node')
-        self.publisher_ = self.create_publisher(Objects, 'object_locations', 10)
+        super().__init__('antvision_publisher')
+        self.antvision_object_publisher_ = self.create_publisher(Objects, 'antvision_objects', 10)
         self.object_counters = {}
         self.objects: Optional[Objects] = None
         self.build_objects_msg()
@@ -22,7 +20,7 @@ class ObjectLocationNode(Node):
 
     def publish(self):
         if self.objects:
-            self.publisher_.publish(self.objects)
+            self.antvision_object_publisher_.publish(self.objects)
 
     def build_objects_msg(self):
         object_locations = AntVisionUtility().get_object_locations()
@@ -44,7 +42,7 @@ class ObjectLocationNode(Node):
             else:
                 object.pose_stamped.pose.position.z = 0.0
             
-            quaternion = self.euler_to_quaternion(0, 0, rotation)
+            quaternion = self.euler_to_quaternion(0.0, 0.0, rotation)
             object.pose_stamped.pose.orientation.x = quaternion[0]
             object.pose_stamped.pose.orientation.y = quaternion[1]
             object.pose_stamped.pose.orientation.z = quaternion[2]
@@ -99,16 +97,3 @@ class ObjectLocationNode(Node):
         qz = math.cos(roll/2) * math.cos(pitch/2) * math.sin(yaw/2) - math.sin(roll/2) * math.sin(pitch/2) * math.cos(yaw/2)
         qw = math.cos(roll/2) * math.cos(pitch/2) * math.cos(yaw/2) + math.sin(roll/2) * math.sin(pitch/2) * math.sin(yaw/2)
         return [qx, qy, qz, qw]
-
-def main(args=None):
-    rclpy.init(args=args)
-    node = ObjectLocationNode()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        node.destroy_node()
-    finally:
-        rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
