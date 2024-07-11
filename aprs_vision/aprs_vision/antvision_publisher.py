@@ -5,6 +5,7 @@ from typing import Optional
 
 from aprs_vision.antvision_read import AntVisionUtility
 from aprs_interfaces.msg import Object, Objects
+from example_interfaces.srv import Trigger
 
 import math
 from time import sleep
@@ -13,6 +14,7 @@ class AntVisionPublisher(Node):
     def __init__(self):
         super().__init__('antvision_publisher')
         self.antvision_object_publisher_ = self.create_publisher(Objects, 'antvision_objects', 10)
+        self.update_antvision_data_srv = self.create_service(Trigger, 'update_antvision_data', self.update_antvision_data_callback)
         self.object_counters = {}
         self.objects: Optional[Objects] = None
         self.build_objects_msg()
@@ -49,6 +51,13 @@ class AntVisionPublisher(Node):
             object.pose_stamped.pose.orientation.w = quaternion[3]
             
             self.objects.objects.append(object) # type: ignore
+
+    def update_antvision_data_callback(self, request, response):
+        self.build_objects_msg()
+        response.success = True
+        response.message = "Antvision Data Updated Successfully"
+        self.get_logger().info('Antvision Data Updated.')
+        return response
 
     def generate_unique_name(self, object_identifier) -> str:
         mappings = {
