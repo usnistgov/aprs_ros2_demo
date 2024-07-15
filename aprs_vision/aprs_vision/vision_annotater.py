@@ -83,7 +83,7 @@ class VisionAnnotater(Node):
 
         for name, (x_offset, y_offset) in self.slot_offsets[kit_tray_msg.identifier].items():
             slot_info = SlotInfo()
-            slot_info.name = name
+            slot_info.name = f"{kit_tray_msg.name}_{name}"
             slot_info.number = int(name[-1])
 
             slot_pose = kit_tray_obj.pose_stamped.pose
@@ -120,7 +120,7 @@ class VisionAnnotater(Node):
 
         for name, (x_offset, y_offset) in self.slot_offsets[part_tray_msg.identifier].items():
             slot_info = SlotInfo()
-            slot_info.name = name
+            slot_info.name = f"{part_tray_msg.name}_{name}"
             slot_info.number = int(name[-1])
 
             slot_pose = part_tray_obj.pose_stamped.pose
