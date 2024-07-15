@@ -143,9 +143,9 @@ bool FanucDemo::BuildTarget(){
 
   RCLCPP_INFO_STREAM(get_logger(),"The current Robot Pose is X: " << robot_pose.position.x << " Y: " << robot_pose.position.y << " Z: " << robot_pose.position.z);
 
-  robot_pose.position.z = 0.2;
-  robot_pose.position.x = -0.087;
-  robot_pose.position.y = 0.547;
+  robot_pose.position.z = 0.04;
+  robot_pose.position.x = -0.088;
+  robot_pose.position.y = 0.541;
 
   RCLCPP_INFO_STREAM(get_logger(), "The New Target Robot Pose is X: "
                                            << robot_pose.position.x
@@ -189,10 +189,11 @@ int main(int argc, char *argv[])
 
   sleep(3);
 
-  std::vector<double> joint_values{1.54,0.0,0.0,0.0,-1.54,0.0};
+  // std::vector<double> joint_values{2.79,0.0,0.0,0.0,-1.54,0.0};
 
   // fanuc_demo->MoveToJoints(joint_values);
   fanuc_demo->BuildTarget();
+  // fanuc_demo->FanucSendHome();
 
   rclcpp::shutdown();
 }

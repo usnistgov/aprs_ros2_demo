@@ -1,3 +1,4 @@
+from numpy import square
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import TransformStamped, Pose
@@ -12,7 +13,8 @@ class VisionAnnotater(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.transforms = []
         self.trays_info = Trays()
-        self.thresh = 0.01
+        self.part_thresh = 0.07
+        self.kit_thresh = 0.050
         self.tf_publish_timer = self.create_timer(0.1, self.publish_frames)
         self.trays_publish_timer = self.create_timer(0.1, self.publish_trays)
         self.objects_sub = self.create_subscription(Objects, 'antvision_objects', self.objects_callback, 10)
@@ -67,7 +69,7 @@ class VisionAnnotater(Node):
         self.tf_broadcaster.sendTransform(self.transforms)
 
     def calculate_distance(self, p1: Pose, p2: Pose):
-        return sqrt(abs(p1.position.x - p2.position.x)**2 + abs(p1.position.y - p2.position.y)**2)
+        return sqrt(square(p1.position.x - p2.position.x) + square(p1.position.y - p2.position.y))
 
     def build_kit_tray_msg(self, kit_tray_obj: Object) -> KitTray:
         if not self.raw_object_data:
@@ -92,16 +94,26 @@ class VisionAnnotater(Node):
 
             distance = [self.calculate_distance(slot_pose, p) for p in part_poses]
 
-            if min(distance) < self.thresh:
+            if not distance:
+                slot_info.occupied = False
+                if "lg" in slot_info.name:
+                    kit_tray_msg.large_gear_slots.append(slot_info) #type: ignore
+                elif "mg" in slot_info.name:
+                    kit_tray_msg.medium_gear_slots.append(slot_info) #type: ignore
+                elif "sg" in slot_info.name:
+                    kit_tray_msg.small_gear_slots.append(slot_info) #type: ignore
+                continue
+            
+            if min(distance) < self.kit_thresh:
                 slot_info.occupied = True
             else:
                 slot_info.occupied = False
 
-            if slot_info.name[:2] == "lg":
+            if "lg" in slot_info.name:
                 kit_tray_msg.large_gear_slots.append(slot_info) #type: ignore
-            elif slot_info.name[:2] == "mg":
+            elif "mg" in slot_info.name:
                 kit_tray_msg.medium_gear_slots.append(slot_info) #type: ignore
-            elif slot_info.name[:2] == "sg": 
+            elif "sg" in slot_info.name:
                 kit_tray_msg.small_gear_slots.append(slot_info) #type: ignore
 
         return kit_tray_msg
@@ -129,15 +141,22 @@ class VisionAnnotater(Node):
 
             distance = [self.calculate_distance(slot_pose, p) for p in part_poses]
 
-            self.get_logger().info(str(min(distance)))
+            if not distance:
+                slot_info.occupied = False
+                part_tray_msg.slots.append(slot_info)
+                continue
 
-            if min(distance) < self.thresh:
+            # self.get_logger().info(str(min(distance)))
+            # self.get_logger().info(slot_info.name)
+
+            if min(distance) < self.part_thresh:
                 slot_info.occupied = True
             else:
                 slot_info.occupied = False
 
             part_tray_msg.slots.append(slot_info) #type: ignore
 
+        # self.get_logger().info("\n")
         return part_tray_msg
 
     def build_trays_msg(self):
@@ -166,6 +185,8 @@ class VisionAnnotater(Node):
         return pose
 
     def build_frames(self):
+        self.transforms.clear()
+        
         if not self.raw_object_data:
             return
 
