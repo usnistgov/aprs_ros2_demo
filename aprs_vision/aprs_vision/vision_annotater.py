@@ -191,6 +191,8 @@ class VisionAnnotater(Node):
             return
 
         for object in self.raw_object_data:
+            if object.object_type == Object.PART:
+                continue
             object: Object
             self.generate_transform(object.pose_stamped.header.frame_id, object.name, object.pose_stamped.pose)
 

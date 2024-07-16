@@ -25,7 +25,7 @@ class AntVisionPublisher(Node):
             self.antvision_object_publisher_.publish(self.objects)
 
     def build_objects_msg(self):
-        object_locations = AntVisionUtility().get_object_locations()
+        object_locations = AntVisionUtility("CONFIG_FANUC").get_object_locations()
         if not object_locations:
             return
 
@@ -40,8 +40,8 @@ class AntVisionPublisher(Node):
                 x_offset = +0.007
                 y_offset = -0.008
             elif object.object_identifier == Object.MEDIUM_GEAR_TRAY:
-                x_offset = 0.001
-                y_offset = -0.008
+                x_offset = 0.006
+                y_offset = -0.012
             elif object.object_identifier == Object.M2L1_KIT_TRAY:
                 x_offset = 0.003
                 y_offset = 0.003

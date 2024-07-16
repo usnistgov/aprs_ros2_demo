@@ -41,9 +41,9 @@ public:
   bool BuildTarget();
   bool MoveToJoints(std::vector<double> joint_values);
   bool FillKitTray();
-  void FillKitSlots(std::vector<aprs_interface::msg::SlotInfo>& kit_tray_slots, const std::string& part_type)
+  void FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type);
   bool EmptyKitTray();
-  void EmptyKitSlots(std::vector<aprs_interface::msg::SlotInfo>& kit_tray_slots, const std::string& part_type);
+  void EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type);
   bool PickPart(const std::string& gear_name);
   bool PlacePart(const std::string& slot_name);
   bool ReplicateTeachTable();
@@ -53,6 +53,7 @@ private:
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> FanucPlantoTarget();
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> FanucPlanCartesian(std::vector<geometry_msgs::msg::Pose> waypoints, double vsf, double asf, bool avoid_collisions);
   bool FanucSendTrajectory(moveit_msgs::msg::RobotTrajectory trajectory);
+  double calculateDistance(const geometry_msgs::msg::Pose& pose1, const geometry_msgs::msg::Pose& pose2);
 
   // MoveIt Interfaces
   moveit::planning_interface::MoveGroupInterface fanuc_arm_;

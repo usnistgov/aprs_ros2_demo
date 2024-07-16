@@ -19,7 +19,7 @@ FanucDemo::FanucDemo()
 
   fanuc_position_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/forward_position_controller/commands", 10);
 
-  trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/trays_info", 10, bind(&FanucDemo::TraysInfoCallback, this, _1));
+  trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/trays_info", 10, bind(&FanucDemo::TraysInfoCallback, this, std::placeholders::_1));
 
   RCLCPP_INFO(this->get_logger(), "Initialization successful.");
 }
@@ -144,6 +144,13 @@ bool FanucDemo::FanucCloseGripper()
   return result.get()->success;
 }
 
+double FanucDemo::calculateDistance(const geometry_msgs::msg::Pose& pose1, const geometry_msgs::msg::Pose& pose2) {
+  double dx = pose1.position.x - pose2.position.x;
+  double dy = pose1.position.y - pose2.position.y;
+  double dz = pose1.position.z - pose2.position.z;
+  return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 bool FanucDemo::BuildTarget(){
   int joint_num = 1;
   for (auto joint_value: fanuc_arm_.getCurrentJointValues()) {
@@ -157,9 +164,9 @@ bool FanucDemo::BuildTarget(){
 
   RCLCPP_INFO_STREAM(get_logger(),"The current Robot Pose is X: " << robot_pose.position.x << " Y: " << robot_pose.position.y << " Z: " << robot_pose.position.z);
 
-  robot_pose.position.z = 0.04;
+  robot_pose.position.z = 0.06;
   robot_pose.position.x = -0.088;
-  robot_pose.position.y = 0.541;
+  robot_pose.position.y = 0.651;
 
   RCLCPP_INFO_STREAM(get_logger(), "The New Target Robot Pose is X: "
                                            << robot_pose.position.x
@@ -202,12 +209,13 @@ bool FanucDemo::PickPart(const std::string& gear_name)
                                                       << " Y: " << pick_transform.transform.translation.y
                                                       << " Z: " << pick_transform.transform.translation.z);
 
-  /*
+  geometry_msgs::msg::Pose robot_pose = fanuc_arm_.getCurrentPose().pose;
+  
   geometry_msgs::msg::Pose pick_pose;
   pick_pose.position.x = pick_transform.transform.translation.x;
   pick_pose.position.y = pick_transform.transform.translation.y;
-  pick_pose.position.z = pick_transform.transform.translation.z;
-  pick_pose.orientation = pick_transform.transform.rotation;
+  pick_pose.position.z = pick_transform.transform.translation.z + 0.05;
+  pick_pose.orientation = robot_pose.orientation;
 
   fanuc_arm_.setPoseTarget(pick_pose);
   auto plan = FanucPlantoTarget();
@@ -215,23 +223,42 @@ bool FanucDemo::PickPart(const std::string& gear_name)
   {
     FanucSendTrajectory(plan.second);
   }
-
-  geometry_msgs::msg::Pose robot_pose = fanuc_arm_.getCurrentPose().pose;
-  while (robot_pose != pick_pose) {
-    robot_pose = fanuc_arm_.getCurrentPose().pose;
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Moving to pick pose");
+  else
+  {
+    return false;
   }
 
-  FanucCloseGripper();
+  pick_pose.position.z -= 0.05;
 
-  pick_pose.position.z += 0.2;
   fanuc_arm_.setPoseTarget(pick_pose);
   plan = FanucPlantoTarget();
   if (plan.first)
   {
     FanucSendTrajectory(plan.second);
   }
-  */
+  else
+  {
+    return false;
+  }
+
+
+
+  robot_pose = fanuc_arm_.getCurrentPose().pose;
+  while (calculateDistance(robot_pose,pick_pose) > 0.003) {
+    robot_pose = fanuc_arm_.getCurrentPose().pose;
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Moving to pick pose");
+  }
+
+  FanucCloseGripper();
+
+  pick_pose.position.z += 0.1;
+  fanuc_arm_.setPoseTarget(pick_pose);
+  plan = FanucPlantoTarget();
+  if (plan.first)
+  {
+    FanucSendTrajectory(plan.second);
+  }
+  
 
   return true;
 }
@@ -244,12 +271,13 @@ bool FanucDemo::PlacePart(const std::string& slot_name)
                                                             << " Y: " << place_transform.transform.translation.y
                                                             << " Z: " << place_transform.transform.translation.z);
 
-  /*
+  geometry_msgs::msg::Pose robot_pose = fanuc_arm_.getCurrentPose().pose;
+  
   geometry_msgs::msg::Pose place_pose;
   place_pose.position.x = place_transform.transform.translation.x;
   place_pose.position.y = place_transform.transform.translation.y;
-  place_pose.position.z = place_transform.transform.translation.z + 0.02;
-  place_pose.orientation = place_transform.transform.rotation;
+  place_pose.position.z = place_transform.transform.translation.z + 0.1;
+  place_pose.orientation = robot_pose.orientation;
 
   fanuc_arm_.setPoseTarget(place_pose);
   auto plan = FanucPlantoTarget();
@@ -257,28 +285,45 @@ bool FanucDemo::PlacePart(const std::string& slot_name)
   {
     FanucSendTrajectory(plan.second);
   }
-
-  geometry_msgs::msg::Pose robot_pose = fanuc_arm_.getCurrentPose().pose;
-  while (robot_pose != place_pose) {
-    robot_pose = fanuc_arm_.getCurrentPose().pose;
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Moving to place pose");
+    else
+  {
+    return false;
   }
 
-  FanucOpenGripper();
+  place_pose.position.z -= 0.06;
 
-  place_pose.position.z += 0.2;
   fanuc_arm_.setPoseTarget(place_pose);
   plan = FanucPlantoTarget();
   if (plan.first)
   {
     FanucSendTrajectory(plan.second);
   }
-  */
+  else
+  {
+    return false;
+  }
+
+  robot_pose = fanuc_arm_.getCurrentPose().pose;
+  while (calculateDistance(robot_pose,place_pose) > 0.003) {
+    robot_pose = fanuc_arm_.getCurrentPose().pose;
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Moving to place pose");
+  }
+
+  FanucOpenGripper();
+
+  place_pose.position.z += 0.1;
+  fanuc_arm_.setPoseTarget(place_pose);
+  plan = FanucPlantoTarget();
+  if (plan.first)
+  {
+    FanucSendTrajectory(plan.second);
+  }
+  
   
   return true;
 }
 
-void FanucDemo::FillKitSlots(std::vector<aprs_interface::msg::SlotInfo>& kit_tray_slots, const std::string& part_type)
+void FanucDemo::FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type)
 {
   for (auto& kit_tray_slot : kit_tray_slots)
   {
@@ -311,7 +356,7 @@ void FanucDemo::FillKitSlots(std::vector<aprs_interface::msg::SlotInfo>& kit_tra
   }
 }
 
-void FanucDemo::EmptyKitSlots(std::vector<aprs_interface::msg::SlotInfo>& kit_tray_slots, const std::string& part_type)
+void FanucDemo::EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type)
 {
   for (auto& kit_tray_slot : kit_tray_slots)
   {
@@ -381,8 +426,9 @@ int main(int argc, char *argv[])
   // std::vector<double> joint_values{2.79,0.0,0.0,0.0,-1.54,0.0};
   
   // fanuc_demo->MoveToJoints(joint_values);
-  // fanuc_demo->FanucSendHome();
+  fanuc_demo->FanucSendHome();
   fanuc_demo->FillKitTray();
+  // fanuc_demo->BuildTarget();
 
   rclcpp::shutdown();
 }
