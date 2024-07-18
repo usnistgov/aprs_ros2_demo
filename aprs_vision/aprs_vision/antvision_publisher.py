@@ -36,22 +36,9 @@ class AntVisionPublisher(Node):
             object.name = self.generate_unique_name(object.object_identifier )
             object.object_type = self.get_object_type(type_)
 
-            if object.object_identifier == Object.LARGE_GEAR_TRAY:
-                x_offset = +0.007
-                y_offset = -0.008
-            elif object.object_identifier == Object.MEDIUM_GEAR_TRAY:
-                x_offset = 0.006
-                y_offset = -0.012
-            elif object.object_identifier == Object.M2L1_KIT_TRAY:
-                x_offset = 0.003
-                y_offset = 0.003
-            else:
-                x_offset = 0.0 
-                y_offset = 0.0
-
             object.pose_stamped.header.frame_id = "fanuc_base_link"
-            object.pose_stamped.pose.position.x = x + x_offset
-            object.pose_stamped.pose.position.y = y + y_offset
+            object.pose_stamped.pose.position.x = x
+            object.pose_stamped.pose.position.y = y
             if object.object_type == Object.PART:
                 object.pose_stamped.pose.position.z = 0.03
             else:

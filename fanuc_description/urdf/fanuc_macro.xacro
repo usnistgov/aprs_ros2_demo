@@ -4,32 +4,32 @@
   <xacro:macro name="fanuc" params="parent">
    
     <!-- Joint 1 -->
-    <xacro:property name="joint1upper" value="${2*pi}"/>
-    <xacro:property name="joint1lower" value="${-2*pi}"/>
+    <xacro:property name="joint1upper" value="2.967"/>
+    <xacro:property name="joint1lower" value="-2.967"/>
     <xacro:property name="joint1velocity" value="7.85"/>
     <xacro:property name="joint1effort" value="-1"/>
 
     <!-- Joint 2 -->
-    <xacro:property name="joint2upper" value="${2*pi}"/>
-    <xacro:property name="joint2lower" value="${-2*pi}"/>
+    <xacro:property name="joint2upper" value="2.53"/>
+    <xacro:property name="joint2lower" value="-1.745"/>
     <xacro:property name="joint2velocity" value="6.63"/>
     <xacro:property name="joint2effort" value="-1"/>
 
     <!-- Joint 3 -->
-    <xacro:property name="joint3upper" value="${2*pi}"/>
-    <xacro:property name="joint3lower" value="${-2*pi}"/>
+    <xacro:property name="joint3upper" value="4.886"/>
+    <xacro:property name="joint3lower" value="-2.447"/>
     <xacro:property name="joint3velocity" value="9.08"/>
     <xacro:property name="joint3effort" value="-1"/>
 
     <!-- Joint 4 -->
-    <xacro:property name="joint4upper" value="${2*pi}"/>
-    <xacro:property name="joint4lower" value="${-2*pi}"/>
+    <xacro:property name="joint4upper" value="3.316"/>
+    <xacro:property name="joint4lower" value="-3.316"/>
     <xacro:property name="joint4velocity" value="9.60"/>
     <xacro:property name="joint4effort" value="-1"/>
 
     <!-- Joint 5 -->
-    <xacro:property name="joint5upper" value="${2*pi}"/>
-    <xacro:property name="joint5lower" value="${-2*pi}"/>
+    <xacro:property name="joint5upper" value="2.18"/>
+    <xacro:property name="joint5lower" value="-2.18"/>
     <xacro:property name="joint5velocity" value="9.51"/>
     <xacro:property name="joint5effort" value="-1"/>
 

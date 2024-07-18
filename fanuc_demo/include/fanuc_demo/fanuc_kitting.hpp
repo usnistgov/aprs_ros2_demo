@@ -44,8 +44,8 @@ public:
   void FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type);
   bool EmptyKitTray();
   void EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type);
-  bool PickPart(const std::string& gear_name);
-  bool PlacePart(const std::string& slot_name);
+  bool PickPart(const std::string& slot_name, const std::string& tray_name);
+  bool PlacePart(const std::string& slot_name, const std::string& tray_name);
   bool ReplicateTeachTable();
 
 private:
