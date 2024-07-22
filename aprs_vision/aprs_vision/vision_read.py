@@ -3,8 +3,6 @@
 import socket
 import re
 
-from time import sleep
-
 CONFIG_FANUC = {
         "port":5001,
         "host_ip":"viz.campus.nist.gov",
@@ -13,13 +11,19 @@ CONFIG_TEACH = {
         "port":6001,
         "host_ip":"viz.campus.nist.gov",
         }
+CONFIG_MOTOMAN = {
+        "port":5002,
+        "host_ip":"viz.campus.nist.gov",
+        }
 
-class AntVisionUtility():
+class VisionUtility():
     def __init__(self, config):
         if config == "CONFIG_FANUC":
             self.config = CONFIG_FANUC
         elif config == "CONFIG_TEACH":
             self.config = CONFIG_TEACH
+        elif config == "CONFIG_MOTOMAN":
+            self.config = CONFIG_MOTOMAN
         self.buffer = b''
     
     def get_object_locations(self):

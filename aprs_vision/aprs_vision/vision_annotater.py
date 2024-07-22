@@ -1,24 +1,31 @@
-from numpy import square
+#!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import TransformStamped, Pose
-from tf2_ros.transform_broadcaster import TransformBroadcaster
+from geometry_msgs.msg import Pose
 from aprs_interfaces.msg import Object, Objects, KitTray, PartTray, SlotInfo, Trays
 from typing import Optional
 from math import sqrt
+from numpy import square
 
 class VisionAnnotater(Node):
     def __init__(self):
-        super().__init__('object_tf_broadcaster')
-        self.tf_broadcaster = TransformBroadcaster(self)
-        self.transforms = []
-        self.trays_info = Trays()
+        super().__init__('vision_annotater')
+        self.fanuc_trays_info = Trays()
+        self.motoman_trays_info = Trays()
+        self.teach_trays_info = Trays()
+
         self.part_thresh = 0.07
         self.kit_thresh = 0.050
-        self.tf_publish_timer = self.create_timer(0.1, self.publish_frames)
-        self.trays_publish_timer = self.create_timer(0.1, self.publish_trays)
-        self.objects_sub = self.create_subscription(Objects, 'antvision_objects', self.objects_callback, 10)
-        self.trays_publisher = self.create_publisher(Trays, 'trays_info', 10)
+
+        self.fanuc_objects_sub = self.create_subscription(Objects, 'fanuc_vision_objects', self.fanuc_objects_callback, 10)
+        self.motoman_objects_sub = self.create_subscription(Objects, 'motoman_vision_objects', self.motoman_objects_callback, 10)
+        self.teach_objects_sub = self.create_subscription(Objects, 'teach_vision_objects', self.teach_objects_callback, 10)
+
+        self.fanuc_trays_publisher = self.create_publisher(Trays, 'fanuc_trays_info', 10)
+        self.motoman_trays_publisher = self.create_publisher(Trays, 'motoman_trays_info', 10)
+        self.teach_trays_publisher = self.create_publisher(Trays, 'teach_trays_info', 10)
+
         self.slot_offsets: dict[int, dict[str, tuple[float, float]]] = {
             Object.S2L2_KIT_TRAY: {
                 'lg_1': (-0.028, -0.055),
@@ -27,19 +34,19 @@ class VisionAnnotater(Node):
                 'sg_2': (0.055, 0.04),
             },
             Object.LARGE_GEAR_TRAY: {
-                'slot_1': (0.007, 0.047), # (0.0, 0.055) + (0.007, -0.008)
-                'slot_2': (0.007, -0.063), # (0.0, -0.055) + (0.007, -0.008)
+                'slot_1': (0.0, 0.055),
+                'slot_2': (0.0, -0.055),
             },
             Object.MEDIUM_GEAR_TRAY: {
-                'slot_1': (0.046, -0.049), # (0.038, -0.038) + (0.008, -0.011)
-                'slot_2': (0.046, 0.033), # (0.038, 0.038) + (0.008,-0.005)
-                'slot_3': (-0.035, -0.049), # (-0.038, -0.038) + (0.003,-0.011)
-                'slot_4': (-0.035, 0.033), # (-0.038, 0.038) + (0.003,-0.005)
+                'slot_1': (0.038, -0.038),
+                'slot_2': (0.038, 0.038),
+                'slot_3': (-0.038, -0.038),
+                'slot_4': (-0.038, 0.038),
             },
             Object.M2L1_KIT_TRAY: {
-                'lg_1': (0.003, 0.043), # (0.0, 0.04) + (0.003, 0.003)
-                'mg_1': (0.04, -0.052), # (0.04, -0.055) + (0.003, 0.003)
-                'mg_2': (-0.037, -0.052), # (-0.04, -0.055) + (0.003, 0.003)
+                'lg_1': (0.0, 0.04),
+                'mg_1': (0.04, -0.055),
+                'mg_2': (-0.04, -0.055),
             },
             Object.SMALL_GEAR_TRAY: {
                 'slot_1': (0.028, -0.028),
@@ -48,38 +55,71 @@ class VisionAnnotater(Node):
                 'slot_4': (-0.028, 0.028),
             },
         }
-        self.raw_object_data : Optional[list[Object]]  = None
+
+        self.fanuc_raw_object_data : Optional[list[Object]]  = None
+        self.motoman_raw_object_data : Optional[list[Object]]  = None
+        self.teach_raw_object_data : Optional[list[Object]]  = None
+
+        self.trays_publish_timer = self.create_timer(0.1, self.publish_trays)
     
-    def objects_callback(self, msg: Objects ):
-        if not self.raw_object_data:
-            self.raw_object_data = []
+    def fanuc_objects_callback(self, msg: Objects ):
+        if not self.fanuc_raw_object_data:
+            self.fanuc_raw_object_data = []
         
-        self.raw_object_data.clear()
+        self.fanuc_raw_object_data.clear()
 
         for obj in msg.objects:
-            self.raw_object_data.append(obj)
+            self.fanuc_raw_object_data.append(obj)
 
-        self.build_frames()
-        self.build_trays_msg()
+        self.build_trays_msg("FANUC")
+
+    def motoman_objects_callback(self, msg: Objects ):
+        if not self.motoman_raw_object_data:
+            self.motoman_raw_object_data = []
+        
+        self.motoman_raw_object_data.clear()
+
+        for obj in msg.objects:
+            self.motoman_raw_object_data.append(obj)
+
+        self.build_trays_msg("MOTOMAN")
+
+    def teach_objects_callback(self, msg: Objects ):
+        if not self.teach_raw_object_data:
+            self.teach_raw_object_data = []
+        
+        self.teach_raw_object_data.clear()
+
+        for obj in msg.objects:
+            self.teach_raw_object_data.append(obj)
+
+        self.build_trays_msg("TEACH")
 
     def publish_trays(self):
-        self.trays_publisher.publish(self.trays_info)
-
-    def publish_frames(self):
-        self.tf_broadcaster.sendTransform(self.transforms)
+        self.fanuc_trays_publisher.publish(self.fanuc_trays_info)
+        self.teach_trays_publisher.publish(self.teach_trays_info)
+        self.motoman_trays_publisher.publish(self.motoman_trays_info)
 
     def calculate_distance(self, p1: Pose, p2: Pose):
         return sqrt(square(p1.position.x - p2.position.x) + square(p1.position.y - p2.position.y))
 
-    def build_kit_tray_msg(self, kit_tray_obj: Object) -> KitTray:
-        if not self.raw_object_data:
+    def build_kit_tray_msg(self, kit_tray_obj: Object, source: str) -> KitTray:
+
+        if source == "FANUC":
+            raw_object_data = self.fanuc_raw_object_data
+        elif source == "MOTOMAN":
+            raw_object_data = self.motoman_raw_object_data
+        elif source =="TEACH":
+            raw_object_data = self.teach_raw_object_data
+                
+        if not raw_object_data:
             return KitTray()
         
         kit_tray_msg = KitTray()
         kit_tray_msg.identifier = kit_tray_obj.object_identifier
         kit_tray_msg.name = kit_tray_obj.name
 
-        part_poses = [p.pose_stamped.pose for p in self.raw_object_data if p.object_type == Object.PART]
+        part_poses = [p.pose_stamped.pose for p in raw_object_data if p.object_type == Object.PART]
 
         a = self.slot_offsets[kit_tray_msg.identifier]
 
@@ -118,15 +158,23 @@ class VisionAnnotater(Node):
 
         return kit_tray_msg
 
-    def build_part_tray_msg(self, part_tray_obj: Object) -> PartTray:
-        if not self.raw_object_data:
+    def build_part_tray_msg(self, part_tray_obj: Object, source: str) -> PartTray:
+
+        if source == "FANUC":
+            raw_object_data = self.fanuc_raw_object_data
+        elif source == "MOTOMAN":
+            raw_object_data = self.motoman_raw_object_data
+        elif source =="TEACH":
+            raw_object_data = self.teach_raw_object_data
+    
+        if not raw_object_data:
             return PartTray()
         
         part_tray_msg = PartTray()
         part_tray_msg.identifier = part_tray_obj.object_identifier
         part_tray_msg.name = part_tray_obj.name
 
-        part_poses = [p.pose_stamped.pose for p in self.raw_object_data if p.object_type == Object.PART]
+        part_poses = [p.pose_stamped.pose for p in raw_object_data if p.object_type == Object.PART]
 
         a = self.slot_offsets[part_tray_msg.identifier]
 
@@ -146,9 +194,6 @@ class VisionAnnotater(Node):
                 part_tray_msg.slots.append(slot_info)
                 continue
 
-            # self.get_logger().info(str(min(distance)))
-            # self.get_logger().info(slot_info.name)
-
             if min(distance) < self.part_thresh:
                 slot_info.occupied = True
             else:
@@ -156,65 +201,37 @@ class VisionAnnotater(Node):
 
             part_tray_msg.slots.append(slot_info) #type: ignore
 
-        # self.get_logger().info("\n")
         return part_tray_msg
 
-    def build_trays_msg(self):
-        if not self.raw_object_data:
+    def build_trays_msg(self, source: str):
+
+        if source == "FANUC":
+            raw_object_data = self.fanuc_raw_object_data
+        elif source == "MOTOMAN":
+            raw_object_data = self.motoman_raw_object_data
+        elif source =="TEACH":
+            raw_object_data = self.teach_raw_object_data
+    
+        if not raw_object_data:
             return
         
-        self.trays_info.kit_trays = []
-        self.trays_info.part_trays = []
+        trays_info = Trays()
+        trays_info.kit_trays = []
+        trays_info.part_trays = []
         
-        for object in self.raw_object_data:
+        for object in raw_object_data:
             object: Object
             if object.object_type == Object.KIT_TRAY:
-                self.trays_info.kit_trays.append(self.build_kit_tray_msg(object)) #type: ignore
+                trays_info.kit_trays.append(self.build_kit_tray_msg(object, source)) #type: ignore
             elif object.object_type == Object.PART_TRAY:
-                self.trays_info.part_trays.append(self.build_part_tray_msg(object)) #type: ignore
+                trays_info.part_trays.append(self.build_part_tray_msg(object, source)) #type: ignore
 
-    def create_pose(self, x, y):
-        pose = Pose()
-        pose.position.x = x
-        pose.position.y = y
-        pose.position.z = 0.03
-        pose.orientation.x = 0.0
-        pose.orientation.y = 0.0
-        pose.orientation.z = 0.0
-        pose.orientation.w = 1.0
-        return pose
-
-    def build_frames(self):
-        self.transforms.clear()
-        
-        if not self.raw_object_data:
-            return
-
-        for object in self.raw_object_data:
-            if object.object_type == Object.PART:
-                continue
-            object: Object
-            self.generate_transform(object.pose_stamped.header.frame_id, object.name, object.pose_stamped.pose)
-
-            slot_info = self.slot_offsets.get(object.object_identifier)
-            if slot_info:
-                for slot_name, (x_offset, y_offset) in slot_info.items():
-                    slot_frame_id = f"{object.name}_{slot_name}"
-                    self.generate_transform(object.name, slot_frame_id, self.create_pose(x_offset, y_offset))
-
-    def generate_transform(self, parent_frame, child_frame, initial_pose: Pose):
-        t = TransformStamped()
-
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = parent_frame
-        t.child_frame_id = child_frame
-
-        t.transform.translation.x = initial_pose.position.x
-        t.transform.translation.y = initial_pose.position.y
-        t.transform.translation.z = initial_pose.position.z
-        t.transform.rotation.x = initial_pose.orientation.x
-        t.transform.rotation.y = initial_pose.orientation.y
-        t.transform.rotation.z = initial_pose.orientation.z
-        t.transform.rotation.w = initial_pose.orientation.w
-        
-        self.transforms.append(t)
+        if source == "FANUC":
+            self.fanuc_trays_info.kit_trays = trays_info.kit_trays
+            self.fanuc_trays_info.part_trays = trays_info.part_trays
+        elif source == "MOTOMAN":
+            self.motoman_trays_info.kit_trays = trays_info.kit_trays
+            self.motoman_trays_info.part_trays = trays_info.part_trays
+        elif source =="TEACH":
+            self.teach_trays_info.kit_trays = trays_info.kit_trays
+            self.teach_trays_info.part_trays = trays_info.part_trays
