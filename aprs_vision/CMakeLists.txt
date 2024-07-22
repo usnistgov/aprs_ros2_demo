@@ -34,6 +34,7 @@ ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_N
 install(PROGRAMS
   nodes/antvision_publisher_node.py
   nodes/vision_annotater_node.py
+  nodes/teach_table_publisher_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
