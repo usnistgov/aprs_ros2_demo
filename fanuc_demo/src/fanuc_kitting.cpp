@@ -13,11 +13,11 @@ FanucDemo::FanucDemo()
 
   open_gripper_client_ = this->create_client<example_interfaces::srv::Trigger>("gripper_open");
   close_gripper_client_ = this->create_client<example_interfaces::srv::Trigger>("gripper_close");
-  update_antvision_data_client_ = this->create_client<example_interfaces::srv::Trigger>("update_antvision_data");
+  update_antvision_data_client_ = this->create_client<example_interfaces::srv::Trigger>("update_vision_data");
 
   fanuc_position_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("/forward_position_controller/commands", 10);
 
-  trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/trays_info", 10, bind(&FanucDemo::TraysInfoCallback, this, std::placeholders::_1));
+  trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc_trays_info", 10, bind(&FanucDemo::TraysInfoCallback, this, std::placeholders::_1));
 
   RCLCPP_INFO(this->get_logger(), "Initialization successful.");
 }
