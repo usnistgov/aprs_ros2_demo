@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import rclpy
-from aprs_vision.antvision_publisher import AntVisionPublisher
+from aprs_vision.vision_publisher import VisionPublisher
 
 def main(args=None):
     rclpy.init(args=args)
-    antvision_publisher_node = AntVisionPublisher()
+    antvision_publisher_node = VisionPublisher()
     try:
         rclpy.spin(antvision_publisher_node)
     except KeyboardInterrupt:
