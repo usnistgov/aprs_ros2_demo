@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-from typing import Optional
-from aprs_vision.vision_read import VisionUtility
-from aprs_interfaces.msg import Object, Objects
-from example_interfaces.srv import Trigger
 import math
+from typing import Optional
 
-class AntVisionPublisher(Node):
+from rclpy.node import Node
+
+from aprs_vision.vision_read import VisionUtility
+
+from example_interfaces.srv import Trigger
+from aprs_interfaces.msg import Object, Objects
+
+
+class VisionPublisher(Node):
     object_name_mappings = {
         Object.SMALL_GEAR: 'small_gear',
         Object.MEDIUM_GEAR: 'medium_gear',
@@ -75,7 +78,6 @@ class AntVisionPublisher(Node):
         if self.teach_objects:
             self.teach_vision_object_publisher_.publish(self.teach_objects)
 
-
     def build_objects_msg(self, object_locations: list[tuple[str, float, float, float, str]], base_link: str) -> Objects:
         objects_msg = Objects()
 
@@ -89,6 +91,7 @@ class AntVisionPublisher(Node):
             object.pose_stamped.header.frame_id = base_link
             object.pose_stamped.pose.position.x = x
             object.pose_stamped.pose.position.y = y
+            
             if object.object_type == Object.PART:
                 object.pose_stamped.pose.position.z = 0.03
             else:
@@ -115,9 +118,6 @@ class AntVisionPublisher(Node):
         return response
 
     def generate_unique_name(self, object_identifier: int) -> str:
-        if object_identifier is None:
-            return ''
-        
         identifier = self.object_name_mappings.get(object_identifier)
         
         if identifier not in self.object_counters:

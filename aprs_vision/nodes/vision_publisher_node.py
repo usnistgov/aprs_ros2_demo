@@ -4,11 +4,13 @@ from aprs_vision.vision_publisher import VisionPublisher
 
 def main(args=None):
     rclpy.init(args=args)
-    antvision_publisher_node = VisionPublisher()
+    
+    vision_publisher_node = VisionPublisher()
+    
     try:
-        rclpy.spin(antvision_publisher_node)
+        rclpy.spin(vision_publisher_node)
     except KeyboardInterrupt:
-        antvision_publisher_node.destroy_node()
+        vision_publisher_node.destroy_node()
     finally:
         rclpy.shutdown()
 

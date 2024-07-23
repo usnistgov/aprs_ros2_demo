@@ -4,17 +4,19 @@ import socket
 import re
 
 CONFIG_FANUC = {
-        "port":5001,
-        "host_ip":"viz.campus.nist.gov",
-        }
+    "port":5001,
+    "host_ip":"viz.campus.nist.gov",
+}
+
 CONFIG_TEACH = {
-        "port":6001,
-        "host_ip":"viz.campus.nist.gov",
-        }
+    "port":6001,
+    "host_ip":"viz.campus.nist.gov",
+}
+
 CONFIG_MOTOMAN = {
-        "port":5002,
-        "host_ip":"viz.campus.nist.gov",
-        }
+    "port":5002,
+    "host_ip":"viz.campus.nist.gov",
+}
 
 class VisionUtility():
     def __init__(self, config):
@@ -37,7 +39,7 @@ class VisionUtility():
         line.decode()
         raw_string = line.decode('ascii')
 
-        regexp = re.compile('([\w.-]*,){6}')
+        regexp = re.compile('([\\w.-]*,){6}')
 
         tmp_string = raw_string
         part_locations = []
