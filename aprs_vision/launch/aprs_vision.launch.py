@@ -13,9 +13,9 @@ def launch_setup(context, *args, **kwargs):
 
     use_rviz = LaunchConfiguration("rviz")
 
-    vision_annotater = Node(
+    vision_annotator = Node(
         package='aprs_vision',
-        executable='vision_annotater_node.py',
+        executable='vision_annotator_node.py',
         output='screen',
     )
 
@@ -38,7 +38,7 @@ def launch_setup(context, *args, **kwargs):
     )
     
     nodes_to_start = [
-        vision_annotater,
+        vision_annotator,
         antvision_node,
         rviz_node,
     ]

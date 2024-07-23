@@ -8,9 +8,9 @@ from typing import Optional
 from math import sqrt
 from numpy import square
 
-class VisionAnnotater(Node):
+class VisionAnnotator(Node):
     def __init__(self):
-        super().__init__('vision_annotater')
+        super().__init__('vision_annotator')
         self.fanuc_trays_info = Trays()
         self.motoman_trays_info = Trays()
         self.teach_trays_info = Trays()

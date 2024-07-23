@@ -26,7 +26,7 @@ class VisionUtility():
             self.config = CONFIG_MOTOMAN
         self.buffer = b''
     
-    def get_object_locations(self):
+    def get_object_locations(self) -> list[tuple[str, float, float, float, str]]:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.config['host_ip'], self.config['port']))
 

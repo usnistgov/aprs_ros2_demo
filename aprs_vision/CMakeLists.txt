@@ -32,9 +32,9 @@ ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_N
 
 # Install Python executables
 install(PROGRAMS
-  nodes/antvision_publisher_node.py
-  nodes/vision_annotater_node.py
-  nodes/teach_table_publisher_node.py
+  nodes/vision_annotator_node.py
+  nodes/vision_publisher_node.py
+  nodes/vision_broadcaster_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
