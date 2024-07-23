@@ -20,8 +20,7 @@
 
 #include <aprs_interfaces/msg/trays.hpp>
 #include <aprs_interfaces/msg/slot_info.hpp>
-#include <aprs_interfaces/msg/kit_tray.hpp>
-#include <aprs_interfaces/msg/part_tray.hpp>
+#include <aprs_interfaces/msg/tray.hpp>
 #include <aprs_interfaces/msg/object.hpp>
 
 #include <tf2_ros/transform_listener.h>
@@ -41,14 +40,15 @@ public:
   bool BuildTarget();
   bool MoveToJoints(std::vector<double> joint_values);
   bool FillKitTray();
-  void FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type);
+  void FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots);
   bool EmptyKitTray();
-  void EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type);
+  void EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots);
   bool PickPart(const std::string& slot_name, const std::string& tray_name);
   bool PlacePart(const std::string& slot_name, const std::string& tray_name);
+  std::string FanucDemo::FindPart(const uint8_t part_size);
   bool ReplicateTeachTable();
 
-private:
+ private:
   // Robot Move Functions
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> FanucPlantoTarget();
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> FanucPlanCartesian(std::vector<geometry_msgs::msg::Pose> waypoints, double vsf, double asf, bool avoid_collisions);
@@ -76,11 +76,14 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 
   // APRS Demo Objects
-  std::vector<aprs_interfaces::msg::KitTray> kit_trays_;
-  std::vector<aprs_interfaces::msg::PartTray> part_trays_;
+  std::vector<aprs_interfaces::msg::Tray> kit_trays_;
+  std::vector<aprs_interfaces::msg::Tray> part_trays_;
 
   // Callbacks
   void TraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
+
+  // Bool
+  bool recieved_tray_info;
 };
 
 #endif  // FANUC_DEMO__FANUC_KITTING_HPP_

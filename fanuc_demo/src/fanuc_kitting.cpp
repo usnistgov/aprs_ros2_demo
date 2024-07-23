@@ -33,6 +33,7 @@ void FanucDemo::TraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr m
     kit_trays_ = msg->kit_trays;
     part_trays_ = msg->part_trays;
   }
+  recieved_tray_info = true;
 }
 
 void FanucDemo::FanucSendHome()
@@ -332,35 +333,53 @@ bool FanucDemo::PlacePart(const std::string& slot_name, const std::string& tray_
   return true;
 }
 
-void FanucDemo::FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type)
+void FanucDemo::FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots)
 {
   for (auto& kit_tray_slot : kit_tray_slots)
   {
-    if (!kit_tray_slot.occupied)
-    {
-      bool slot_filled = false;
-      for (auto& part_tray : part_trays_)
-      {
-        if (part_tray.identifier == part_type)
-        {
-          for (auto& part_tray_slot : part_tray.slots)
-          {
-            if (part_tray_slot.occupied)
-            {
-              PickPart(part_tray_slot.name, part_tray.name);
-              PlacePart(kit_tray_slot.name,kit_tray_slot.name.substr(0, kit_tray_slot.name.size()-5));
-              kit_tray_slot.occupied = true;
-              part_tray_slot.occupied = false;
-              slot_filled = true;
-              break;
-            }
-          }
-        }
-        if (slot_filled)
-        {
+    if (kit_tray_slot.occupied) {
+      continue;
+    }
+
+    std::string slot_name = FindPart(kit_tray_slot.size);
+
+    if (slot_name == "") {
+      continue;
+    }
+
+    PickPart(slot_name);
+
+    PlacePart(kit_tray_slot.name);
+
+    kit_tray_slot.occupied = true;
+    bool set_part_tray_slot = false;
+
+    for (auto part_tray : part_trays_) {
+      for (auto part_tray_slot : part_tray.slots) {
+        if (part_tray_slot.name == slot_name) {
+          part_tray_slot.occupied = false;
+          set_part_tray_slot = true;
           break;
         }
       }
+      if (set_part_tray_slot) {
+        break;
+      }
+    }
+  }
+}
+
+std::string FanucDemo::FindPart(const uint8_t part_size){
+  // Find part and return the string name for tf
+  for (auto part_tray : part_trays_) {
+
+    
+    if (part_size == aprs_interfaces::msg::SlotInfo::
+      continue;
+    }
+    for (auto part_tray_slot : part_tray.slots) {
+      if (part_tray_slot)
+
     }
   }
 }
@@ -402,9 +421,7 @@ bool FanucDemo::FillKitTray()
 {
   for (auto& kit_tray : kit_trays_)
   {
-    FillKitSlots(kit_tray.large_gear_slots, aprs_interfaces::msg::Object::LARGE_GEAR_TRAY);
-    FillKitSlots(kit_tray.medium_gear_slots, aprs_interfaces::msg::Object::MEDIUM_GEAR_TRAY);
-    FillKitSlots(kit_tray.small_gear_slots, aprs_interfaces::msg::Object::SMALL_GEAR_TRAY);
+    FillKitSlots(kit_tray.slots);
   }
   return true;
 }
@@ -436,6 +453,9 @@ int main(int argc, char *argv[])
   
   // fanuc_demo->MoveToJoints(joint_values);
   fanuc_demo->FanucSendHome();
+  while(!recieved_tray_info){
+    usleep(100);
+  }
   fanuc_demo->FillKitTray();
   fanuc_demo->EmptyKitTray();
   fanuc_demo->FanucSendHome();
