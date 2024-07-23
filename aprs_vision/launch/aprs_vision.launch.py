@@ -19,11 +19,18 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
-    antvision_node = Node(
+    vision_publisher = Node(
         package='aprs_vision',
-        executable='antvision_publisher_node.py',
+        executable='vision_publisher_node.py',
         output='screen'
     )
+
+    vision_broadcaster = Node(
+        package='aprs_vision',
+        executable='vision_broadcaster_node.py',
+        output='screen'
+    )
+
 
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("aprs_vision"), "config", "vision.rviz"]
@@ -38,8 +45,9 @@ def launch_setup(context, *args, **kwargs):
     )
     
     nodes_to_start = [
+        vision_publisher,
         vision_annotater,
-        antvision_node,
+        vision_broadcaster,
         rviz_node,
     ]
 

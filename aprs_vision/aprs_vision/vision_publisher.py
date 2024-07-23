@@ -8,7 +8,7 @@ from aprs_interfaces.msg import Object, Objects
 from example_interfaces.srv import Trigger
 import math
 
-class AntVisionPublisher(Node):
+class VisionPublisher(Node):
     def __init__(self):
         super().__init__('vision_publisher')
         self.fanuc_vision_object_publisher_ = self.create_publisher(Objects, 'fanuc_vision_objects', 10)
