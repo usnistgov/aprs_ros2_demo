@@ -1,2 +1,2 @@
-aprs_interfaces/KitTray[] kit_trays
-aprs_interfaces/PartTray[] part_trays
+aprs_interfaces/Tray[] kit_trays
+aprs_interfaces/Tray[] part_trays
