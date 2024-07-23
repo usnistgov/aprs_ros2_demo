@@ -43,10 +43,13 @@ public:
   void FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots);
   bool EmptyKitTray();
   void EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots);
-  bool PickPart(const std::string& slot_name, const std::string& tray_name);
-  bool PlacePart(const std::string& slot_name, const std::string& tray_name);
-  std::string FanucDemo::FindPart(const uint8_t part_size);
+  bool PickPart(const std::string& slot_name);
+  bool PlacePart(const std::string& slot_name);
+  std::string FindPart(const uint8_t part_size);
   bool ReplicateTeachTable();
+
+  // Bool
+  bool recieved_tray_info;
 
  private:
   // Robot Move Functions
@@ -82,8 +85,7 @@ public:
   // Callbacks
   void TraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
 
-  // Bool
-  bool recieved_tray_info;
+  
 };
 
 #endif  // FANUC_DEMO__FANUC_KITTING_HPP_
