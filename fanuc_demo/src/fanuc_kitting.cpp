@@ -203,14 +203,16 @@ bool FanucDemo::BuildTarget(){
   return true;
 }
 
-bool FanucDemo::PickPart(const std::string& slot_name, const std::string& tray_name)
+bool FanucDemo::PickPart(const std::string& slot_name)
 {
-  // geometry_msgs::msg::TransformStamped tray_transform = tf_buffer->lookupTransform("fanuc_base_link", tray_name, tf2::TimePointZero);
   geometry_msgs::msg::TransformStamped pick_transform = tf_buffer->lookupTransform("fanuc_base_link", slot_name, tf2::TimePointZero);
 
-  RCLCPP_INFO_STREAM(get_logger(), "Picking part " << slot_name << " at X: " << pick_transform.transform.translation.x
-                                                      << " Y: " << pick_transform.transform.translation.y
-                                                      << " Z: " << pick_transform.transform.translation.z);
+  RCLCPP_INFO_STREAM(get_logger(), 
+    "Picking part " << slot_name << " at "
+    " X: " << pick_transform.transform.translation.x <<
+    " Y: " << pick_transform.transform.translation.y <<
+    " Z: " << pick_transform.transform.translation.z
+  );
 
   geometry_msgs::msg::Pose robot_pose = fanuc_arm_.getCurrentPose().pose;
 
@@ -267,16 +269,16 @@ bool FanucDemo::PickPart(const std::string& slot_name, const std::string& tray_n
   return true;
 }
 
-bool FanucDemo::PlacePart(const std::string& slot_name, const std::string& tray_name)
+bool FanucDemo::PlacePart(const std::string& slot_name)
 {
-  RCLCPP_INFO_STREAM(get_logger(), tray_name);
-
-  // geometry_msgs::msg::TransformStamped tray_transform = tf_buffer->lookupTransform("fanuc_base_link", tray_name, tf2::TimePointZero);
   geometry_msgs::msg::TransformStamped place_transform = tf_buffer->lookupTransform("fanuc_base_link", slot_name, tf2::TimePointZero);
 
-  RCLCPP_INFO_STREAM(get_logger(), "Placing part in slot " << slot_name << " at X: " << place_transform.transform.translation.x
-                                                            << " Y: " << place_transform.transform.translation.y
-                                                            << " Z: " << place_transform.transform.translation.z);
+  RCLCPP_INFO_STREAM(get_logger(), 
+    "Placing part in slot " << slot_name <<
+    " X: " << place_transform.transform.translation.x <<
+    " Y: " << place_transform.transform.translation.y <<
+    " Z: " << place_transform.transform.translation.z
+  );
 
   geometry_msgs::msg::Pose robot_pose = fanuc_arm_.getCurrentPose().pose;
 
@@ -352,18 +354,14 @@ void FanucDemo::FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tr
     PlacePart(kit_tray_slot.name);
 
     kit_tray_slot.occupied = true;
-    bool set_part_tray_slot = false;
 
+    // Update part tray slot to unoccupied
     for (auto part_tray : part_trays_) {
       for (auto part_tray_slot : part_tray.slots) {
         if (part_tray_slot.name == slot_name) {
           part_tray_slot.occupied = false;
-          set_part_tray_slot = true;
-          break;
+          return;
         }
-      }
-      if (set_part_tray_slot) {
-        break;
       }
     }
   }
@@ -371,50 +369,66 @@ void FanucDemo::FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tr
 
 std::string FanucDemo::FindPart(const uint8_t part_size){
   // Find part and return the string name for tf
+
+  bool found_tray = false;
   for (auto part_tray : part_trays_) {
-
-    
-    if (part_size == aprs_interfaces::msg::SlotInfo::
-      continue;
+    if (part_size == aprs_interfaces::msg::SlotInfo::SMALL && part_tray.identifier == aprs_interfaces::msg::Object::SMALL_GEAR_TRAY) {
+      found_tray = true;
     }
-    for (auto part_tray_slot : part_tray.slots) {
-      if (part_tray_slot)
 
+    else if (part_size == aprs_interfaces::msg::SlotInfo::MEDIUM && part_tray.identifier == aprs_interfaces::msg::Object::MEDIUM_GEAR_TRAY) {
+      found_tray = true;
     }
-  }
-}
 
-void FanucDemo::EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots, const uint8_t part_type)
-{
-  for (auto& kit_tray_slot : kit_tray_slots)
-  {
-    if (kit_tray_slot.occupied)
-    {
-      bool slot_empty = false;
-      for (auto& part_tray : part_trays_)
-      {
-        if (part_tray.identifier == part_type)
-        {
-          for (auto& part_tray_slot : part_tray.slots)
-          {
-            if (!part_tray_slot.occupied)
-            {
-              PickPart(kit_tray_slot.name,kit_tray_slot.name.substr(0, kit_tray_slot.name.size()-5));
-              PlacePart(part_tray_slot.name, part_tray.name);
-              kit_tray_slot.occupied = false;
-              part_tray_slot.occupied = true;
-              slot_empty = true;
-              break;
-            }
-          }
-        }
-        if (slot_empty)
-        {
-          break;
+    else if (part_size == aprs_interfaces::msg::SlotInfo::LARGE && part_tray.identifier == aprs_interfaces::msg::Object::LARGE_GEAR_TRAY) {
+      found_tray = true;
+    }
+
+    if (found_tray) {
+      for (auto slot: part_tray.slots) {
+        if (slot.occupied) {
+          return slot.name;
         }
       }
+      found_tray = false;
     }
   }
+
+  return "";
+}
+
+void FanucDemo::EmptyKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tray_slots)
+{
+  (void)kit_tray_slots;
+  // for (auto& kit_tray_slot : kit_tray_slots)
+  // {
+  //   if (kit_tray_slot.occupied)
+  //   {
+  //     bool slot_empty = false;
+  //     for (auto& part_tray : part_trays_)
+  //     {
+  //       if (part_tray.identifier == part_type)
+  //       {
+  //         for (auto& part_tray_slot : part_tray.slots)
+  //         {
+  //           if (!part_tray_slot.occupied)
+  //           {
+  //             PickPart(kit_tray_slot.name,kit_tray_slot.name.substr(0, kit_tray_slot.name.size()-5));
+  //             PlacePart(part_tray_slot.name, part_tray.name);
+  //             kit_tray_slot.occupied = false;
+  //             part_tray_slot.occupied = true;
+  //             slot_empty = true;
+  //             break;
+  //           }
+  //         }
+  //       }
+  //       if (slot_empty)
+  //       {
+  //         break;
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 bool FanucDemo::FillKitTray()
@@ -428,12 +442,12 @@ bool FanucDemo::FillKitTray()
 
 bool FanucDemo::EmptyKitTray()
 {
-  for (auto& kit_tray : kit_trays_)
-  {
-    EmptyKitSlots(kit_tray.large_gear_slots, aprs_interfaces::msg::Object::LARGE_GEAR_TRAY);
-    EmptyKitSlots(kit_tray.medium_gear_slots, aprs_interfaces::msg::Object::MEDIUM_GEAR_TRAY);
-    EmptyKitSlots(kit_tray.small_gear_slots, aprs_interfaces::msg::Object::SMALL_GEAR_TRAY);
-  }
+  // for (auto& kit_tray : kit_trays_)
+  // {
+  //   EmptyKitSlots(kit_tray.large_gear_slots, aprs_interfaces::msg::Object::LARGE_GEAR_TRAY);
+  //   EmptyKitSlots(kit_tray.medium_gear_slots, aprs_interfaces::msg::Object::MEDIUM_GEAR_TRAY);
+  //   EmptyKitSlots(kit_tray.small_gear_slots, aprs_interfaces::msg::Object::SMALL_GEAR_TRAY);
+  // }
   return true;
 }
 
@@ -449,17 +463,15 @@ int main(int argc, char *argv[])
 
   sleep(3);
 
-  // std::vector<double> joint_values{2.79,0.0,0.0,0.0,-1.54,0.0};
-  
-  // fanuc_demo->MoveToJoints(joint_values);
   fanuc_demo->FanucSendHome();
-  while(!recieved_tray_info){
+  
+  while(!fanuc_demo->recieved_tray_info){
     usleep(100);
   }
+
   fanuc_demo->FillKitTray();
-  fanuc_demo->EmptyKitTray();
+
   fanuc_demo->FanucSendHome();
-  // fanuc_demo->BuildTarget();
 
   rclcpp::shutdown();
 }
