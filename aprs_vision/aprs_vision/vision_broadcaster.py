@@ -64,6 +64,7 @@ class VisionBroadcaster(Node):
                 slot_pose = Pose()
                 slot_pose.position.x = x_offset
                 slot_pose.position.y = y_offset
+                slot_pose.position.z = 0.03
 
                 transforms.append(self.generate_transform(object.name, slot_frame_id, slot_pose))
         

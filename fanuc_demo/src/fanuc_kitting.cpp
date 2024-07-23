@@ -252,6 +252,7 @@ bool FanucDemo::PickPart(const std::string& slot_name)
   waypoints.clear();
   
   pick_pose.position.z += 0.07;
+  // pick_pose.position.z += 0.2;
 
   waypoints.push_back(pick_pose);
 
@@ -350,17 +351,15 @@ void FanucDemo::FillKitSlots(std::vector<aprs_interfaces::msg::SlotInfo>& kit_tr
     }
 
     PickPart(slot_name);
-
     PlacePart(kit_tray_slot.name);
 
     kit_tray_slot.occupied = true;
 
     // Update part tray slot to unoccupied
-    for (auto part_tray : part_trays_) {
-      for (auto part_tray_slot : part_tray.slots) {
+    for (auto& part_tray : part_trays_) {
+      for (auto& part_tray_slot : part_tray.slots) {
         if (part_tray_slot.name == slot_name) {
           part_tray_slot.occupied = false;
-          return;
         }
       }
     }
