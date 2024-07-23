@@ -15,7 +15,7 @@ def launch_setup(context, *args, **kwargs):
 
     vision_annotater = Node(
         package='aprs_vision',
-        executable='vision_annotater_node.py',
+        executable='vision_annotator_node.py',
         output='screen',
     )
 

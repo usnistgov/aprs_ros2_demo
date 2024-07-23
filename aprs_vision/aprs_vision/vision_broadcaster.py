@@ -13,7 +13,8 @@ class VisionBroadcaster(Node):
     def __init__(self):
         super().__init__('vision_tf_broadcaster')
         self.tf_broadcaster = TransformBroadcaster(self)
-        self.transforms: list[TransformStamped] = []
+        self.motoman_transforms: list[TransformStamped] = []
+        self.fanuc_transforms: list[TransformStamped] = []
 
         self.fanuc_objects_sub = self.create_subscription(Objects, 'fanuc_vision_objects', self.fanuc_objects_callback, 10)
         self.motoman_objects_sub = self.create_subscription(Objects, 'motoman_vision_objects', self.motoman_objects_callback, 10)
@@ -21,20 +22,26 @@ class VisionBroadcaster(Node):
         self.tf_publish_timer = self.create_timer(0.1, self.publish_frames)
     
     def fanuc_objects_callback(self, msg: Objects):
-        self.build_frames(msg)
+        self.fanuc_transforms = self.build_frames(msg)
 
     def motoman_objects_callback(self, msg: Objects):
-        self.build_frames(msg)
+        self.motoman_transforms = self.build_frames(msg)
 
     def publish_frames(self):
-        if self.transforms:
-            for transform in self.transforms: # Update timestamps
+        if self.fanuc_transforms:
+            for transform in self.fanuc_transforms: # Update timestamps
                 transform.header.stamp = self.get_clock().now().to_msg()
             
-            self.tf_broadcaster.sendTransform(self.transforms)
+            self.tf_broadcaster.sendTransform(self.fanuc_transforms)
 
-    def build_frames(self, objects_msg: Objects):
-        self.transforms.clear()
+        if self.motoman_transforms:
+            for transform in self.motoman_transforms: # Update timestamps
+                transform.header.stamp = self.get_clock().now().to_msg()
+            
+            self.tf_broadcaster.sendTransform(self.motoman_transforms)
+
+    def build_frames(self, objects_msg: Objects) -> list[TransformStamped]:
+        transforms: list[TransformStamped] = []
 
         objects: list[Object] = objects_msg.objects #type: ignore
         
@@ -44,7 +51,7 @@ class VisionBroadcaster(Node):
             if object.object_type not in tray_types: #don't publish part transforms
                 continue
             
-            self.transforms.append(self.generate_transform(
+            transforms.append(self.generate_transform(
                 object.pose_stamped.header.frame_id, 
                 object.name, 
                 object.pose_stamped.pose))
@@ -58,7 +65,9 @@ class VisionBroadcaster(Node):
                 slot_pose.position.x = x_offset
                 slot_pose.position.y = y_offset
 
-                self.transforms.append(self.generate_transform(object.name, slot_frame_id, slot_pose))
+                transforms.append(self.generate_transform(object.name, slot_frame_id, slot_pose))
+        
+        return transforms
                 
     def generate_transform(self, parent_frame, child_frame, initial_pose: Pose) -> TransformStamped:
         t = TransformStamped()

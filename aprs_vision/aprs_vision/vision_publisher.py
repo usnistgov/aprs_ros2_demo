@@ -54,8 +54,8 @@ class VisionPublisher(Node):
         self.teach_objects: Optional[Objects] = None
 
         self.fanuc_vision_utility_ = VisionUtility("CONFIG_FANUC")
-        self.motoman_vision_utility_ = VisionUtility("CONFIG_TEACH")
-        self.teach_table_vision_utility_ = VisionUtility("CONFIG_MOTOMAN")
+        self.motoman_vision_utility_ = VisionUtility("CONFIG_MOTOMAN")
+        self.teach_table_vision_utility_ = VisionUtility("CONFIG_TEACH")
 
         self.read_from_vision_system()
 

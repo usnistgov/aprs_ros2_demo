@@ -63,11 +63,11 @@ class VisionAnnotator(Node):
             except ValueError:
                 slot_info.occupied = False
             
-            if "sg" in slot_info.name:
+            if "sg" in slot_info.name or tray_object.object_identifier == Object.SMALL_GEAR_TRAY:
                 slot_info.size = SlotInfo.SMALL
-            elif "mg" in slot_info.name:
+            elif "mg" in slot_info.name or tray_object.object_identifier == Object.MEDIUM_GEAR_TRAY:
                 slot_info.size = SlotInfo.MEDIUM
-            elif "lg" in slot_info.name:
+            elif "lg" in slot_info.name or tray_object.object_identifier == Object.LARGE_GEAR_TRAY:
                 slot_info.size = SlotInfo.LARGE
             
             tray_msg.slots.append(slot_info) #type: ignore
