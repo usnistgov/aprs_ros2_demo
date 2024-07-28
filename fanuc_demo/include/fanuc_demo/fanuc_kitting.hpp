@@ -46,6 +46,7 @@ public:
   bool PickPart(const std::string& slot_name);
   bool PlacePart(const std::string& slot_name);
   std::string FindPart(const uint8_t part_size);
+  std::string FindEmptySlot(const uint8_t part_size);
   bool ReplicateTeachTable();
 
   // Bool
