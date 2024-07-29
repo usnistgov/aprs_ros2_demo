@@ -1,5 +1,4 @@
 import os
-
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
@@ -14,17 +13,24 @@ def launch_setup(context, *args, **kwargs):
 
     use_rviz = LaunchConfiguration("rviz")
 
-    object_tf_broadcaster = Node(
+    vision_annotater = Node(
         package='aprs_vision',
-        executable='object_tf_broadcaster.py',
+        executable='vision_annotator_node.py',
         output='screen',
     )
 
-    antvision_node = Node(
+    vision_publisher = Node(
         package='aprs_vision',
-        executable='antvision_publisher.py',
+        executable='vision_publisher_node.py',
         output='screen'
     )
+
+    vision_broadcaster = Node(
+        package='aprs_vision',
+        executable='vision_broadcaster_node.py',
+        output='screen'
+    )
+
 
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("aprs_vision"), "config", "vision.rviz"]
@@ -39,8 +45,9 @@ def launch_setup(context, *args, **kwargs):
     )
     
     nodes_to_start = [
-        object_tf_broadcaster,
-        antvision_node,
+        vision_publisher,
+        vision_annotater,
+        vision_broadcaster,
         rviz_node,
     ]
 

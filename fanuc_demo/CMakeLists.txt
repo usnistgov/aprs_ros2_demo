@@ -17,6 +17,7 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(example_interfaces)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(aprs_interfaces REQUIRED)
 
 
 
@@ -33,6 +34,7 @@ ament_target_dependencies(fanuc_kitting
   geometry_msgs
   example_interfaces
   moveit_ros_planning_interface
+  aprs_interfaces
 )
 
 install(TARGETS fanuc_kitting

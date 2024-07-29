@@ -3,19 +3,32 @@
 import socket
 import re
 
-from time import sleep
+CONFIG_FANUC = {
+    "port":5001,
+    "host_ip":"viz.campus.nist.gov",
+}
 
-CONFIG = {
-        "port":5001,
-        "host_ip":"viz.campus.nist.gov",
-        }
+CONFIG_TEACH = {
+    "port":6001,
+    "host_ip":"viz.campus.nist.gov",
+}
 
-class AntVisionUtility():
-    def __init__(self, config=CONFIG):
-        self.config = config
+CONFIG_MOTOMAN = {
+    "port":5002,
+    "host_ip":"viz.campus.nist.gov",
+}
+
+class VisionUtility():
+    def __init__(self, config):
+        if config == "CONFIG_FANUC":
+            self.config = CONFIG_FANUC
+        elif config == "CONFIG_TEACH":
+            self.config = CONFIG_TEACH
+        elif config == "CONFIG_MOTOMAN":
+            self.config = CONFIG_MOTOMAN
         self.buffer = b''
     
-    def get_object_locations(self):
+    def get_object_locations(self) -> list[tuple[str, float, float, float, str]]:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.config['host_ip'], self.config['port']))
 
@@ -26,7 +39,7 @@ class AntVisionUtility():
         line.decode()
         raw_string = line.decode('ascii')
 
-        regexp = re.compile('([\w.-]*,){6}')
+        regexp = re.compile('([\\w.-]*,){6}')
 
         tmp_string = raw_string
         part_locations = []
@@ -44,10 +57,3 @@ class AntVisionUtility():
         s.close()
 
         return part_locations
-
-
-if __name__ == '__main__':
-    avu = AntVisionUtility()
-    parts = avu.get_object_locations()
-    for p in parts:
-        print(p)
