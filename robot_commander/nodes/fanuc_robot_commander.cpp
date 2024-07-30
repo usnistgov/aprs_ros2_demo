@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto fanuc_commander = std::make_shared<RobotCommander>("fanuc_robot_commander");
+  auto fanuc_commander = std::make_shared<RobotCommander>("fanuc_robot_commander", "fanuc_arm");
 
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(fanuc_commander);
