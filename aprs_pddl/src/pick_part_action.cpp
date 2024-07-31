@@ -8,32 +8,31 @@ PickPartAction::PickPartAction()
 
 void PickPartAction::do_work() {
 
-    if(!service_called_) {
+  if(!service_called_) {
 
-        rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client;
+    rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client;
 
-        pick_part_client = this->create_client<aprs_interfaces::srv::Pick>("/pick_from_slot");
+    pick_part_client = this->create_client<aprs_interfaces::srv::Pick>("/pick_from_slot");
 
-        auto request = std::make_shared<aprs_interfaces::srv::Pick::Request>();
+    auto request = std::make_shared<aprs_interfaces::srv::Pick::Request>();
 
-        request->frame_name = current_arguments_[1];
+    request->frame_name = current_arguments_[1];
 
-        pick_part_client->async_send_request(request,
-        std::bind(&PickPartAction::pick_response_cb, this, std::placeholders::_1)
-        );
+    pick_part_client->async_send_request(request,
+    std::bind(&PickPartAction::pick_response_cb, this, std::placeholders::_1));
 
-        waiting_for_response_=true;
-        service_called_ = true;
+    waiting_for_response_=true;
+    service_called_ = true;
 
-    } else {
-        if(!waiting_for_response_) {
-            service_called_ = false;
-            progress_ = 1.0;
-            finish(true, progress_,"Picked Part from Slot Successfully");
-        }
+  } else {
+    if(!waiting_for_response_) {
+      service_called_ = false;
+      progress_ = 1.0;
+      finish(true, progress_,"Picked Part from Slot Successfully");
     }
-        
-    send_feedback(progress_);
+  }
+      
+  send_feedback(progress_);
 }
 
 void PickPartAction::pick_response_cb(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future){
