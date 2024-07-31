@@ -84,10 +84,10 @@ void TaskPlanner::init_world_state(){
     for (auto& kit_tray_slot : kit_tray.slots){
       problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
       if (!kit_tray_slot.occupied) {
-        problem_expert_->addPredicate(plansys2::Predicate("(kit_slot_empty " + kit_tray_slot.name + " " + part_size_.at(kit_tray_slot.size) + ")"));
+        problem_expert_->addPredicate(plansys2::Predicate("(kit_slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
       }
       else{
-        problem_expert_->addPredicate(plansys2::Predicate("(kit_slot_occupied " + kit_tray_slot.name + " " + part_size_.at(kit_tray_slot.size) + ")"));
+        problem_expert_->addPredicate(plansys2::Predicate("(kit_slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
       }
     }
   }
@@ -99,7 +99,7 @@ void TaskPlanner::init_world_state(){
         continue;
       }
       else{
-        problem_expert_->addPredicate(plansys2::Predicate("(in_part_tray " + GeneratePartName(part_tray_slot.size) + " " + part_tray_slot.name + " " + part_size_.at(part_tray_slot.size) + ") "));
+        problem_expert_->addPredicate(plansys2::Predicate("(in_part_tray " + GeneratePartName(part_tray_slot.size) + " " + part_tray_slot.name + " " + part_size_[part_tray_slot.size] + ")"));
       }
     }
   }
@@ -120,10 +120,10 @@ void TaskPlanner::init_goal_state(){
     for (auto& kit_tray_slot : kit_tray.slots){
       problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
       if (!kit_tray_slot.occupied) {
-        goal_str_ += ("(kit_slot_empty " + kit_tray_slot.name + " " + part_size_.at(kit_tray_slot.size) + ")");
+        goal_str_ += ("(kit_slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");
       }
       else{
-        goal_str_ += ("(kit_slot_occupied " + kit_tray_slot.name + " " + part_size_.at(kit_tray_slot.size) + ")");
+        goal_str_ += ("(kit_slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");
       }
     }
   }

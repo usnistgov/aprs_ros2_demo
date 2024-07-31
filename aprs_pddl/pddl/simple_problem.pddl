@@ -1,32 +1,63 @@
 (define (problem teach)
     (:domain aprs_demo)
     (:objects
-        gear_1 gear_2 gear_3 gear_4 - part
-        pt_1 kt_1 pt_2 kt_2 pt_3 kt_3 pt_4 kt_4 - slot
-        small medium large - size
+        small - size
+        medium - size
+        large - size
+        m2l1_kit_tray_1_lg_1 - slot
+        m2l1_kit_tray_1_mg_1 - slot
+        m2l1_kit_tray_1_mg_2 - slot
+        m2l1_kit_tray_2_lg_1 - slot
+        m2l1_kit_tray_2_mg_1 - slot
+        m2l1_kit_tray_2_mg_2 - slot
+        large_gear_tray_1_slot_1 - slot
+        large_gear_tray_1_slot_2 - slot
+        medium_gear_tray_1_slot_1 - slot
+        medium_gear_tray_1_slot_2 - slot
+        medium_gear_tray_1_slot_3 - slot
+        medium_gear_tray_1_slot_4 - slot
+        m2l1_kit_tray_3_lg_1 - slot
+        m2l1_kit_tray_3_mg_1 - slot
+        m2l1_kit_tray_3_mg_2 - slot
+        m2l1_kit_tray_4_lg_1 - slot
+        m2l1_kit_tray_4_mg_1 - slot
+        m2l1_kit_tray_4_mg_2 - slot
+        large_0 - part
+        large_1 - part
+        medium_0 - part
+        medium_1 - part
+        medium_2 - part
+        medium_3 - part
     )
 
     (:init
-        (in_part_tray gear_1 pt_1 small)
-        (in_part_tray gear_4 pt_4 small)
-        (in_part_tray gear_2 pt_2 large)
-        ; (in_part_tray gear_3 pt_3 medium)
-
-        (kit_slot_occupied kt_2 medium)
-        (kit_slot_empty kt_1 small)
-        (kit_slot_empty kt_3 large)
-        (kit_slot_empty kt_4 small)
-
         (robot_on_standby)
         (gripper_empty)
+
+        (kit_slot_empty m2l1_kit_tray_1_lg_1 large)
+        (kit_slot_empty m2l1_kit_tray_1_mg_1 medium)
+        (kit_slot_empty m2l1_kit_tray_1_mg_2 medium)
+        (kit_slot_empty m2l1_kit_tray_2_lg_1 large)
+        (kit_slot_empty m2l1_kit_tray_2_mg_1 medium)
+        (kit_slot_empty m2l1_kit_tray_2_mg_2 medium)
+
+        (in_part_tray large_0 large_gear_tray_1_slot_1 large)
+        (in_part_tray large_1 large_gear_tray_1_slot_2 large)
+
+        (in_part_tray medium_0 medium_gear_tray_1_slot_1 medium)
+        (in_part_tray medium_1 medium_gear_tray_1_slot_2 medium)
+        (in_part_tray medium_2 medium_gear_tray_1_slot_3 medium)
+        (in_part_tray medium_3 medium_gear_tray_1_slot_4 medium)
     )
 
     (:goal
-        (and
-            (kit_slot_occupied kt_1 small)
-            (kit_slot_occupied kt_4 small)
-            (kit_slot_empty kt_2 medium)
-            (kit_slot_occupied kt_3 large)
+        (and 
+            (kit_slot_occupied m2l1_kit_tray_1_lg_1 large)
+            (kit_slot_occupied m2l1_kit_tray_1_mg_1 medium)
+            (kit_slot_empty m2l1_kit_tray_1_mg_2 medium)
+            (kit_slot_occupied m2l1_kit_tray_2_lg_1 large)
+            (kit_slot_occupied m2l1_kit_tray_2_mg_1 medium)
+            (kit_slot_occupied m2l1_kit_tray_2_mg_2 medium)
         )
     )
 )
