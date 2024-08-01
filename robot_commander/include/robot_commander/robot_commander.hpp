@@ -3,6 +3,12 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 
+#include "tf2/exceptions.h"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
+
+#include <std_msgs/msg/float64_multi_array.hpp>
+#include <example_interfaces/srv/trigger.hpp>
 #include <aprs_interfaces/srv/pick.hpp>
 #include <aprs_interfaces/srv/place.hpp>
 #include <aprs_interfaces/srv/move_to_named_pose.hpp>
@@ -13,10 +19,27 @@ class RobotCommander : public rclcpp::Node
     RobotCommander(std::string node_name, std::string group_name);
 
   private:
-    // MoveIt
+    // Robot Move Functions
+    std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_to_target();
+    bool send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory);
 
+    // Utility Functions
+    void handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory);
+
+    // MoveIt
     moveit::planning_interface::MoveGroupInterface planning_interface_;
     moveit::planning_interface::PlanningSceneInterface planning_scene_;
+
+    // TF
+    std::unique_ptr<tf2_ros::Buffer> tf_buffer = std::make_unique<tf2_ros::Buffer>(get_clock());
+    std::shared_ptr<tf2_ros::TransformListener> tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
+    
+    // Publishers
+    rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr joint_command_publisher_;
+
+    // Clients
+    rclcpp::Client<example_interfaces::srv::Trigger>::SharedPtr open_gripper_client_;
+    rclcpp::Client<example_interfaces::srv::Trigger>::SharedPtr close_gripper_client_;
 
     // Services
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;
@@ -38,5 +61,7 @@ class RobotCommander : public rclcpp::Node
       const std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Request> request,
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
+
+    double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
 
 };
