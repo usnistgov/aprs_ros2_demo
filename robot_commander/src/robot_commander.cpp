@@ -340,6 +340,8 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
   while (!finished_motion) {
     current_positions = planning_interface_.getCurrentJointValues();
 
+    current_positions[2] -= current_positions[1];
+
     auto distances = compare_joint_positions(goal_positions, current_positions);
 
     double largest_error = *std::max_element(std::begin(distances), std::end(distances));
