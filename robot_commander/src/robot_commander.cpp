@@ -339,8 +339,12 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
 
     auto distances = compare_joint_positions(goal_positions, current_positions);
 
-    if (*std::max_element(std::begin(distances), std::end(distances)) < goal_joint_tolerance) {
+    double largest_error = *std::max_element(std::begin(distances), std::end(distances));
+
+    if (largest_error < goal_joint_tolerance) {
       finished_motion = true;
+    } else {
+      RCLCPP_INFO_STREAM(get_logger(), largest_error);
     }
 
     sleep(0.1);
