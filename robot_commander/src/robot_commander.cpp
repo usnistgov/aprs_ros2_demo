@@ -25,7 +25,7 @@ RobotCommander::RobotCommander(std::string node_name, std::string move_group_nam
   );
 
   // Create publishers
-  joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("/forward_postion_controller/commands", 10);
+  joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
 
   // Create clients
   open_gripper_client_ = create_client<example_interfaces::srv::Trigger>("gripper_open");
@@ -159,10 +159,10 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   send_trajectory(plan.second);
 
   // Move to place pose
-  geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
+  geometry_msgs::msg::Pose place_pose;
+  place_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
 
-  plan = plan_cartesian(pick_pose);
+  plan = plan_cartesian(place_pose);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to place pose");
