@@ -133,6 +133,8 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   open_gripper();
 
+  sleep(0.5);
+
   // Move to pick pose
   geometry_msgs::msg::Pose pick_pose;
   pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
@@ -144,7 +146,11 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   send_trajectory(plan.second);
 
+  sleep(0.5);
+
   close_gripper();
+
+  sleep(0.5);
 
   holding_part = true;
 
@@ -348,8 +354,6 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
 
     if (largest_error < goal_joint_tolerance) {
       finished_motion = true;
-    } else {
-      RCLCPP_INFO_STREAM(get_logger(), largest_error);
     }
 
     sleep(0.1);
