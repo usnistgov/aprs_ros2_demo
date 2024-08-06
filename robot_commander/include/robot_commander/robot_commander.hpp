@@ -79,6 +79,14 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
 
+    // Response callbacks
+    void open_gripper_response_cb(rclcpp::Client<example_interfaces::srv::Trigger>::SharedFuture future);
+    void close_gripper_response_cb(rclcpp::Client<example_interfaces::srv::Trigger>::SharedFuture future);
+
+    // Reponse flags
+    bool recieved_open_gripper_response = false;
+    bool recieved_close_gripper_response = false;
+
     double vsf = 0.1;
     double asf = 0.5;
     double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds

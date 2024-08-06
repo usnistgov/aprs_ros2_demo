@@ -44,9 +44,14 @@ bool RobotCommander::open_gripper()
 {
   example_interfaces::srv::Trigger::Request::SharedPtr req;
 
-  auto future = open_gripper_client_->async_send_request(req);
+  recieved_open_gripper_response = false;
 
-  future.wait();
+  auto future = open_gripper_client_->async_send_request(
+    req,
+    std::bind(&RobotCommander::open_gripper_response_cb, this, std::placeholders::_1)
+  );
+
+  while (!recieved_open_gripper_response) {}
 
   if (!future.get()->success) {
     RCLCPP_ERROR_STREAM(get_logger(), future.get()->message);
@@ -61,9 +66,14 @@ bool RobotCommander::close_gripper()
 {
   example_interfaces::srv::Trigger::Request::SharedPtr req;
 
-  auto future = close_gripper_client_->async_send_request(req);
+  recieved_close_gripper_response = false;
 
-  future.wait();
+  auto future = close_gripper_client_->async_send_request(
+    req,
+    std::bind(&RobotCommander::close_gripper_response_cb, this, std::placeholders::_1)
+  );
+
+  while (!recieved_close_gripper_response) {}
 
   if (!future.get()->success) {
     RCLCPP_ERROR_STREAM(get_logger(), future.get()->message);
