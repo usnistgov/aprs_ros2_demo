@@ -1,7 +1,11 @@
+#include <math.h>
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include <moveit/trajectory_processing/time_optimal_trajectory_generation.h>
+#include <moveit/robot_trajectory/robot_trajectory.h>
 
 #include "tf2/exceptions.h"
 #include "tf2_ros/transform_listener.h"
@@ -18,17 +22,27 @@ class RobotCommander : public rclcpp::Node
   public:
     RobotCommander(std::string node_name, std::string group_name);
 
+    bool open_gripper();
+    bool close_gripper();
+    std::pair<bool, std::string> move_to_named_pose(const std::string &pose_name);
+    std::pair<bool, std::string> pick_part(const std::string &slot_name);
+    std::pair<bool, std::string> place_part(const std::string &slot_name);
+
   private:
     // Robot Move Functions
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_to_target();
-    bool send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory);
+    std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_cartesian(geometry_msgs::msg::Pose pose);
+    
+    void send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory);
 
     // Utility Functions
     void handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory);
+    geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
 
     // MoveIt
     moveit::planning_interface::MoveGroupInterface planning_interface_;
     moveit::planning_interface::PlanningSceneInterface planning_scene_;
+    trajectory_processing::TimeOptimalTrajectoryGeneration totg_;
 
     // TF
     std::unique_ptr<tf2_ros::Buffer> tf_buffer = std::make_unique<tf2_ros::Buffer>(get_clock());
@@ -62,6 +76,16 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
 
+    double vsf = 0.1;
+    double asf = 0.5;
     double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
+    double pick_offset = 0.1;
+    double place_offset = 0.1;
+    double gripper_roll = M_PI;
+    double gripper_pitch = M_PI;
+    
+    std::string base_link = "fanuc_base_link";
+    std::string group_name;
 
+    bool holding_part = false;
 };
