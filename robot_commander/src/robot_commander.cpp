@@ -318,6 +318,31 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
     
     usleep(trajectory_spacing_);
   }
+
+  std::vector<double> goal_positions = trajectory.joint_trajectory.points.back().positions;
+  std::vector<double> current_positions; 
+
+  bool finished_motion = false;
+
+  auto compare_joint_positions = [] (std::vector<double> v1, std::vector<double> v2){
+    std::vector<double> d;
+
+    for (int i=0; i<=v1.size(); i++) {
+      d.push_back(std::abs(v1[i] - v2[i]));
+    }
+
+    return d;
+  };
+
+  while (!finished_motion) {
+    current_positions = planning_interface_.getCurrentJointValues();
+
+    auto distances = compare_joint_positions(goal_positions, current_positions);
+
+    if (*std::max_element(std::begin(distances), std::end(distances)) < 0.01) {
+      finished_motion = true;
+    }
+  }
 }
 
 void RobotCommander::handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory)
