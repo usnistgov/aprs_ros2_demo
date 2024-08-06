@@ -52,8 +52,14 @@ install(TARGETS fanuc_robot_commander
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY include/
+install(
+  DIRECTORY include/
   DESTINATION include
+)
+
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_export_libraries(
