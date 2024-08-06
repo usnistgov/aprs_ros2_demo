@@ -81,8 +81,8 @@ class RobotCommander : public rclcpp::Node
     double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
     double pick_offset = 0.1;
     double place_offset = 0.1;
-    double gripper_roll = M_PI;
-    double gripper_pitch = M_PI;
+    double gripper_roll = 0;
+    double gripper_pitch = M_PI_2;
     
     std::string base_link = "fanuc_base_link";
     std::string group_name;
