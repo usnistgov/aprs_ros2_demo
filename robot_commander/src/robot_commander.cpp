@@ -42,7 +42,7 @@ RobotCommander::RobotCommander(std::string node_name, std::string move_group_nam
 
 bool RobotCommander::open_gripper()
 {
-  example_interfaces::srv::Trigger::Request::SharedPtr req;
+  auto req = std::make_shared<example_interfaces::srv::Trigger::Request>();
 
   recieved_open_gripper_response = false;
 
@@ -64,7 +64,7 @@ bool RobotCommander::open_gripper()
 
 bool RobotCommander::close_gripper()
 {
-  example_interfaces::srv::Trigger::Request::SharedPtr req;
+  auto req = std::make_shared<example_interfaces::srv::Trigger::Request>();
 
   recieved_close_gripper_response = false;
 
