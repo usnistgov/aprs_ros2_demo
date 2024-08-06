@@ -96,6 +96,8 @@ class RobotCommander : public rclcpp::Node
     double place_offset = 0.1;
     double gripper_roll = 0;
     double gripper_pitch = M_PI_2;
+
+    double goal_joint_tolerance = 0.05;
     
     std::string base_link = "fanuc_base_link";
     std::string group_name;

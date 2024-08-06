@@ -339,11 +339,11 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
 
     auto distances = compare_joint_positions(goal_positions, current_positions);
 
-    if (*std::max_element(std::begin(distances), std::end(distances)) < 0.01) {
+    if (*std::max_element(std::begin(distances), std::end(distances)) < goal_joint_tolerance) {
       finished_motion = true;
     }
 
-    sleep(1);
+    sleep(0.1);
   }
 }
 
