@@ -8,20 +8,28 @@ RobotCommander::RobotCommander(std::string node_name, std::string move_group_nam
 {
   RCLCPP_INFO(get_logger(), "Starting robot commander node");
 
+  client_cb_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
   // Start up service servers
   pick_srv_ = create_service<aprs_interfaces::srv::Pick>(
     "/pick_from_slot", 
-    std::bind(&RobotCommander::pick_from_slot_cb, this, std::placeholders::_1, std::placeholders::_2)
+    std::bind(&RobotCommander::pick_from_slot_cb, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS(),
+    client_cb_group_
   );
 
   place_srv_ = create_service<aprs_interfaces::srv::Place>(
     "/place_in_slot", 
-    std::bind(&RobotCommander::place_in_slot_cb, this, std::placeholders::_1, std::placeholders::_2)
+    std::bind(&RobotCommander::place_in_slot_cb, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS(),
+    client_cb_group_
   );
 
   move_to_named_pose_srv_ = create_service<aprs_interfaces::srv::MoveToNamedPose>(
     "/move_to_named_pose", 
-    std::bind(&RobotCommander::move_to_named_pose_cb, this, std::placeholders::_1, std::placeholders::_2)
+    std::bind(&RobotCommander::move_to_named_pose_cb, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS(),
+    client_cb_group_
   );
 
   // Create publishers

@@ -60,6 +60,9 @@ class RobotCommander : public rclcpp::Node
     rclcpp::Service<aprs_interfaces::srv::Place>::SharedPtr place_srv_;
     rclcpp::Service<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr move_to_named_pose_srv_;
 
+    // Callback groups
+    rclcpp::CallbackGroup::SharedPtr client_cb_group_;
+
     // Service Callbacks
     void pick_from_slot_cb(
       const std::shared_ptr<aprs_interfaces::srv::Pick::Request> request,
