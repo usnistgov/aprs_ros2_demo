@@ -4,6 +4,7 @@
   <name>aprs_vision</name>
   <version>0.0.0</version>
   <description>APRS Vision System</description>
+  <maintainer email="justin.albrecht@nist.gov">Justin Albrecht</maintainer>
   <maintainer email="sanchit.kedia@nist.gov">Sanchit Kedia</maintainer>
   <license>NIST</license>
 

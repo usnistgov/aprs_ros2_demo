@@ -5,6 +5,7 @@
   <version>2024.1.0</version>
   <description>Package containing URDF descriptions for the fanuc in the APRS Lab</description>
   <maintainer email="justin.albrecht@nist.gov">Justin Albrecht</maintainer>
+  <maintainer email="sanchit.kedia@nist.gov">Sanchit Kedia</maintainer>
   <license>NIST</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
