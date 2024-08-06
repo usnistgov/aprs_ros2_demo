@@ -86,6 +86,8 @@ class RobotCommander : public rclcpp::Node
     // Reponse flags
     bool recieved_open_gripper_response = false;
     bool recieved_close_gripper_response = false;
+    example_interfaces::srv::Trigger::Response open_gripper_response;
+    example_interfaces::srv::Trigger::Response close_gripper_response;
 
     double vsf = 0.1;
     double asf = 0.5;

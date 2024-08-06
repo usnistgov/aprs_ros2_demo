@@ -45,20 +45,21 @@ bool RobotCommander::open_gripper()
   auto req = std::make_shared<example_interfaces::srv::Trigger::Request>();
 
   recieved_open_gripper_response = false;
+  open_gripper_response = example_interfaces::srv::Trigger::Response();
 
-  auto future = open_gripper_client_->async_send_request(
+  open_gripper_client_->async_send_request(
     req,
     std::bind(&RobotCommander::open_gripper_response_cb, this, std::placeholders::_1)
   );
 
   while (!recieved_open_gripper_response) {}
 
-  if (!future.get()->success) {
-    RCLCPP_ERROR_STREAM(get_logger(), future.get()->message);
+  if (!open_gripper_response.success) {
+    RCLCPP_ERROR_STREAM(get_logger(), open_gripper_response.message);
     return false;
   } 
   
-  RCLCPP_INFO(get_logger(), "opened gripper");
+  RCLCPP_INFO(get_logger(), "Opened gripper");
   return true;
 }
 
@@ -67,20 +68,21 @@ bool RobotCommander::close_gripper()
   auto req = std::make_shared<example_interfaces::srv::Trigger::Request>();
 
   recieved_close_gripper_response = false;
+  close_gripper_response = example_interfaces::srv::Trigger::Response();
 
-  auto future = close_gripper_client_->async_send_request(
+  close_gripper_client_->async_send_request(
     req,
     std::bind(&RobotCommander::close_gripper_response_cb, this, std::placeholders::_1)
   );
 
   while (!recieved_close_gripper_response) {}
 
-  if (!future.get()->success) {
-    RCLCPP_ERROR_STREAM(get_logger(), future.get()->message);
+  if (!close_gripper_response.success) {
+    RCLCPP_ERROR_STREAM(get_logger(), close_gripper_response.message);
     return false;
   } 
   
-  RCLCPP_INFO(get_logger(), "closed gripper");
+  RCLCPP_INFO(get_logger(), "Closed gripper");
   return true;
 }
 
@@ -233,6 +235,22 @@ void RobotCommander::place_in_slot_cb(
   response->success = result.first;
   response->status = result.second;
 } 
+
+void RobotCommander::open_gripper_response_cb(rclcpp::Client<example_interfaces::srv::Trigger>::SharedFuture future)
+{
+  open_gripper_response.success = future.get()->success;
+  open_gripper_response.message = future.get()->message;
+
+  recieved_open_gripper_response = true;
+}
+
+void RobotCommander::close_gripper_response_cb(rclcpp::Client<example_interfaces::srv::Trigger>::SharedFuture future)
+{
+  close_gripper_response.success = future.get()->success;
+  close_gripper_response.message = future.get()->message;
+  
+  recieved_close_gripper_response = true;
+}
 
 void RobotCommander::move_to_named_pose_cb(
   const std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Request> request,
