@@ -310,14 +310,17 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
   
   std_msgs::msg::Float64MultiArray joint_positions;
 
-  for (auto point : trajectory.joint_trajectory.points)
-  {
-    joint_positions.data = point.positions;
+  joint_positions.data = trajectory.joint_trajectory.points.back().positions;
+  joint_command_publisher_->publish(joint_positions);
+
+  // for (auto point : trajectory.joint_trajectory.points)
+  // {
+  //   joint_positions.data = point.positions;
     
-    joint_command_publisher_->publish(joint_positions);
+  //   joint_command_publisher_->publish(joint_positions);
     
-    usleep(trajectory_spacing_);
-  }
+  //   usleep(trajectory_spacing_);
+  // }
 
   std::vector<double> goal_positions = trajectory.joint_trajectory.points.back().positions;
   std::vector<double> current_positions; 
