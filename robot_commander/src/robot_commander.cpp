@@ -342,6 +342,8 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
     if (*std::max_element(std::begin(distances), std::end(distances)) < 0.01) {
       finished_motion = true;
     }
+
+    sleep(1);
   }
 }
 
