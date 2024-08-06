@@ -4,8 +4,9 @@
   <name>fanuc_moveit_config</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
+  <maintainer email="justin.albrecht@nist.gov">Justin Albrecht</maintainer>
   <maintainer email="sanchit.kedia@nist.gov">Sanchit Kedia</maintainer>
-  <license>Apache License 2.0</license>
+  <license>NIST</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

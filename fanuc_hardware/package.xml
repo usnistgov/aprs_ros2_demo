@@ -5,6 +5,7 @@
   <version>0.0.1</version>
   <description>Fanuc Hardware Interface for APRS Lab at NIST</description>
   <maintainer email="justin.albrecht@nist.gov">Justin Albrecht</maintainer>
+  <maintainer email="sanchit.kedia@nist.gov">Sanchit Kedia</maintainer>
   <license>NIST</license>
 
   <depend>rclcpp</depend>

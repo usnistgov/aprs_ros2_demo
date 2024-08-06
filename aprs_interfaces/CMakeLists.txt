@@ -22,9 +22,23 @@ set(srv_files
   "srv/Place.srv"
 )
 
+set(srv_files
+  "srv/MoveToNamedPose.srv"
+  "srv/Pick.srv"
+  "srv/Place.srv"
+  "srv/GenerateInitState.srv"
+  "srv/GeneratePlan.srv"
+)
+
+set(action_files
+  "action/ExecutePlan.action"
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}
+  ${action_files}
+
   DEPENDENCIES
   builtin_interfaces
   std_msgs

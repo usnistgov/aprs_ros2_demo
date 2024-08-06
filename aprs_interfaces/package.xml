@@ -4,6 +4,7 @@
   <name>aprs_interfaces</name>
   <version>1.0.0</version>
   <description>Interface definitions for APRS Demo</description>
+  <maintainer email="justin.albrecht@nist.gov">Justin Albrecht</maintainer>
   <maintainer email="sanchit.kedia@nist.gov">Sanchit Kedia</maintainer>
   <license>NIST</license>
 

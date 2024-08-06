@@ -48,6 +48,7 @@ class VisionPublisher(Node):
 
         self.update_vision_data_srv = self.create_service(Trigger, 'update_vision_data', self.update_vision_data_callback)
         self.object_counters = {}
+        self.teach_objects_counters = {}
 
         self.fanuc_objects: Optional[Objects] = None
         self.motoman_objects: Optional[Objects] = None
@@ -85,7 +86,7 @@ class VisionPublisher(Node):
             object = Object()
 
             object.object_identifier = self.get_object_identifier(name)
-            object.name = self.generate_unique_name(object.object_identifier)
+            object.name = self.generate_unique_name(object.object_identifier, is_teach_message=(base_link == "teach_base_link"))
             object.object_type = self.get_object_type(type_)
 
             object.pose_stamped.header.frame_id = base_link
@@ -116,16 +117,21 @@ class VisionPublisher(Node):
         self.get_logger().info('Vision Data Updated.')
         
         return response
-
-    def generate_unique_name(self, object_identifier: int) -> str:
+   
+    def generate_unique_name(self, object_identifier: int, is_teach_message: bool = False) -> str:
         identifier = self.object_name_mappings.get(object_identifier)
         
-        if identifier not in self.object_counters:
-            self.object_counters[identifier] = 1
+        if is_teach_message:
+            counters = self.teach_objects_counters
         else:
-            self.object_counters[identifier] += 1
+            counters = self.object_counters
         
-        return f'{identifier}_{self.object_counters[identifier]}'
+        if identifier not in counters:
+            counters[identifier] = 1
+        else:
+            counters[identifier] += 1
+        
+        return f'{identifier}_{counters[identifier]}'
 
     def get_object_type(self, object_type) -> int:
         return self.object_type_mappings.get(object_type) or -1
