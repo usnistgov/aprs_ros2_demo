@@ -5,17 +5,20 @@ import re
 
 CONFIG_FANUC = {
     "port":5001,
-    "host_ip":"viz.campus.nist.gov",
+    # "host_ip":"viz.campus.nist.gov",
+    "host_ip": "192.168.1.21"
 }
 
 CONFIG_TEACH = {
     "port":6001,
-    "host_ip":"viz.campus.nist.gov",
+    # "host_ip":"viz.campus.nist.gov",
+    "host_ip": "192.168.1.21"
 }
 
 CONFIG_MOTOMAN = {
     "port":5002,
-    "host_ip":"viz.campus.nist.gov",
+    # "host_ip":"viz.campus.nist.gov",
+    "host_ip": "192.168.1.21"
 }
 
 class VisionUtility():
