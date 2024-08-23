@@ -23,6 +23,16 @@ def launch_setup(context, *args, **kwargs):
         .planning_pipelines(pipelines=["ompl"])
         .to_moveit_configs()
     )
+
+    # Move group node
+    move_group_node = Node(
+        package="moveit_ros_move_group",
+        executable="move_group",
+        output="screen",
+        parameters=[
+            moveit_config.to_dict(),
+        ],
+    )   
         
     # Fanuc Robot Commander
     fanuc_robot_commander = Node(
@@ -35,6 +45,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     nodes_to_start = [
+        move_group_node,
         fanuc_robot_commander,
     ]
 

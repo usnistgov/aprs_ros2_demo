@@ -137,7 +137,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   // Move to pick pose
   geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
+  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + 0.02, 0.0);
 
   plan = plan_cartesian(pick_pose);
   
@@ -145,6 +145,8 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
     return std::make_pair(false, "Unable to plan to pick pose");
 
   send_trajectory(plan.second);
+
+  return std::make_pair(false, "Testing");
 
   sleep(0.5);
 
@@ -291,7 +293,7 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
 
   std::vector<geometry_msgs::msg::Pose> waypoints = {pose};
 
-  double path_fraction = planning_interface_.computeCartesianPath(waypoints, 0.01, 0.0, trajectory, true);
+  double path_fraction = planning_interface_.computeCartesianPath(waypoints, 0.01, 0.0, trajectory, false);
 
   if (path_fraction < 1.0)
   {
