@@ -1,0 +1,8 @@
+# Pneumatic gripper control
+
+# Enable/Disable gripper suction
+bool enable
+
+---
+string status
+bool success
