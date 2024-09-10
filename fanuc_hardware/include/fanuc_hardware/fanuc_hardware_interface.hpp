@@ -11,6 +11,8 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
 
+#include <unistd.h>
+
 
 namespace fanuc_hardware {
 
@@ -41,6 +43,7 @@ namespace fanuc_hardware {
 
     std::pair<bool, std::vector<float>> read_joints();
     std::pair<bool, const std::vector<uint8_t>> write_joints();
+    bool write_gripper();
 
     int get_packet_length();
 
@@ -62,25 +65,33 @@ namespace fanuc_hardware {
     std::vector<double> prev_hw_states_;
     std::vector<double> prev_hw_commands_;
 
+    uint32_t open_msg = htonl(0);
+    uint32_t close_msg = htonl(1);
 
     const char *robot_ip_ = "192.168.1.34";
     const int state_port_ = 11002;
     const int motion_port_ = 11000;
+    const int gripper_port_ = 12123;
     const int state_buffer_length_ = 56;
     const int motion_buffer_length_ = 64;
 
     struct sockaddr_in state_socket_;
     struct sockaddr_in motion_socket_;
+    struct sockaddr_in gripper_socket_;
 
     int state_sock_ = 0;
     int motion_sock_ = 0;
+    int gripper_sock_ = 0;
     bool state_socket_created_{false};
     bool motion_socket_created_{false};
-  };
+    bool gripper_socket_created_{false};
 
+    bool gripper_state_ = false; // false = open, true = closed
+    int gripper_stroke_ = 0.015;
+  };
 }
 
-#include <unistd.h>
+
 
 namespace socket_read {
   ssize_t read_socket(int __fd, void *__buf, size_t __nbytes);

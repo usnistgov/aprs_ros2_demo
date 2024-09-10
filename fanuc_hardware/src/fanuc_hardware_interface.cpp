@@ -51,6 +51,22 @@ namespace fanuc_hardware {
       return hardware_interface::CallbackReturn::FAILURE;
     }
 
+    // Create Gripper Control Socket
+    if((gripper_sock_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+    {
+      RCLCPP_ERROR(get_logger(), "Gripper Socket creation error" );
+      return hardware_interface::CallbackReturn::FAILURE;
+    }
+
+    gripper_socket_.sin_family = AF_INET;
+    gripper_socket_.sin_port = htons(gripper_port_);
+
+    // Convert IP addresses from text to binary form
+    if(inet_pton(AF_INET, robot_ip_, &gripper_socket_.sin_addr) <= 0) 
+    {
+      RCLCPP_ERROR(get_logger(), "Invalid address / Address not supported");
+      return hardware_interface::CallbackReturn::FAILURE;
+    }
 
     hw_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
@@ -94,6 +110,19 @@ namespace fanuc_hardware {
     }
 
     motion_socket_created_ = true;
+
+    // Connect to the Gripper server
+    if(connect(gripper_sock_, (struct sockaddr *)&gripper_socket_, sizeof(gripper_socket_)) < 0) 
+    {
+      RCLCPP_ERROR(get_logger(), "Connection failed");
+      return hardware_interface::CallbackReturn::FAILURE;
+    }
+
+    gripper_socket_created_ = true;
+
+    // Open Gripper
+    send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
+    gripper_state_ = 0;
 
     auto ret = read_joints();
 
@@ -165,18 +194,20 @@ namespace fanuc_hardware {
     (void)time;
     (void)period;
 
-    if (prev_hw_commands_ != hw_commands_ && flag)
+    // Check if hw_commands were changed if so write joints.
+    std::vector<double> previous_positions = std::vector<double>(
+        prev_hw_commands_.begin(), prev_hw_commands_.end() - 1);
+
+    std::vector<double> current_positions = std::vector<double>(
+        hw_commands_.begin(), hw_commands_.end() - 1);
+
+    if (current_positions != previous_positions && flag)
     {
       auto ret = write_joints();
-
-      if (!ret.first){
-        return hardware_interface::return_type::OK;
-      }
 
       if (send(motion_sock_, ret.second.data(), ret.second.size(), 0) < 0)
       {
         RCLCPP_INFO(get_logger(), "Send failed");
-        return hardware_interface::return_type::OK;
       }
       
       char buffer[1024] = {0};
@@ -184,11 +215,16 @@ namespace fanuc_hardware {
       if (recv(motion_sock_, buffer, sizeof(buffer)-1,0) < 0)
       {
         RCLCPP_INFO(get_logger(),  "Receive failed");
-        return hardware_interface::return_type::OK;
       }
-
-      prev_hw_commands_ = hw_commands_;
     }
+
+    // Check if gripper state was changed if so write gripper
+    if (flag && prev_hw_commands_[6] != hw_commands_[6])
+    {
+      auto ret = write_gripper();
+    }
+
+    prev_hw_commands_ = hw_commands_;
 
     return hardware_interface::return_type::OK;
   }
@@ -287,6 +323,12 @@ namespace fanuc_hardware {
 
       delete[] state_packet;
 
+      if (gripper_state_) {
+        joint_positions.push_back(0);
+      } else {
+        joint_positions.push_back(gripper_stroke_);
+      }
+
       return std::make_pair(true, joint_positions);
     }
 
@@ -307,8 +349,8 @@ namespace fanuc_hardware {
     uint32_t sequence = htonl(0x00000001);
 
     std::vector<uint32_t> joint_data;
-    for (float val : hw_commands_) {
-        joint_data.push_back(float_to_ieee754(val));
+    for (size_t i = 0; i < 6; i++) {
+      joint_data.push_back(float_to_ieee754(hw_commands_[i]));
     }
     while (joint_data.size() < 10) {
         joint_data.push_back(0x00000000);
@@ -332,6 +374,21 @@ namespace fanuc_hardware {
 
     return std::make_pair(true, byte_array);
 
+  }
+
+  bool FanucHardwareInterface::write_gripper(){
+
+    if (hw_commands_[6] == 0){
+      send(gripper_sock_, &close_msg, sizeof(close_msg), 0);
+      gripper_state_ = 0;
+    } else if (hw_commands_[6] == gripper_stroke_){
+      send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
+      gripper_state_ = gripper_stroke_;
+    } else {
+      RCLCPP_ERROR(get_logger(), "Gripper Command Not Valid");
+    }
+
+    return true;
   }
 
   int FanucHardwareInterface::get_packet_length()
