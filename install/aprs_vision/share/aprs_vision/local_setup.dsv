@@ -1,0 +1,3 @@
+source;share/aprs_vision/environment/ament_prefix_path.sh
+source;share/aprs_vision/environment/path.sh
+source;share/aprs_vision/environment/pythonpath.sh

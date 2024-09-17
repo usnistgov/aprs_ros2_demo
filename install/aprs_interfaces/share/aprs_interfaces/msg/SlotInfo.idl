@@ -1,0 +1,21 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from aprs_interfaces/msg/SlotInfo.msg
+// generated code does not contain a copyright notice
+
+
+module aprs_interfaces {
+  module msg {
+    module SlotInfo_Constants {
+      const uint8 SMALL = 1;
+      const uint8 MEDIUM = 2;
+      const uint8 LARGE = 3;
+    };
+    struct SlotInfo {
+      boolean occupied;
+
+      uint8 size;
+
+      string name;
+    };
+  };
+};

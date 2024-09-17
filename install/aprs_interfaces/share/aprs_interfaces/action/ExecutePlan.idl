@@ -1,0 +1,18 @@
+// generated from rosidl_adapter/resource/action.idl.em
+// with input from aprs_interfaces/action/ExecutePlan.action
+// generated code does not contain a copyright notice
+
+
+module aprs_interfaces {
+  module action {
+    struct ExecutePlan_Goal {
+      uint8 structure_needs_at_least_one_member;
+    };
+    struct ExecutePlan_Result {
+      uint8 structure_needs_at_least_one_member;
+    };
+    struct ExecutePlan_Feedback {
+      uint8 structure_needs_at_least_one_member;
+    };
+  };
+};

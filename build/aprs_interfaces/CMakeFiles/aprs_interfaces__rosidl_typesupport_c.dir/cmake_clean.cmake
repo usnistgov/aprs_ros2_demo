@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/action/execute_plan__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/action/execute_plan__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/object__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/object__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/objects__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/objects__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/slot_info__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/slot_info__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/tray__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/tray__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/trays__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/trays__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/generate_init_state__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/generate_init_state__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/generate_plan__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/generate_plan__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/move_to_named_pose__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/move_to_named_pose__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/pick__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/pick__type_support.cpp.o.d"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/place__type_support.cpp.o"
+  "CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/place__type_support.cpp.o.d"
+  "libaprs_interfaces__rosidl_typesupport_c.pdb"
+  "libaprs_interfaces__rosidl_typesupport_c.so"
+  "rosidl_typesupport_c/aprs_interfaces/action/execute_plan__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/msg/object__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/msg/objects__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/msg/slot_info__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/msg/tray__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/msg/trays__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/srv/generate_init_state__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/srv/generate_plan__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/srv/move_to_named_pose__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/srv/pick__type_support.cpp"
+  "rosidl_typesupport_c/aprs_interfaces/srv/place__type_support.cpp"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

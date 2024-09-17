@@ -1,0 +1,11 @@
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Object.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Objects.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Tray.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Trays.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/SlotInfo.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/MoveToNamedPose.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/Pick.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/Place.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/GenerateInitState.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/GeneratePlan.idl
+/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:action/ExecutePlan.idl

@@ -1,0 +1,15 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from aprs_interfaces/msg/Trays.msg
+// generated code does not contain a copyright notice
+
+#include "aprs_interfaces/msg/Tray.idl"
+
+module aprs_interfaces {
+  module msg {
+    struct Trays {
+      sequence<aprs_interfaces::msg::Tray> kit_trays;
+
+      sequence<aprs_interfaces::msg::Tray> part_trays;
+    };
+  };
+};

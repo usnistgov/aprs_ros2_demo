@@ -1,0 +1,77 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.0.6 (/opt/ros/iron/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+-- Found rclcpp: 21.0.7 (/opt/ros/iron/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 4.0.1 (/opt/ros/iron/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.0.1 (/opt/ros/iron/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 7.1.0 (/opt/ros/iron/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 7.1.4 (/opt/ros/iron/share/rmw_fastrtps_cpp/cmake)
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+-- Found FastRTPS: /opt/ros/iron/include  
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found aprs_interfaces: 1.0.0 (/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake)
+-- Found example_interfaces: 0.10.2 (/opt/ros/iron/share/example_interfaces/cmake)
+-- Found moveit_ros_planning_interface: 2.8.0 (/opt/ros/iron/share/moveit_ros_planning_interface/cmake)
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: date_time filesystem program_options system thread 
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: chrono date_time filesystem iostreams program_options regex serialization system thread 
+-- Found parameter_traits: 0.3.8 (/opt/ros/iron/share/parameter_traits/cmake)
+-- Found Eigen3: TRUE (found version "3.4.0") 
+-- Found rclcpp_lifecycle: 21.0.7 (/opt/ros/iron/share/rclcpp_lifecycle/cmake)
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: filesystem 
+-- library: /usr/lib/x86_64-linux-gnu/libcurl.so
+-- Ensuring Eigen3 include directory is part of orocos-kdl CMake target
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread chrono 
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: thread system filesystem regex date_time program_options 
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander
+[ 25%] [32mBuilding CXX object CMakeFiles/robot_commander.dir/src/robot_commander.cpp.o[0m
+[ 50%] [32m[1mLinking CXX shared library librobot_commander.so[0m
+[ 50%] Built target robot_commander
+[ 75%] [32mBuilding CXX object CMakeFiles/fanuc_robot_commander.dir/nodes/fanuc_robot_commander.cpp.o[0m
+[100%] [32m[1mLinking CXX executable fanuc_robot_commander[0m
+[100%] Built target fanuc_robot_commander
+-- Install configuration: ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/librobot_commander.so
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/librobot_commander.so" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/robot_commander/fanuc_robot_commander
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/robot_commander/fanuc_robot_commander" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/include
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/include/robot_commander
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/include/robot_commander/robot_commander.hpp
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/launch
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/launch/fanuc_robot_commander.launch.py
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/library_path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/library_path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/ament_index/resource_index/package_run_dependencies/robot_commander
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/ament_index/resource_index/parent_prefix_path/robot_commander
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/ament_prefix_path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/ament_prefix_path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.bash
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.zsh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/package.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/ament_index/resource_index/packages/robot_commander
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/ament_cmake_export_libraries-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/robot_commanderConfig.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/robot_commanderConfig-version.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/package.xml

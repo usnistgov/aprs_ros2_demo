@@ -1,0 +1,64 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.0.6 (/opt/ros/iron/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+-- Found rclcpp: 21.0.7 (/opt/ros/iron/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 4.0.1 (/opt/ros/iron/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.0.1 (/opt/ros/iron/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 7.1.0 (/opt/ros/iron/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 7.1.4 (/opt/ros/iron/share/rmw_fastrtps_cpp/cmake)
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+-- Found FastRTPS: /opt/ros/iron/include  
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found hardware_interface: 3.28.0 (/opt/ros/iron/share/hardware_interface/cmake)
+-- Found rclcpp_components: 21.0.7 (/opt/ros/iron/share/rclcpp_components/cmake)
+-- Found rclpy: 4.1.6 (/opt/ros/iron/share/rclpy/cmake)
+-- Found example_interfaces: 0.10.2 (/opt/ros/iron/share/example_interfaces/cmake)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/justin/demo_ws/src/aprs_ros2_demo/build/fanuc_hardware
+[ 50%] [32mBuilding CXX object CMakeFiles/fanuc_hardware.dir/src/fanuc_hardware_interface.cpp.o[0m
+[100%] [32m[1mLinking CXX shared library libfanuc_hardware.so[0m
+[100%] Built target fanuc_hardware
+-- Install configuration: ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/fanuc_hardware.xml
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/lib/libfanuc_hardware.so
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/lib/libfanuc_hardware.so" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/include
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/include/fanuc_hardware
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/include/fanuc_hardware/fanuc_hardware_interface.hpp
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/environment/library_path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/environment/library_path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/lib/fanuc_hardware/command_publisher.py
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/lib/fanuc_hardware/fanuc_gripper_control.py
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/ament_index/resource_index/package_run_dependencies/fanuc_hardware
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/ament_index/resource_index/parent_prefix_path/fanuc_hardware
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/environment/ament_prefix_path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/environment/ament_prefix_path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/environment/path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/environment/path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/local_setup.bash
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/local_setup.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/local_setup.zsh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/local_setup.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/package.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/ament_index/resource_index/packages/fanuc_hardware
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/ament_index/resource_index/hardware_interface__pluginlib__plugin/fanuc_hardware
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/cmake/ament_cmake_export_libraries-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/cmake/fanuc_hardwareConfig.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/cmake/fanuc_hardwareConfig-version.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/fanuc_hardware/share/fanuc_hardware/package.xml

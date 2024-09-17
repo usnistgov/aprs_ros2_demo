@@ -1,0 +1,93 @@
+[0.008s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/justin/demo_ws/src/aprs_ros2_demo/aprs_vision -DCMAKE_INSTALL_PREFIX=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision
+[0.035s] -- The C compiler identification is GNU 11.4.0
+[0.064s] -- The CXX compiler identification is GNU 11.4.0
+[0.068s] -- Detecting C compiler ABI info
+[0.104s] -- Detecting C compiler ABI info - done
+[0.108s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.108s] -- Detecting C compile features
+[0.108s] -- Detecting C compile features - done
+[0.109s] -- Detecting CXX compiler ABI info
+[0.152s] -- Detecting CXX compiler ABI info - done
+[0.155s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.156s] -- Detecting CXX compile features
+[0.156s] -- Detecting CXX compile features - done
+[0.157s] -- Found ament_cmake: 2.0.6 (/opt/ros/iron/share/ament_cmake/cmake)
+[0.250s] -- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+[0.300s] -- Found rclpy: 4.1.6 (/opt/ros/iron/share/rclpy/cmake)
+[0.379s] -- Configuring done
+[0.380s] -- Generating done
+[0.381s] -- Build files have been written to: /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision
+[0.384s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision' returned '0': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/justin/demo_ws/src/aprs_ros2_demo/aprs_vision -DCMAKE_INSTALL_PREFIX=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision
+[0.385s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision -- -j24 -l24
+[0.413s] Built target ament_cmake_python_copy_aprs_vision
+[0.562s] running egg_info
+[0.562s] creating aprs_vision.egg-info
+[0.562s] writing aprs_vision.egg-info/PKG-INFO
+[0.562s] writing dependency_links to aprs_vision.egg-info/dependency_links.txt
+[0.562s] writing top-level names to aprs_vision.egg-info/top_level.txt
+[0.563s] writing manifest file 'aprs_vision.egg-info/SOURCES.txt'
+[0.564s] running install_scripts
+[0.564s] reading manifest file 'aprs_vision.egg-info/SOURCES.txt'
+[0.565s] writing manifest file 'aprs_vision.egg-info/SOURCES.txt'
+[0.576s] running egg_info
+[0.577s] writing aprs_vision.egg-info/PKG-INFO
+[0.577s] writing dependency_links to aprs_vision.egg-info/dependency_links.txt
+[0.577s] writing top-level names to aprs_vision.egg-info/top_level.txt
+[0.578s] reading manifest file 'aprs_vision.egg-info/SOURCES.txt'
+[0.578s] writing manifest file 'aprs_vision.egg-info/SOURCES.txt'
+[0.578s] Built target ament_cmake_python_build_aprs_vision_egg
+[0.597s] Built target ament_cmake_python_build_aprs_vision_scripts
+[0.604s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision' returned '0': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision -- -j24 -l24
+[0.615s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision
+[0.618s] -- Install configuration: ""
+[0.619s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/launch
+[0.619s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/launch/aprs_vision.launch.py
+[0.619s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/config
+[0.619s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/config/vision.rviz
+[0.619s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/config/map_x.npy
+[0.621s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/config/base_background.jpg
+[0.622s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/config/map_y.npy
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/environment/pythonpath.sh
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/environment/pythonpath.dsv
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision-0.0.0-py3.10.egg-info
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision-0.0.0-py3.10.egg-info/top_level.txt
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision-0.0.0-py3.10.egg-info/PKG-INFO
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision-0.0.0-py3.10.egg-info/SOURCES.txt
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision-0.0.0-py3.10.egg-info/dependency_links.txt
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/aprs_vision/
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision
+[0.624s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/fanuc_table.py
+[0.625s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_publisher.py
+[0.625s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_annotator.py
+[0.625s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/__init__.py
+[0.625s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_read.py
+[0.625s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/slot_offsets.py
+[0.625s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_broadcaster.py
+[0.644s] Listing '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision'...
+[0.644s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/__init__.py'...
+[0.645s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/fanuc_table.py'...
+[0.645s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/slot_offsets.py'...
+[0.645s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_annotator.py'...
+[0.645s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_broadcaster.py'...
+[0.645s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_publisher.py'...
+[0.645s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/python3.10/site-packages/aprs_vision/vision_read.py'...
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/aprs_vision/vision_annotator_node.py
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/aprs_vision/vision_publisher_node.py
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/aprs_vision/vision_broadcaster_node.py
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/lib/aprs_vision/fanuc_vision_node.py
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/ament_index/resource_index/package_run_dependencies/aprs_vision
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/ament_index/resource_index/parent_prefix_path/aprs_vision
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/environment/ament_prefix_path.sh
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/environment/ament_prefix_path.dsv
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/environment/path.sh
+[0.647s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/environment/path.dsv
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/local_setup.bash
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/local_setup.sh
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/local_setup.zsh
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/local_setup.dsv
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/package.dsv
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/ament_index/resource_index/packages/aprs_vision
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/cmake/aprs_visionConfig.cmake
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/cmake/aprs_visionConfig-version.cmake
+[0.648s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_vision/share/aprs_vision/package.xml
+[0.649s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision' returned '0': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_vision

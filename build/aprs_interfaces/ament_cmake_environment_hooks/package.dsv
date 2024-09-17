@@ -1,0 +1,4 @@
+source;share/aprs_interfaces/local_setup.bash
+source;share/aprs_interfaces/local_setup.dsv
+source;share/aprs_interfaces/local_setup.sh
+source;share/aprs_interfaces/local_setup.zsh

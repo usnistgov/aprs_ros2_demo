@@ -1,0 +1,118 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.0.6 (/opt/ros/iron/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+-- Found rclcpp: 21.0.7 (/opt/ros/iron/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 4.0.1 (/opt/ros/iron/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.0.1 (/opt/ros/iron/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 7.1.0 (/opt/ros/iron/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 7.1.4 (/opt/ros/iron/share/rmw_fastrtps_cpp/cmake)
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+-- Found FastRTPS: /opt/ros/iron/include  
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found rclcpp_action: 21.0.7 (/opt/ros/iron/share/rclcpp_action/cmake)
+-- Found aprs_interfaces: 1.0.0 (/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake)
+-- Found plansys2_msgs: 2.0.11 (/opt/ros/iron/share/plansys2_msgs/cmake)
+-- Found plansys2_executor: 2.0.11 (/opt/ros/iron/share/plansys2_executor/cmake)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_pddl
+[ 12%] [32mBuilding CXX object CMakeFiles/task_planner_library.dir/src/task_planner.cpp.o[0m
+[ 37%] [32mBuilding CXX object CMakeFiles/pick_part_action_node.dir/src/pick_part_action.cpp.o[0m
+[ 37%] [32mBuilding CXX object CMakeFiles/place_part_action_node.dir/src/place_part_action.cpp.o[0m
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:[m[K In member function ‘[01m[Kvoid TaskPlanner::GeneratePlanCallback(std::shared_ptr<aprs_interfaces::srv::GeneratePlan_Request_<std::allocator<void> > >, std::shared_ptr<aprs_interfaces::srv::GeneratePlan_Response_<std::allocator<void> > >)[m[K’:
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:64:107:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Krequest[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   64 | void TaskPlanner::GeneratePlanCallback([01;35m[Kconst std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request[m[K,
+      |                                        [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~[m[K
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:65:73:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kresponse[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   65 |     [01;35m[Kconst std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response[m[K){
+      |     [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~[m[K
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:[m[K In member function ‘[01m[Krclcpp_action::GoalResponse TaskPlanner::ExecutePlanHandelGoal(const GoalUUID&, std::shared_ptr<const aprs_interfaces::action::ExecutePlan_Goal_<std::allocator<void> > >)[m[K’:
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:69:174:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreturn-type-Wreturn-type]8;;[m[K]
+   69 | n::GoalResponse TaskPlanner::ExecutePlanHandelGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const aprs_interfaces::action::ExecutePlan::Goal> goal){[01;35m[K}[m[K
+      |                                                                                                                                                                  [01;35m[K^[m[K
+
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:69:96:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kuuid[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   69 | rclcpp_action::GoalResponse TaskPlanner::ExecutePlanHandelGoal([01;35m[Kconst rclcpp_action::GoalUUID & uuid[m[K, std::shared_ptr<const aprs_interfaces::action::ExecutePlan::Goal> goal){}
+      |                                                                [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~[m[K
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:69:168:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kgoal[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   69 | n::GoalResponse TaskPlanner::ExecutePlanHandelGoal(const rclcpp_action::GoalUUID & uuid, [01;35m[Kstd::shared_ptr<const aprs_interfaces::action::ExecutePlan::Goal> goal[m[K){}
+      |                                                                                          [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~[m[K
+
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:[m[K In member function ‘[01m[Krclcpp_action::CancelResponse TaskPlanner::ExecutePlanHandelCancel(std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan> >)[m[K’:
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:70:174:[m[K [01;35m[Kwarning: [m[Kno return statement in function returning non-void [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wreturn-type-Wreturn-type]8;;[m[K]
+   70 | n::CancelResponse TaskPlanner::ExecutePlanHandelCancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){[01;35m[K}[m[K
+      |                                                                                                                                                                  [01;35m[K^[m[K
+
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:70:161:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kgoal_handle[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   70 | tion::CancelResponse TaskPlanner::ExecutePlanHandelCancel([01;35m[Kconst std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle[m[K){}
+      |                                                           [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~[m[K
+
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:[m[K In member function ‘[01m[Kvoid TaskPlanner::ExecutePlanHandelAccept(std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan> >)[m[K’:
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:71:136:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kgoal_handle[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   71 | void TaskPlanner::ExecutePlanHandelAccept([01;35m[Kconst std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle[m[K){}
+      |                                           [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~[m[K
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:[m[K In member function ‘[01m[Kvoid TaskPlanner::ExecutePlanExecute(std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan> >)[m[K’:
+[01m[K/home/justin/demo_ws/src/aprs_ros2_demo/aprs_pddl/src/task_planner.cpp:72:131:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kgoal_handle[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+   72 | void TaskPlanner::ExecutePlanExecute([01;35m[Kconst std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle[m[K){}
+      |                                      [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~[m[K
+[ 50%] [32m[1mLinking CXX executable pick_part_action_node[0m
+[ 62%] [32m[1mLinking CXX executable place_part_action_node[0m
+[ 62%] Built target pick_part_action_node
+[ 62%] Built target place_part_action_node
+[ 75%] [32m[1mLinking CXX shared library libtask_planner_library.so[0m
+[ 75%] Built target task_planner_library
+[ 87%] [32mBuilding CXX object CMakeFiles/task_planner_node.dir/src/task_planner_node.cpp.o[0m
+[100%] [32m[1mLinking CXX executable task_planner_node[0m
+[100%] Built target task_planner_node
+-- Install configuration: ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/libtask_planner_library.so
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/libtask_planner_library.so" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/aprs_pddl/task_planner_node
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/aprs_pddl/task_planner_node" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/aprs_pddl/pick_part_action_node
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/aprs_pddl/pick_part_action_node" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/aprs_pddl/place_part_action_node
+-- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/lib/aprs_pddl/place_part_action_node" to ""
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/include
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/include/aprs_pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/include/aprs_pddl/pick_part_action.hpp
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/include/aprs_pddl/place_part_action.hpp
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/include/aprs_pddl/task_planner.hpp
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/launch
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/launch/aprs_pddl.launch.py
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/pddl/simple_problem.pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/pddl/aprs_demo_domain.pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/environment/library_path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/environment/library_path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/ament_index/resource_index/package_run_dependencies/aprs_pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/ament_index/resource_index/parent_prefix_path/aprs_pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/environment/ament_prefix_path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/environment/ament_prefix_path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/environment/path.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/environment/path.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/local_setup.bash
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/local_setup.sh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/local_setup.zsh
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/local_setup.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/package.dsv
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/ament_index/resource_index/packages/aprs_pddl
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/cmake/ament_cmake_export_libraries-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/cmake/aprs_pddlConfig.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/cmake/aprs_pddlConfig-version.cmake
+-- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_pddl/share/aprs_pddl/package.xml

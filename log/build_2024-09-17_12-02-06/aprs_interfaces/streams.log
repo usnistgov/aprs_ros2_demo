@@ -1,0 +1,613 @@
+[0.007s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces': CMAKE_PREFIX_PATH=/opt/ros/iron /usr/bin/cmake /home/justin/demo_ws/src/aprs_ros2_demo/aprs_interfaces -DCMAKE_INSTALL_PREFIX=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces
+[0.037s] -- The C compiler identification is GNU 11.4.0
+[0.066s] -- The CXX compiler identification is GNU 11.4.0
+[0.070s] -- Detecting C compiler ABI info
+[0.105s] -- Detecting C compiler ABI info - done
+[0.109s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.109s] -- Detecting C compile features
+[0.109s] -- Detecting C compile features - done
+[0.110s] -- Detecting CXX compiler ABI info
+[0.151s] -- Detecting CXX compiler ABI info - done
+[0.155s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.155s] -- Detecting CXX compile features
+[0.155s] -- Detecting CXX compile features - done
+[0.159s] -- Found ament_cmake: 2.0.6 (/opt/ros/iron/share/ament_cmake/cmake)
+[0.250s] -- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+[0.299s] -- Found builtin_interfaces: 1.6.0 (/opt/ros/iron/share/builtin_interfaces/cmake)
+[0.319s] -- Found rosidl_generator_c: 4.0.1 (/opt/ros/iron/share/rosidl_generator_c/cmake)
+[0.326s] -- Found rosidl_generator_cpp: 4.0.1 (/opt/ros/iron/share/rosidl_generator_cpp/cmake)
+[0.336s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.347s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.357s] -- Found std_msgs: 5.0.1 (/opt/ros/iron/share/std_msgs/cmake)
+[0.377s] -- Found geometry_msgs: 5.0.1 (/opt/ros/iron/share/geometry_msgs/cmake)
+[0.399s] -- Found rosidl_default_generators: 1.5.0 (/opt/ros/iron/share/rosidl_default_generators/cmake)
+[0.407s] -- Found rosidl_adapter: 4.0.1 (/opt/ros/iron/share/rosidl_adapter/cmake)
+[0.686s] -- Found ament_cmake_cppcheck: 0.14.4 (/opt/ros/iron/share/ament_cmake_cppcheck/cmake)
+[0.687s] -- Found ament_cmake_cpplint: 0.14.4 (/opt/ros/iron/share/ament_cmake_cpplint/cmake)
+[0.689s] -- Found ament_cmake_uncrustify: 0.14.4 (/opt/ros/iron/share/ament_cmake_uncrustify/cmake)
+[0.690s] -- Found ament_cmake_ros: 0.11.2 (/opt/ros/iron/share/ament_cmake_ros/cmake)
+[0.911s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.997s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.010s] -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.10.12", minimum required is "3.6") 
+[1.011s] -- Found python_cmake_module: 0.10.2 (/opt/ros/iron/share/python_cmake_module/cmake)
+[1.026s] -- Found PythonLibs: /usr/lib/x86_64-linux-gnu/libpython3.10.so (found suitable version "3.10.12", minimum required is "3.5") 
+[1.026s] -- Using PYTHON_EXECUTABLE: /usr/bin/python3
+[1.026s] -- Using PYTHON_INCLUDE_DIRS: /usr/include/python3.10
+[1.026s] -- Using PYTHON_LIBRARIES: /usr/lib/x86_64-linux-gnu/libpython3.10.so
+[1.037s] -- Found PythonExtra: .so  
+[1.071s] -- Found ament_cmake_flake8: 0.14.4 (/opt/ros/iron/share/ament_cmake_flake8/cmake)
+[1.072s] -- Found ament_cmake_pep257: 0.14.4 (/opt/ros/iron/share/ament_cmake_pep257/cmake)
+[1.076s] -- Configuring done
+[1.104s] -- Generating done
+[1.105s] -- Build files have been written to: /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces
+[1.112s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/iron /usr/bin/cmake /home/justin/demo_ws/src/aprs_ros2_demo/aprs_interfaces -DCMAKE_INSTALL_PREFIX=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces
+[1.113s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces': CMAKE_PREFIX_PATH=/opt/ros/iron /usr/bin/cmake --build /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces -- -j24 -l24
+[1.140s] [  1%] [34m[1mGenerating type hashes for ROS interfaces[0m
+[1.144s] [  1%] Built target ament_cmake_python_copy_aprs_interfaces
+[1.288s] running egg_info
+[1.288s] creating aprs_interfaces.egg-info
+[1.288s] writing aprs_interfaces.egg-info/PKG-INFO
+[1.288s] writing dependency_links to aprs_interfaces.egg-info/dependency_links.txt
+[1.288s] writing top-level names to aprs_interfaces.egg-info/top_level.txt
+[1.289s] writing manifest file 'aprs_interfaces.egg-info/SOURCES.txt'
+[1.290s] reading manifest file 'aprs_interfaces.egg-info/SOURCES.txt'
+[1.290s] writing manifest file 'aprs_interfaces.egg-info/SOURCES.txt'
+[1.304s] [  1%] Built target ament_cmake_python_build_aprs_interfaces_egg
+[1.343s] [  1%] Built target aprs_interfaces__rosidl_generator_type_description
+[1.349s] [  2%] [34m[1mGenerating C code for ROS interfaces[0m
+[1.354s] [  2%] [34m[1mGenerating C++ code for ROS interfaces[0m
+[1.931s] [  2%] Built target aprs_interfaces__cpp
+[2.088s] [  2%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/object__description.c.o[0m
+[2.088s] [  3%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/object__functions.c.o[0m
+[2.088s] [  4%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/object__type_support.c.o[0m
+[2.088s] [  5%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/objects__functions.c.o[0m
+[2.089s] [  6%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/objects__type_support.c.o[0m
+[2.089s] [  7%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/tray__description.c.o[0m
+[2.089s] [  7%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/objects__description.c.o[0m
+[2.090s] [  8%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/trays__functions.c.o[0m
+[2.090s] [  9%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/slot_info__functions.c.o[0m
+[2.090s] [ 10%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/slot_info__type_support.c.o[0m
+[2.091s] [ 11%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/move_to_named_pose__description.c.o[0m
+[2.091s] [ 12%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/tray__type_support.c.o[0m
+[2.091s] [ 12%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/tray__functions.c.o[0m
+[2.091s] [ 13%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/move_to_named_pose__type_support.c.o[0m
+[2.091s] [ 14%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/move_to_named_pose__functions.c.o[0m
+[2.091s] [ 14%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/trays__description.c.o[0m
+[2.091s] [ 14%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/pick__type_support.c.o[0m
+[2.091s] [ 15%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/trays__type_support.c.o[0m
+[2.092s] [ 15%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/msg/detail/slot_info__description.c.o[0m
+[2.093s] [ 17%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/pick__description.c.o[0m
+[2.093s] [ 17%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/pick__functions.c.o[0m
+[2.098s] [ 18%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/place__description.c.o[0m
+[2.104s] [ 19%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/place__functions.c.o[0m
+[2.106s] [ 20%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/place__type_support.c.o[0m
+[2.121s] [ 21%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/generate_init_state__description.c.o[0m
+[2.121s] [ 22%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/generate_init_state__type_support.c.o[0m
+[2.121s] [ 22%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/generate_plan__description.c.o[0m
+[2.122s] [ 23%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/generate_init_state__functions.c.o[0m
+[2.124s] [ 24%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/generate_plan__functions.c.o[0m
+[2.124s] [ 26%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/srv/detail/generate_plan__type_support.c.o[0m
+[2.124s] [ 26%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/action/detail/execute_plan__description.c.o[0m
+[2.124s] [ 26%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/action/detail/execute_plan__functions.c.o[0m
+[2.129s] [ 26%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_c.dir/rosidl_generator_c/aprs_interfaces/action/detail/execute_plan__type_support.c.o[0m
+[2.215s] [ 27%] [32m[1mLinking C shared library libaprs_interfaces__rosidl_generator_c.so[0m
+[2.240s] [ 27%] Built target aprs_interfaces__rosidl_generator_c
+[2.245s] [ 28%] [34m[1mGenerating C++ type support dispatch for ROS interfaces[0m
+[2.245s] [ 28%] [34m[1mGenerating C type support for eProsima Fast-RTPS[0m
+[2.246s] [ 29%] [34m[1mGenerating C++ type support for eProsima Fast-RTPS[0m
+[2.246s] [ 29%] [34m[1mGenerating C introspection for ROS interfaces[0m
+[2.246s] [ 30%] [34m[1mGenerating C type support dispatch for ROS interfaces[0m
+[2.246s] [ 31%] [34m[1mGenerating C++ introspection for ROS interfaces[0m
+[2.594s] [ 31%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/object__type_support.cpp.o[0m
+[2.595s] [ 32%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/trays__type_support.cpp.o[0m
+[2.595s] [ 33%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/move_to_named_pose__type_support.cpp.o[0m
+[2.596s] [ 34%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/objects__type_support.cpp.o[0m
+[2.596s] [ 35%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/pick__type_support.cpp.o[0m
+[2.596s] [ 37%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/place__type_support.cpp.o[0m
+[2.596s] [ 37%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/tray__type_support.cpp.o[0m
+[2.596s] [ 37%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/msg/slot_info__type_support.cpp.o[0m
+[2.597s] [ 37%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/generate_init_state__type_support.cpp.o[0m
+[2.597s] [ 39%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/action/execute_plan__type_support.cpp.o[0m
+[2.597s] [ 39%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/aprs_interfaces/srv/generate_plan__type_support.cpp.o[0m
+[2.601s] [ 41%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/msg/objects__type_support.cpp.o[0m
+[2.601s] [ 43%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/msg/trays__type_support.cpp.o[0m
+[2.601s] [ 43%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/msg/tray__type_support.cpp.o[0m
+[2.601s] [ 43%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/msg/slot_info__type_support.cpp.o[0m
+[2.601s] [ 43%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/srv/move_to_named_pose__type_support.cpp.o[0m
+[2.604s] [ 44%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/srv/pick__type_support.cpp.o[0m
+[2.611s] [ 45%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/srv/generate_init_state__type_support.cpp.o[0m
+[2.611s] [ 45%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/msg/object__type_support.cpp.o[0m
+[2.615s] [ 45%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/srv/place__type_support.cpp.o[0m
+[2.630s] [ 46%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/action/execute_plan__type_support.cpp.o[0m
+[2.631s] [ 47%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/aprs_interfaces/srv/generate_plan__type_support.cpp.o[0m
+[2.642s] [ 48%] [32m[1mLinking CXX shared library libaprs_interfaces__rosidl_typesupport_c.so[0m
+[2.684s] [ 48%] Built target aprs_interfaces__rosidl_typesupport_c
+[2.722s] [ 50%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/msg/detail/slot_info__type_support.cpp.o[0m
+[2.722s] [ 51%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/msg/detail/objects__type_support.cpp.o[0m
+[2.722s] [ 51%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/msg/detail/tray__type_support.cpp.o[0m
+[2.722s] [ 51%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/srv/detail/generate_init_state__type_support.cpp.o[0m
+[2.722s] [ 51%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/srv/detail/place__type_support.cpp.o[0m
+[2.722s] [ 51%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/msg/detail/object__type_support.cpp.o[0m
+[2.723s] [ 52%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/msg/detail/trays__type_support.cpp.o[0m
+[2.724s] [ 53%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/srv/detail/generate_plan__type_support.cpp.o[0m
+[2.725s] [ 54%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/srv/detail/move_to_named_pose__type_support.cpp.o[0m
+[2.730s] [ 55%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/srv/detail/pick__type_support.cpp.o[0m
+[2.929s] [ 56%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/aprs_interfaces/action/detail/execute_plan__type_support.cpp.o[0m
+[3.045s] [ 62%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/msg/detail/object__type_support_c.cpp.o[0m
+[3.045s] [ 62%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/msg/detail/object__type_support.c.o[0m
+[3.045s] [ 62%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/msg/detail/tray__type_support.c.o[0m
+[3.045s] [ 62%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/msg/detail/tray__type_support_c.cpp.o[0m
+[3.045s] [ 62%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/msg/detail/objects__type_support.c.o[0m
+[3.045s] [ 62%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/msg/detail/trays__type_support_c.cpp.o[0m
+[3.045s] [ 62%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/msg/detail/objects__type_support_c.cpp.o[0m
+[3.054s] [ 63%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/msg/detail/slot_info__type_support_c.cpp.o[0m
+[3.063s] [ 63%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/msg/detail/dds_fastrtps/object__type_support.cpp.o[0m
+[3.079s] [ 64%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/srv/detail/move_to_named_pose__type_support_c.cpp.o[0m
+[3.090s] [ 65%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/srv/detail/pick__type_support_c.cpp.o[0m
+[3.092s] [ 65%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/srv/detail/place__type_support_c.cpp.o[0m
+[3.092s] [ 65%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/msg/detail/trays__type_support.c.o[0m
+[3.096s] [ 66%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/msg/detail/slot_info__type_support.c.o[0m
+[3.118s] [ 67%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/msg/detail/dds_fastrtps/objects__type_support.cpp.o[0m
+[3.133s] [ 69%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/msg/detail/dds_fastrtps/tray__type_support.cpp.o[0m
+[3.133s] [ 69%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/srv/detail/move_to_named_pose__type_support.c.o[0m
+[3.142s] [ 70%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/msg/detail/dds_fastrtps/trays__type_support.cpp.o[0m
+[3.155s] [ 70%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/msg/detail/dds_fastrtps/slot_info__type_support.cpp.o[0m
+[3.180s] [ 71%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/srv/detail/pick__type_support.c.o[0m
+[3.190s] [ 71%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/srv/detail/place__type_support.c.o[0m
+[3.218s] [ 72%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/srv/detail/generate_init_state__type_support.c.o[0m
+[3.245s] [ 73%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/srv/detail/generate_init_state__type_support_c.cpp.o[0m
+[3.246s] [ 74%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/srv/detail/dds_fastrtps/move_to_named_pose__type_support.cpp.o[0m
+[3.248s] [ 75%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/srv/detail/dds_fastrtps/pick__type_support.cpp.o[0m
+[3.256s] [ 76%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/srv/detail/generate_plan__type_support.c.o[0m
+[3.257s] [ 77%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/aprs_interfaces/action/detail/execute_plan__type_support.c.o[0m
+[3.275s] [ 79%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/srv/detail/generate_plan__type_support_c.cpp.o[0m
+[3.276s] [ 79%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/srv/detail/dds_fastrtps/place__type_support.cpp.o[0m
+[3.280s] [ 80%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/aprs_interfaces/action/detail/execute_plan__type_support_c.cpp.o[0m
+[3.314s] [ 80%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/srv/detail/dds_fastrtps/generate_init_state__type_support.cpp.o[0m
+[3.331s] [ 81%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/srv/detail/dds_fastrtps/generate_plan__type_support.cpp.o[0m
+[3.353s] [ 81%] [32m[1mLinking C shared library libaprs_interfaces__rosidl_typesupport_introspection_c.so[0m
+[3.359s] [ 82%] [32mBuilding CXX object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/aprs_interfaces/action/detail/dds_fastrtps/execute_plan__type_support.cpp.o[0m
+[3.401s] [ 82%] Built target aprs_interfaces__rosidl_typesupport_introspection_c
+[3.487s] [ 83%] [32m[1mLinking CXX shared library libaprs_interfaces__rosidl_typesupport_cpp.so[0m
+[3.626s] [ 83%] Built target aprs_interfaces__rosidl_typesupport_cpp
+[3.643s] [ 84%] [32m[1mLinking CXX shared library libaprs_interfaces__rosidl_typesupport_introspection_cpp.so[0m
+[3.683s] [ 84%] [32m[1mLinking CXX shared library libaprs_interfaces__rosidl_typesupport_fastrtps_c.so[0m
+[3.711s] [ 84%] Built target aprs_interfaces__rosidl_typesupport_introspection_cpp
+[3.733s] [ 84%] Built target aprs_interfaces__rosidl_typesupport_fastrtps_c
+[3.958s] [ 85%] [32m[1mLinking CXX shared library libaprs_interfaces__rosidl_typesupport_fastrtps_cpp.so[0m
+[4.013s] [ 85%] Built target aprs_interfaces__rosidl_typesupport_fastrtps_cpp
+[4.023s] [ 85%] Built target aprs_interfaces
+[4.033s] [ 86%] [34m[1mGenerating Python code for ROS interfaces[0m
+[5.103s] [ 86%] Built target aprs_interfaces__py
+[5.114s] [ 89%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/srv/_pick_s.c.o[0m
+[5.114s] [ 89%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/msg/_objects_s.c.o[0m
+[5.114s] [ 89%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/msg/_tray_s.c.o[0m
+[5.114s] [ 91%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/msg/_trays_s.c.o[0m
+[5.115s] [ 91%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/srv/_move_to_named_pose_s.c.o[0m
+[5.115s] [ 91%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/msg/_object_s.c.o[0m
+[5.115s] [ 91%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/msg/_slot_info_s.c.o[0m
+[5.116s] [ 92%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/srv/_place_s.c.o[0m
+[5.117s] [ 93%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/srv/_generate_init_state_s.c.o[0m
+[5.117s] [ 94%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/action/_execute_plan_s.c.o[0m
+[5.117s] [ 94%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_generator_py.dir/rosidl_generator_py/aprs_interfaces/srv/_generate_plan_s.c.o[0m
+[5.223s] [ 95%] [32m[1mLinking C shared library rosidl_generator_py/aprs_interfaces/libaprs_interfaces__rosidl_generator_py.so[0m
+[5.248s] [ 95%] Built target aprs_interfaces__rosidl_generator_py
+[5.258s] [ 96%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/aprs_interfaces/_aprs_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o[0m
+[5.258s] [ 97%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/aprs_interfaces/_aprs_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o[0m
+[5.258s] [ 97%] [32mBuilding C object CMakeFiles/aprs_interfaces__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/aprs_interfaces/_aprs_interfaces_s.ep.rosidl_typesupport_c.c.o[0m
+[5.352s] [ 99%] [32m[1mLinking C shared library rosidl_generator_py/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-x86_64-linux-gnu.so[0m
+[5.352s] [ 99%] [32m[1mLinking C shared library rosidl_generator_py/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-x86_64-linux-gnu.so[0m
+[5.356s] [100%] [32m[1mLinking C shared library rosidl_generator_py/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_c.cpython-310-x86_64-linux-gnu.so[0m
+[5.378s] [100%] Built target aprs_interfaces__rosidl_typesupport_introspection_c__pyext
+[5.378s] [100%] Built target aprs_interfaces__rosidl_typesupport_fastrtps_c__pyext
+[5.381s] [100%] Built target aprs_interfaces__rosidl_typesupport_c__pyext
+[5.388s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/iron /usr/bin/cmake --build /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces -- -j24 -l24
+[5.516s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces': CMAKE_PREFIX_PATH=/opt/ros/iron /usr/bin/cmake --install /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces
+[5.521s] -- Install configuration: ""
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/ament_index/resource_index/rosidl_interfaces/aprs_interfaces
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Object.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Objects.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Tray.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Trays.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/SlotInfo.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/MoveToNamedPose.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Pick.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Place.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GenerateInitState.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GeneratePlan.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/action/ExecutePlan.json
+[5.521s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/generate_plan.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/generate_init_state.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/move_to_named_pose.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/pick.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__type_support.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__type_support.c
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__description.c
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__struct.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__type_support.c
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__type_support.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__type_support.c
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__struct.h
+[5.522s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__type_support.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__functions.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__description.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__description.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__functions.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__functions.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__struct.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__type_support.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__functions.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__functions.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__struct.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__functions.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__struct.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__functions.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__type_support.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__description.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__functions.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__type_support.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__type_support.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__description.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__functions.c
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__functions.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/place.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/execute_plan.h
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail
+[5.523s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__description.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__struct.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__functions.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__type_support.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__functions.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__type_support.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/objects.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/rosidl_generator_c__visibility_control.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/slot_info.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__functions.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__functions.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__struct.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__functions.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__type_support.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__struct.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__description.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__struct.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__type_support.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__description.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__type_support.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__functions.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__type_support.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__functions.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__functions.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__functions.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__functions.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__functions.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__description.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__type_support.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__type_support.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__description.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__struct.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__description.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__struct.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__functions.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__type_support.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__type_support.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__type_support.h
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__type_support.c
+[5.524s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/trays.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/tray.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/object.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/library_path.sh
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/library_path.dsv
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_generator_c.so
+[5.525s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_generator_c.so" to ""
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__rosidl_typesupport_fastrtps_c.h
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_fastrtps_c.so
+[5.525s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_fastrtps_c.so" to ""
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces
+[5.525s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/generate_init_state.hpp
+[5.525s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/move_to_named_pose.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/pick.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/generate_plan.hpp
+[5.526s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__struct.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__traits.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__traits.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__builder.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__traits.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__struct.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__builder.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__struct.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__struct.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__traits.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__builder.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__struct.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__traits.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__builder.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__builder.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/place.hpp
+[5.526s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/execute_plan.hpp
+[5.526s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__traits.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__struct.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__builder.hpp
+[5.526s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/trays.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/slot_info.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/tray.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/objects.hpp
+[5.526s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/object.hpp
+[5.527s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__struct.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__traits.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__builder.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__traits.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__traits.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__traits.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__traits.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__builder.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__builder.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__struct.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__builder.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__struct.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__struct.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__builder.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__struct.hpp
+[5.527s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces
+[5.527s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv
+[5.527s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__rosidl_typesupport_fastrtps_cpp.hpp
+[5.527s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/dds_fastrtps
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action
+[5.528s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/dds_fastrtps
+[5.528s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg
+[5.528s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/dds_fastrtps
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__rosidl_typesupport_fastrtps_cpp.hpp
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[5.528s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[5.529s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__rosidl_typesupport_introspection_c.h
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__type_support.c
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg
+[5.529s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__type_support.c
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__rosidl_typesupport_introspection_c.h
+[5.529s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__rosidl_typesupport_introspection_c.h
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__type_support.c
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__rosidl_typesupport_introspection_c.h
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__type_support.c
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_introspection_c.so
+[5.530s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_introspection_c.so" to ""
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_c.so
+[5.530s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_c.so" to ""
+[5.530s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces
+[5.530s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv
+[5.530s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__rosidl_typesupport_introspection_cpp.hpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__type_support.cpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__rosidl_typesupport_introspection_cpp.hpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__rosidl_typesupport_introspection_cpp.hpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_plan__rosidl_typesupport_introspection_cpp.hpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/pick__type_support.cpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/generate_init_state__type_support.cpp
+[5.530s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/move_to_named_pose__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/srv/detail/place__type_support.cpp
+[5.531s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action
+[5.531s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/action/detail/execute_plan__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg
+[5.531s] -- Up-to-date: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/object__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/slot_info__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/objects__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/tray__type_support.cpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/include/aprs_interfaces/aprs_interfaces/msg/detail/trays__rosidl_typesupport_introspection_cpp.hpp
+[5.531s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_introspection_cpp.so
+[5.532s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_introspection_cpp.so" to ""
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_cpp.so
+[5.532s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_typesupport_cpp.so" to ""
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/pythonpath.sh
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/pythonpath.dsv
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces-1.0.0-py3.10.egg-info
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces-1.0.0-py3.10.egg-info/top_level.txt
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces-1.0.0-py3.10.egg-info/PKG-INFO
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces-1.0.0-py3.10.egg-info/SOURCES.txt
+[5.532s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces-1.0.0-py3.10.egg-info/dependency_links.txt
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/libaprs_interfaces__rosidl_generator_py.so
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-x86_64-linux-gnu.so
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_place.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_generate_plan_s.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_pick_s.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_pick.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/__init__.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_generate_init_state_s.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_move_to_named_pose.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_generate_init_state.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_place_s.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_move_to_named_pose_s.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_generate_plan.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/__init__.py
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/_aprs_interfaces_s.ep.rosidl_typesupport_c.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/_aprs_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+[5.533s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/_aprs_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-x86_64-linux-gnu.so
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_c.cpython-310-x86_64-linux-gnu.so
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action/__init__.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action/_execute_plan.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action/_execute_plan_s.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_object_s.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_slot_info_s.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/__init__.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_tray.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_trays_s.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_slot_info.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_objects_s.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_tray_s.c
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_object.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_objects.py
+[5.534s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_trays.py
+[5.564s] Listing '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/__init__.py'...
+[5.564s] Listing '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action/__init__.py'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/action/_execute_plan.py'...
+[5.564s] Listing '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/__init__.py'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_object.py'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_objects.py'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_slot_info.py'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_tray.py'...
+[5.564s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/msg/_trays.py'...
+[5.565s] Listing '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv'...
+[5.565s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/__init__.py'...
+[5.565s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_generate_init_state.py'...
+[5.565s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_generate_plan.py'...
+[5.565s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_move_to_named_pose.py'...
+[5.565s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_pick.py'...
+[5.565s] Compiling '/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/srv/_place.py'...
+[5.567s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-x86_64-linux-gnu.so
+[5.567s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_fastrtps_c.cpython-310-x86_64-linux-gnu.so" to ""
+[5.567s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-x86_64-linux-gnu.so
+[5.567s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_introspection_c.cpython-310-x86_64-linux-gnu.so" to ""
+[5.567s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_c.cpython-310-x86_64-linux-gnu.so
+[5.567s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages/aprs_interfaces/aprs_interfaces_s__rosidl_typesupport_c.cpython-310-x86_64-linux-gnu.so" to ""
+[5.567s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_generator_py.so
+[5.568s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/libaprs_interfaces__rosidl_generator_py.so" to ""
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Object.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Objects.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Tray.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Trays.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/SlotInfo.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/MoveToNamedPose.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Pick.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Place.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GenerateInitState.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GeneratePlan.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/action/ExecutePlan.idl
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Object.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Objects.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Tray.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/Trays.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/msg/SlotInfo.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/MoveToNamedPose.srv
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/MoveToNamedPose_Request.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/MoveToNamedPose_Response.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Pick.srv
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Pick_Request.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Pick_Response.msg
+[5.568s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Place.srv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Place_Request.msg
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/Place_Response.msg
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GenerateInitState.srv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GenerateInitState_Request.msg
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GenerateInitState_Response.msg
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GeneratePlan.srv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GeneratePlan_Request.msg
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/srv/GeneratePlan_Response.msg
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/action/ExecutePlan.action
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/ament_index/resource_index/package_run_dependencies/aprs_interfaces
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/ament_index/resource_index/parent_prefix_path/aprs_interfaces
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/ament_prefix_path.sh
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/ament_prefix_path.dsv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/path.sh
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/environment/path.dsv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/local_setup.bash
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/local_setup.sh
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/local_setup.zsh
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/local_setup.dsv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/package.dsv
+[5.569s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/ament_index/resource_index/packages/aprs_interfaces
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_generator_cExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_generator_cExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_generator_cppExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_introspection_cExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_cExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_cppExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_generator_pyExport.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/export_aprs_interfaces__rosidl_generator_pyExport-noconfig.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/rosidl_cmake-extras.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+[5.570s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfacesConfig.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake/aprs_interfacesConfig-version.cmake
+[5.571s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/package.xml
+[5.573s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces' returned '0': CMAKE_PREFIX_PATH=/opt/ros/iron /usr/bin/cmake --install /home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces

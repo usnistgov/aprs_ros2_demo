@@ -1,0 +1,19 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from aprs_interfaces/srv/GeneratePlan.srv
+// generated code does not contain a copyright notice
+
+
+module aprs_interfaces {
+  module srv {
+    struct GeneratePlan_Request {
+      uint8 structure_needs_at_least_one_member;
+    };
+    struct GeneratePlan_Response {
+      boolean success;
+
+      string plan;
+
+      string status;
+    };
+  };
+};

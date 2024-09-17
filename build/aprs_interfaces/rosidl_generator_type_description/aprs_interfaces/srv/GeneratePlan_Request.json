@@ -1,0 +1,26 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "aprs_interfaces/srv/GeneratePlan_Request",
+      "fields": [
+        {
+          "name": "structure_needs_at_least_one_member",
+          "type": {
+            "type_id": 3,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "aprs_interfaces/srv/GeneratePlan_Request",
+      "hash_string": "RIHS01_798589687331c8a5b2e137128df0bb78c01168a4c9559cdadc995eb03b150aa6"
+    }
+  ]
+}

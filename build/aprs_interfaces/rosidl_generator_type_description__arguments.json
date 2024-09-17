@@ -1,0 +1,25 @@
+{
+  "package_name": "aprs_interfaces",
+  "output_dir": "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_generator_type_description/aprs_interfaces",
+  "idl_tuples": [
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Object.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Objects.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Tray.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/Trays.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:msg/SlotInfo.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/MoveToNamedPose.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/Pick.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/Place.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/GenerateInitState.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:srv/GeneratePlan.idl",
+    "/home/justin/demo_ws/src/aprs_ros2_demo/build/aprs_interfaces/rosidl_adapter/aprs_interfaces:action/ExecutePlan.idl"
+  ],
+  "include_paths": [
+    "builtin_interfaces:/opt/ros/iron/share/builtin_interfaces",
+    "std_msgs:/opt/ros/iron/share/std_msgs",
+    "geometry_msgs:/opt/ros/iron/share/geometry_msgs",
+    "service_msgs:/opt/ros/iron/share/service_msgs",
+    "action_msgs:/opt/ros/iron/share/action_msgs",
+    "unique_identifier_msgs:/opt/ros/iron/share/unique_identifier_msgs"
+  ]
+}

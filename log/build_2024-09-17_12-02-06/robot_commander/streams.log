@@ -1,0 +1,83 @@
+[0.006s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/justin/demo_ws/src/aprs_ros2_demo/robot_commander -DCMAKE_INSTALL_PREFIX=/home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander
+[0.033s] -- The C compiler identification is GNU 11.4.0
+[0.060s] -- The CXX compiler identification is GNU 11.4.0
+[0.064s] -- Detecting C compiler ABI info
+[0.100s] -- Detecting C compiler ABI info - done
+[0.104s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.104s] -- Detecting C compile features
+[0.104s] -- Detecting C compile features - done
+[0.106s] -- Detecting CXX compiler ABI info
+[0.148s] -- Detecting CXX compiler ABI info - done
+[0.152s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.152s] -- Detecting CXX compile features
+[0.152s] -- Detecting CXX compile features - done
+[0.154s] -- Found ament_cmake: 2.0.6 (/opt/ros/iron/share/ament_cmake/cmake)
+[0.247s] -- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+[0.297s] -- Found rclcpp: 21.0.7 (/opt/ros/iron/share/rclcpp/cmake)
+[0.322s] -- Found rosidl_generator_c: 4.0.1 (/opt/ros/iron/share/rosidl_generator_c/cmake)
+[0.329s] -- Found rosidl_generator_cpp: 4.0.1 (/opt/ros/iron/share/rosidl_generator_cpp/cmake)
+[0.338s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.349s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.439s] -- Found rmw_implementation_cmake: 7.1.0 (/opt/ros/iron/share/rmw_implementation_cmake/cmake)
+[0.440s] -- Found rmw_fastrtps_cpp: 7.1.4 (/opt/ros/iron/share/rmw_fastrtps_cpp/cmake)
+[0.497s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[0.514s] -- Found FastRTPS: /opt/ros/iron/include  
+[0.542s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.637s] -- Found aprs_interfaces: 1.0.0 (/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/share/aprs_interfaces/cmake)
+[0.804s] -- Found example_interfaces: 0.10.2 (/opt/ros/iron/share/example_interfaces/cmake)
+[0.847s] -- Found moveit_ros_planning_interface: 2.8.0 (/opt/ros/iron/share/moveit_ros_planning_interface/cmake)
+[0.935s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: date_time filesystem program_options system thread 
+[1.523s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: chrono date_time filesystem iostreams program_options regex serialization system thread 
+[1.547s] -- Found parameter_traits: 0.3.8 (/opt/ros/iron/share/parameter_traits/cmake)
+[1.557s] -- Found Eigen3: TRUE (found version "3.4.0") 
+[1.558s] -- Found rclcpp_lifecycle: 21.0.7 (/opt/ros/iron/share/rclcpp_lifecycle/cmake)
+[1.633s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: filesystem 
+[1.687s] -- library: /usr/lib/x86_64-linux-gnu/libcurl.so
+[1.806s] -- Ensuring Eigen3 include directory is part of orocos-kdl CMake target
+[2.155s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread chrono 
+[2.471s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: thread system filesystem regex date_time program_options 
+[2.602s] -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake (found version "1.74.0") found components: system filesystem date_time program_options thread 
+[2.817s] -- Configuring done
+[2.837s] -- Generating done
+[2.838s] -- Build files have been written to: /home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander
+[2.847s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander' returned '0': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake /home/justin/demo_ws/src/aprs_ros2_demo/robot_commander -DCMAKE_INSTALL_PREFIX=/home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander
+[2.848s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander -- -j24 -l24
+[2.874s] [ 25%] [32mBuilding CXX object CMakeFiles/robot_commander.dir/src/robot_commander.cpp.o[0m
+[8.882s] [ 50%] [32m[1mLinking CXX shared library librobot_commander.so[0m
+[9.185s] [ 50%] Built target robot_commander
+[9.197s] [ 75%] [32mBuilding CXX object CMakeFiles/fanuc_robot_commander.dir/nodes/fanuc_robot_commander.cpp.o[0m
+[13.244s] [100%] [32m[1mLinking CXX executable fanuc_robot_commander[0m
+[13.491s] [100%] Built target fanuc_robot_commander
+[13.498s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander' returned '0': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander -- -j24 -l24
+[13.511s] Invoking command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander
+[13.515s] -- Install configuration: ""
+[13.515s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/librobot_commander.so
+[13.517s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/librobot_commander.so" to ""
+[13.517s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/robot_commander/fanuc_robot_commander
+[13.517s] -- Set runtime path of "/home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/lib/robot_commander/fanuc_robot_commander" to ""
+[13.517s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/include
+[13.517s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/include/robot_commander
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/include/robot_commander/robot_commander.hpp
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/launch
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/launch/fanuc_robot_commander.launch.py
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/library_path.sh
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/library_path.dsv
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/ament_index/resource_index/package_run_dependencies/robot_commander
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/ament_index/resource_index/parent_prefix_path/robot_commander
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/ament_prefix_path.sh
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/ament_prefix_path.dsv
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/path.sh
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/environment/path.dsv
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.bash
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.sh
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.zsh
+[13.518s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/local_setup.dsv
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/package.dsv
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/ament_index/resource_index/packages/robot_commander
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/ament_cmake_export_libraries-extras.cmake
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/ament_cmake_export_include_directories-extras.cmake
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/ament_cmake_export_dependencies-extras.cmake
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/robot_commanderConfig.cmake
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/cmake/robot_commanderConfig-version.cmake
+[13.519s] -- Installing: /home/justin/demo_ws/src/aprs_ros2_demo/install/robot_commander/share/robot_commander/package.xml
+[13.520s] Invoked command in '/home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander' returned '0': AMENT_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces:/opt/ros/iron LD_LIBRARY_PATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/justin/demo_ws/src/aprs_ros2_demo/install/aprs_interfaces/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/justin/demo_ws/src/aprs_ros2_demo/build/robot_commander

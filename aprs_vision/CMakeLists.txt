@@ -35,6 +35,7 @@ install(PROGRAMS
   nodes/vision_annotator_node.py
   nodes/vision_publisher_node.py
   nodes/vision_broadcaster_node.py
+  nodes/fanuc_vision_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

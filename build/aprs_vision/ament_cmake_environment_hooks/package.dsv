@@ -1,0 +1,4 @@
+source;share/aprs_vision/local_setup.bash
+source;share/aprs_vision/local_setup.dsv
+source;share/aprs_vision/local_setup.sh
+source;share/aprs_vision/local_setup.zsh

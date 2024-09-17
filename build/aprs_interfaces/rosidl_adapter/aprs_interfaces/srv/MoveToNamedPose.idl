@@ -1,0 +1,17 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from aprs_interfaces/srv/MoveToNamedPose.srv
+// generated code does not contain a copyright notice
+
+
+module aprs_interfaces {
+  module srv {
+    struct MoveToNamedPose_Request {
+      string name;
+    };
+    struct MoveToNamedPose_Response {
+      boolean success;
+
+      string status;
+    };
+  };
+};
