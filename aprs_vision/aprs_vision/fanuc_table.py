@@ -65,7 +65,7 @@ class FanucTable(Node):
         self.found_trays = self.publish_initial()
 
         # ROS Timers
-        self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
+        self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.update)
 
     def update_trays(self, req: Trigger.Request):
         # Update tray info msg
@@ -81,28 +81,32 @@ class FanucTable(Node):
 
         if frame is None:
             return
+        
+        # Use most recent frame to find positions of trays
 
-        return self.run_vision_pipeline_initial(frame)
+        return self.run_vision_pipeline(frame)
 
 
-    def publish(self):
+    def update(self):
         # Get most recent frame for raw image 
         frame = self.get_most_recent_frame()
 
         if frame is None:
             return
         
+        # Publish Raw Image
+
         raw_image = self.rectify_frame(frame)
-        # raw_image_msg = self.build_img_msg_from_mat(raw_image)
+        raw_image_msg = self.build_img_msg_from_mat(raw_image)
+        self.raw_image_pub.publish(raw_image_msg)
+
+        # Update the status of gears in the located trays and publish
         
-        trays_info = self.run_vision_pipeline(frame)
-        # trays_image_msg = self.build_img_msg_from_mat(trays_image)
+        trays_info = self.update_gear_info(frame)
+        self.trays_info_pub.publish(trays_info)
 
-        # cv2.imshow('window', trays_image)
-        # cv2.waitKey(1)
-
-        # self.raw_image_pub.publish(raw_image_msg)
-        # self.detected_trays_image_pub.publish(trays_image_msg)
+        # Publish Trays only message
+        self.detected_trays_image_pub.publish(self.no_gears_msg)
 
 
 
@@ -115,30 +119,32 @@ class FanucTable(Node):
         
         return frame
     
-    def run_vision_pipeline_initial(self, frame: MatLike):
+    def run_vision_pipeline(self, frame: MatLike):
+        # Function to determine the location of the trays provided an initial image
         rectified = self.rectify_frame(frame)
 
         original = rectified.copy()
 
+        # Remove table backgroud
         no_background = self.remove_background(rectified)
 
+        # Remove and replace and large gears present
         no_green_gears = self.remove_and_replace_gears(no_background, gear_size="large")
         
+        # Remove and replace any medium gears present
         no_gears = self.remove_and_replace_gears(no_green_gears, gear_size="medium")
-        
+
+        # Prepare no_gears image for publishing
+        self.no_gears_msg = self.build_img_msg_from_mat(no_gears)
+
         return self.locate_trays(no_gears, original)
 
     
-    def run_vision_pipeline(self, frame: MatLike) -> Trays:
+    def update_gear_info(self, frame: MatLike) -> Trays:
+        # Function to update what slots of trays are filled based on initial vision pipeline result of tray locations
         rectified = self.rectify_frame(frame)
 
         original = rectified.copy()
-
-        no_background = self.remove_background(rectified)
-
-        no_green_gears = self.remove_and_replace_gears(no_background, gear_size="large")
-        
-        no_gears = self.remove_and_replace_gears(no_green_gears, gear_size="medium")
 
         return self.determine_tray_info(self.found_trays,original)
 
@@ -276,6 +282,7 @@ class FanucTable(Node):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         # Remove and replace large green gears
+        #TODO Add small gears to if statement
         if gear_size == "large":
             hsv_lower = (40, 30, 123)
             hsv_upper = (85, 165, 215)
@@ -387,25 +394,33 @@ class FanucTable(Node):
 
         for identifier, trays in trays_on_table.items():
             for i, ((x,y), angle) in enumerate(trays):
+                # Gather info for publishing TF frames
                 tray_msg = Tray()
                 tray_msg.identifier = identifier
                 tray_msg.name = f'{FanucTable.tray_names[identifier]}_{i}'
                 table_x = (FanucTable.table_origin.x - (x * self.conversion_factor)) / 1000
                 table_y = (FanucTable.table_origin.y + (y * self.conversion_factor)) /1000
 
+                # Publish TF frames
                 tray_transform = self.generate_transform(tray_msg.name,table_x,table_y,angle)
                 self.tf_broadcaster.sendTransform(tray_transform)
 
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
+                    # Begin filling info for whether slots are filled
                     slot_info = SlotInfo()
                     slot_info.name = f"{tray_msg.name}_{slot_name}"
+
+                    # Conversion from m to mm
                     x_off *= 1000
                     y_off *= 1000
 
+                    # Determination of the center of the slot based on the offset from the center of the tray
                     slot_center = (
                         int(x_off/self.conversion_factor * math.cos(angle) + y_off/self.conversion_factor * math.cos(angle - math.pi/2) + x),
                         int(x_off/self.conversion_factor * math.sin(angle) + y_off/self.conversion_factor * math.sin(angle - math.pi/2) + y)
                     )
+
+                    #TODO Add radius and hsv values for small gear
 
                     if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
                         slot_info.size = SlotInfo.SMALL
