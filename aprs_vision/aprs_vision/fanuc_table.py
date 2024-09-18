@@ -62,6 +62,8 @@ class FanucTable(Node):
         # TF Broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
 
+        self.found_trays = self.publish_initial()
+
         # ROS Timers
         self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
 
@@ -72,6 +74,16 @@ class FanucTable(Node):
     def calibrate_maps(self, req: Trigger.Request):
         # Generate and save new maps for calibration
         pass
+
+    def publish_initial(self):
+        # Get most recent frame for raw image 
+        frame = self.get_most_recent_frame()
+
+        if frame is None:
+            return
+
+        return self.run_vision_pipeline_initial(frame)
+
 
     def publish(self):
         # Get most recent frame for raw image 
@@ -103,6 +115,20 @@ class FanucTable(Node):
         
         return frame
     
+    def run_vision_pipeline_initial(self, frame: MatLike):
+        rectified = self.rectify_frame(frame)
+
+        original = rectified.copy()
+
+        no_background = self.remove_background(rectified)
+
+        no_green_gears = self.remove_and_replace_gears(no_background, gear_size="large")
+        
+        no_gears = self.remove_and_replace_gears(no_green_gears, gear_size="medium")
+        
+        return self.locate_trays(no_gears, original)
+
+    
     def run_vision_pipeline(self, frame: MatLike) -> Trays:
         rectified = self.rectify_frame(frame)
 
@@ -114,7 +140,7 @@ class FanucTable(Node):
         
         no_gears = self.remove_and_replace_gears(no_green_gears, gear_size="medium")
 
-        return self.detect_trays(no_gears, original)
+        return self.determine_tray_info(self.found_trays,original)
 
     def generate_grid_maps(self, frame: MatLike) -> MatLike:
         offset = 15
@@ -290,7 +316,7 @@ class FanucTable(Node):
         
         return frame
             
-    def detect_trays(self, table_image: MatLike, original: MatLike) -> Trays:
+    def locate_trays(self, table_image: MatLike, original: MatLike):
         # Determine basic tray info for all trays
         trays_on_table = {
             Tray.SMALL_GEAR_TRAY: [],
@@ -344,13 +370,18 @@ class FanucTable(Node):
             else:
                 trays_on_table[Tray.MEDIUM_GEAR_TRAY].append(((cX,cY),angle))
 
+
         # Sort trays_on_table lists based on location
         for identifier, trays in trays_on_table.items():
             if not len(trays) > 1:
                 continue
 
             trays_on_table[identifier] = sorted(trays, key=lambda k: [k[0][1] , k[0][0]])
-                     
+
+    
+        return trays_on_table
+    
+    def determine_tray_info(self,trays_on_table,original):       
         # Fill the trays info msg
         tray_info = Trays()
 
