@@ -1,4 +1,0 @@
-# generated from rosidl_cmake/cmake/rosidl_cmake-extras.cmake.in
-
-set(aprs_interfaces_IDL_FILES "msg/Object.idl;msg/Objects.idl;msg/Tray.idl;msg/Trays.idl;msg/SlotInfo.idl;srv/MoveToNamedPose.idl;srv/Pick.idl;srv/Place.idl;srv/GenerateInitState.idl;srv/GeneratePlan.idl;action/ExecutePlan.idl")
-set(aprs_interfaces_INTERFACE_FILES "msg/Object.msg;msg/Objects.msg;msg/Tray.msg;msg/Trays.msg;msg/SlotInfo.msg;srv/MoveToNamedPose.srv;srv/MoveToNamedPose_Request.msg;srv/MoveToNamedPose_Response.msg;srv/Pick.srv;srv/Pick_Request.msg;srv/Pick_Response.msg;srv/Place.srv;srv/Place_Request.msg;srv/Place_Response.msg;srv/GenerateInitState.srv;srv/GenerateInitState_Request.msg;srv/GenerateInitState_Response.msg;srv/GeneratePlan.srv;srv/GeneratePlan_Request.msg;srv/GeneratePlan_Response.msg;action/ExecutePlan.action")
