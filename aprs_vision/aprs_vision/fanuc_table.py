@@ -35,7 +35,9 @@ class FanucTable(Node):
     kit_tray_types = [Tray.S2L2_KIT_TRAY, Tray.M2L1_KIT_TRAY]
     part_tray_types = [Tray.SMALL_GEAR_TRAY, Tray.MEDIUM_GEAR_TRAY, Tray.LARGE_GEAR_TRAY]
 
-    table_origin = Point(x=228.591,y=228.287)
+    table_origin = Point(x=228.591, y=228.287, z=0.0)
+    tray_height = 0.02 # TODO: find real value
+    gear_height = 0.02 # TODO: find real value
 
     def __init__(self):
         super().__init__(node_name='fanuc_vision_node')
@@ -50,9 +52,16 @@ class FanucTable(Node):
         self.map_y = np.load(os.path.join(share_path, 'config', 'map_y.npy'))
         self.base_background = cv2.imread(os.path.join(share_path, 'config', 'base_background.jpg'))
 
+        self.slot_pixel_centers: dict[str, tuple[int, int]] = {}
+
+        # ROS Messages
+        self.trays_info: Optional[Trays] = None
+        self.current_frame: Optional[Image] = None
+
         # ROS Services
-        self.update_trays_info_srv = self.create_service(Trigger, 'update_vision_data', self.update_trays)
-        self.calibrate_maps_srv = self.create_service(Trigger, 'calibrate_maps', self.calibrate_maps)
+        self.locate_trays_srv = self.create_service(Trigger, 'locate_trays', self.locate_trays_cb)
+        self.update_trays_info_srv = self.create_service(Trigger, 'update_slots', self.update_slots_cb)
+        self.calibrate_maps_srv = self.create_service(Trigger, 'calibrate_maps', self.calibrate_maps_cb)
 
         # ROS Topics
         self.trays_info_pub = self.create_publisher(Trays, 'trays_info', qos_profile_default)
@@ -61,54 +70,95 @@ class FanucTable(Node):
     
         # TF Broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
-
-        self.found_trays = self.publish_initial()
+        self.transforms: list[TransformStamped] = []
 
         # ROS Timers
-        self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.update)
+        self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
 
-    def update_trays(self, req: Trigger.Request):
-        # Update tray info msg
-        pass
-
-    def calibrate_maps(self, req: Trigger.Request):
-        # Generate and save new maps for calibration
-        pass
-
-    def publish_initial(self):
-        # Get most recent frame for raw image 
+    def locate_trays_cb(self, _, response: Trigger.Response) -> Trigger.Response:
+        if self.trays_info is not None:
+            response.message = "Trays already located"
+            response.success = False
+            return response
+        
         frame = self.get_most_recent_frame()
 
         if frame is None:
-            return
+            response.message = "Unable to connect to camera"
+            response.success = False
+            return response
         
-        # Use most recent frame to find positions of trays
+        # Save current frame as ROS message for publishing
+        self.current_frame = self.build_img_msg_from_mat(frame)
 
-        return self.run_vision_pipeline(frame)
+        # Function to determine the location of the trays provided an initial image
+        frame = self.rectify_frame(frame)
 
+        original_img = frame.copy()
 
-    def update(self):
-        # Get most recent frame for raw image 
+        # Remove table backgroud
+        frame = self.remove_background(frame)
+
+        # Remove and replace and large gears present
+        frame = self.remove_and_replace_gears(frame, gear_size="large")
+        
+        # Remove and replace any medium gears present
+        frame = self.remove_and_replace_gears(frame, gear_size="medium")
+
+        trays_on_table = self.detect_trays(frame)
+
+        # Fill tray info message
+        self.trays_info = self.determine_tray_info(trays_on_table)
+
+        # Check if slots are occupied 
+        self.update_slots(original_img)
+
+        response.success = True
+        response.message = "Located trays"
+
+        return response
+    
+    def update_slots_cb(self, _, response: Trigger.Response) -> Trigger.Response:
         frame = self.get_most_recent_frame()
 
         if frame is None:
-            return
+            response.message = "Unable to connect to camera"
+            response.success = False
+            return response
+
+        self.update_slots(frame)
         
+        response.success = True
+        response.message = "Updated slots"
+
+        return response
+    
+    def calibrate_maps_cb(self, _, response: Trigger.Response) -> Trigger.Response:
+        # TODO: Generate and save new maps for calibration
+
+        response.success = False
+        response.message = "Not yet implemented"
+
+        return response
+
+    def publish(self):
         # Publish Raw Image
+        if self.current_frame is not None:
+            self.raw_image_pub.publish(self.current_frame)
 
-        raw_image = self.rectify_frame(frame)
-        raw_image_msg = self.build_img_msg_from_mat(raw_image)
-        self.raw_image_pub.publish(raw_image_msg)
+        # Publish trays info
+        if self.trays_info is not None:
+            self.trays_info_pub.publish(self.trays_info)
 
-        # Update the status of gears in the located trays and publish
+        # Update timestamps and send TF transforms
+        for t in self.transforms:
+            t.header.stamp = self.get_clock().now().to_msg()
         
-        trays_info = self.update_gear_info(frame)
-        self.trays_info_pub.publish(trays_info)
+        if self.transforms:
+            self.tf_broadcaster.sendTransform(self.transforms)
 
-        # Publish Trays only message
-        self.detected_trays_image_pub.publish(self.no_gears_msg)
-
-
+        # Publish annotated image
+        # self.detected_trays_image_pub.publish(self.no_gears_msg)
 
     def get_most_recent_frame(self) -> Optional[MatLike]:
         ret, frame = self.capture.read()
@@ -118,37 +168,247 @@ class FanucTable(Node):
             return None
         
         return frame
+
+    def rectify_frame(self, frame: MatLike) -> MatLike:
+        return cv2.remap(frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30]
     
-    def run_vision_pipeline(self, frame: MatLike):
-        # Function to determine the location of the trays provided an initial image
-        rectified = self.rectify_frame(frame)
+    def remove_background(self, frame: MatLike) -> MatLike:
+        delta = cv2.subtract(self.base_background, frame)
 
-        original = rectified.copy()
+        gray = cv2.cvtColor(delta, cv2.COLOR_BGR2GRAY)
 
-        # Remove table backgroud
-        no_background = self.remove_background(rectified)
+        _, mask = cv2.threshold(gray, 12, 255, cv2.THRESH_BINARY)
 
-        # Remove and replace and large gears present
-        no_green_gears = self.remove_and_replace_gears(no_background, gear_size="large")
+        canvas = np.zeros(gray.shape, dtype=np.uint8)
+
+        contours,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        filtered_contours = []
+        for c in contours:
+            if cv2.contourArea(c) > 40:
+                filtered_contours.append(c)
+
+        cv2.drawContours(canvas, filtered_contours, -1, color=255, thickness=cv2.FILLED) # type: ignore
+
+        return cv2.bitwise_and(frame, frame, mask=canvas)
+    
+    def remove_and_replace_gears(self, frame: MatLike, gear_size="large") -> MatLike:
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        # Remove and replace large green gears
+        #TODO Add small gears to if statement
+        if gear_size == "large":
+            hsv_lower = (40, 30, 123)
+            hsv_upper = (85, 165, 215)
+            radius = 60
+        elif gear_size == "medium":
+            hsv_lower = (6, 76, 140)
+            hsv_upper = (24, 162, 255)
+            radius = 44
+        else:
+            return frame
+
+        gears = cv2.inRange(hsv, hsv_lower, hsv_upper) # type: ignore
+    
+        contours, _ = cv2.findContours(gears, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        for c in contours:
+            if cv2.contourArea(c) < 200:
+                continue
+
+            M = cv2.moments(c)
         
-        # Remove and replace any medium gears present
-        no_gears = self.remove_and_replace_gears(no_green_gears, gear_size="medium")
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
 
-        # Prepare no_gears image for publishing
-        self.no_gears_msg = self.build_img_msg_from_mat(no_gears)
+            start_x = int(cX - radius)
+            start_y = int(cY - radius)
 
-        return self.locate_trays(no_gears, original)
+            cv2.circle(frame, (cX, cY), radius, (0, 0, 0), -1)
 
+            square = frame[start_y:start_y + 2*radius, start_x:start_x + 2*radius]
+
+            _, mask = cv2.threshold(cv2.cvtColor(square, cv2.COLOR_BGR2GRAY), 0, 255, cv2.THRESH_BINARY)
+
+            avg_color = cv2.mean(square, mask)
+
+            cv2.circle(frame, (cX, cY), radius + 3, avg_color, -1)
+        
+        return frame
+            
+    def detect_trays(self, table_image: MatLike) -> dict[int, list[tuple[tuple[int, int], float]]]:
+        # Determine basic tray info for all trays
+        trays_on_table = {
+            Tray.SMALL_GEAR_TRAY: [],
+            Tray.MEDIUM_GEAR_TRAY: [],
+            Tray.LARGE_GEAR_TRAY: [],
+            Tray.M2L1_KIT_TRAY: [],
+            Tray.S2L2_KIT_TRAY:[]
+        }
+        
+        tray_contours, _ = cv2.findContours(
+            cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY),
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_NONE)
+        
+        for contour in tray_contours:
+            # Ignore contours under a size threshold
+            if cv2.contourArea(contour) < 200:
+                continue
+
+            # Approximate the contour as a polygon
+            peri = cv2.arcLength(contour, True)
+            poly = cv2.approxPolyDP(contour, 0.01 * peri, True)
+
+            # Fit a rotated rect bounding box to the poly
+            rect = cv2.minAreaRect(poly)
+            (_, _), (width, height), angle = rect
+
+            if width < height:
+                angle += 90
+
+            angle = math.radians(angle - 90)
+
+            aspect_ratio = min(width, height) / max(width, height)
+
+            # Calculate center of contour
+            box = cv2.boxPoints(rect)
+            box = box.astype(np.int32)
+
+            M = cv2.moments(box)
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+
+            # TODO: Update classifier to handle small gear tray and s2l2 kit tray
+
+            # Use aspect ratio to classify tray type
+            if aspect_ratio < 0.6:
+                trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY), angle))
+            elif aspect_ratio < 0.9:
+                trays_on_table[Tray.M2L1_KIT_TRAY].append(((cX,cY), angle))
+            else:
+                trays_on_table[Tray.MEDIUM_GEAR_TRAY].append(((cX,cY), angle))
+
+        # Sort trays_on_table lists based on location
+        for identifier, trays in trays_on_table.items():
+            if not len(trays) > 1:
+                continue
+
+            trays_on_table[identifier] = sorted(trays, key=lambda k: [k[0][1] , k[0][0]])
+
+        return trays_on_table
     
-    def update_gear_info(self, frame: MatLike) -> Trays:
-        # Function to update what slots of trays are filled based on initial vision pipeline result of tray locations
-        rectified = self.rectify_frame(frame)
+    def determine_tray_info(self, trays_on_table: dict[int, list[tuple[tuple[int, int], float]]]) -> Trays:       
+        # Fill the trays info msg
+        tray_info = Trays()
 
-        original = rectified.copy()
+        # Clear list of transforms
+        self.transforms.clear()
 
-        return self.determine_tray_info(self.found_trays,original)
+        for identifier, trays in trays_on_table.items():
+            for i, ((x,y), angle) in enumerate(trays):
+                # Gather info for publishing TF frames
+                tray_msg = Tray()
+                tray_msg.identifier = identifier
+                tray_msg.name = f'{FanucTable.tray_names[identifier]}_{i}'
 
-    def generate_grid_maps(self, frame: MatLike) -> MatLike:
+                tray_center = Point(
+                    x=(FanucTable.table_origin.x - (x * self.conversion_factor)) / 1000,
+                    y=(FanucTable.table_origin.y + (y * self.conversion_factor)) / 1000, 
+                    z=(FanucTable.table_origin.z + self.tray_height)
+                )
+
+                theta = angle + math.pi
+
+                # Publish TF frame
+                self.transforms.append(self.generate_transform('fanuc_base', tray_msg.name, tray_center, theta))
+ 
+                for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
+                    # Create slot info for each slot
+                    slot_info = SlotInfo()
+                    slot_info.name = f"{tray_msg.name}_{slot_name}"
+
+                    if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
+                        slot_info.size = SlotInfo.SMALL
+                    elif "mg" in slot_info.name or identifier == Tray.MEDIUM_GEAR_TRAY:
+                        slot_info.size = SlotInfo.MEDIUM
+                    elif "lg" in slot_info.name or identifier == Tray.LARGE_GEAR_TRAY:
+                        slot_info.size = SlotInfo.LARGE
+
+                    # Generate tf transform for slot
+                    slot_center_tray = Point(
+                        x=x_off,
+                        y=y_off, 
+                        z=self.gear_height
+                    )
+
+                    self.transforms.append(self.generate_transform(tray_msg.name, slot_info.name, slot_center_tray, 0.0))
+
+                    # Store pixel coordinates for center of slot
+                
+                    x_off *= 1000 # convert to mm
+                    y_off *= 1000 # convert to mm
+
+                    self.slot_pixel_centers[slot_info.name] = (
+                        int(x_off/self.conversion_factor * math.cos(angle) + y_off/self.conversion_factor * math.sin(angle) + x),
+                        int(x_off/self.conversion_factor * math.sin(angle) + y_off/self.conversion_factor * math.cos(angle) + y)
+                    )
+
+                    tray_msg.slots.append(slot_info)
+
+                if identifier in FanucTable.part_tray_types:
+                    tray_info.part_trays.append(tray_msg)
+                elif identifier in FanucTable.kit_tray_types:
+                    tray_info.kit_trays.append(tray_msg)   
+        
+        return tray_info
+    
+    def update_slots(self, frame: MatLike) -> bool:
+        if self.trays_info is None:
+            return False
+        
+        for kit_tray in self.trays_info.kit_trays:
+            kit_tray: Tray
+            for slot in kit_tray.slots:
+                slot: SlotInfo
+                slot.occupied = self.check_occupied(frame, slot)
+
+        for part_tray in self.trays_info.part_trays:
+            part_tray: Tray
+            for slot in part_tray.slots:
+                slot: SlotInfo
+                slot.occupied = self.check_occupied(frame, slot)
+
+        return True
+
+    def check_occupied(self, orignal_img: MatLike, slot: SlotInfo) -> bool:
+        if slot.size == SlotInfo.SMALL:
+            #TODO: Add radius and hsv values for small gear
+            return False
+        elif slot.size == SlotInfo.MEDIUM:
+            radius = 42
+            hsv_lower = (6, 76, 140)
+            hsv_upper = (24, 162, 255)
+        elif slot.size == SlotInfo.LARGE:
+            radius = 55
+            hsv_lower = (40, 30, 123)
+            hsv_upper = (85, 165, 215)
+            
+        start_x = int(self.slot_pixel_centers[slot.name][0] - radius)
+        start_y = int(self.slot_pixel_centers[slot.name][1] - radius)
+
+        square = orignal_img[start_y:start_y + 2*radius, start_x:start_x + 2*radius]
+
+        gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), hsv_lower, hsv_upper) # type: ignore
+
+        if cv2.countNonZero(gear) > 100:
+            return True
+
+        return False        
+    
+    def generate_grid_maps(self, frame: MatLike) -> Optional[MatLike]:
         offset = 15
 
         # Corners are manually deduced from location of screw heads in table
@@ -170,7 +430,7 @@ class FanucTable(Node):
 
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-        threshold = cv2.inRange(hsv, (100, 0, 0), (255, 255, 120))
+        threshold = cv2.inRange(hsv, (100, 0, 0), (255, 255, 120)) # type: ignore
 
         offset = 25
 
@@ -182,7 +442,8 @@ class FanucTable(Node):
         corners = np.array([top_right, bottom_right, bottom_left, top_left])
 
         mask2 = np.zeros(threshold.shape, dtype=np.uint8)
-        cv2.drawContours(mask2, [corners], 0, 255, -1)
+        
+        cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
 
         just_holes = cv2.bitwise_and(threshold, mask2)
 
@@ -199,7 +460,7 @@ class FanucTable(Node):
 
         if not len(filtered_contours) == rows * columns:
             self.get_logger().error("Not able to detect all holes")
-            return
+            return None
 
         center_points = []
 
@@ -255,215 +516,16 @@ class FanucTable(Node):
         np.save("src/vision_testing/map_x.npy", map_x_32)
         np.save("src/vision_testing/map_y.npy", map_y_32)
 
-    def rectify_frame(self, frame: MatLike) -> MatLike:
-        return cv2.remap(frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30]
-    
-    def remove_background(self, frame: MatLike) -> MatLike:
-        delta = cv2.subtract(self.base_background, frame)
-
-        gray = cv2.cvtColor(delta, cv2.COLOR_BGR2GRAY)
-
-        _, mask = cv2.threshold(gray, 12, 255, cv2.THRESH_BINARY)
-
-        canvas = np.zeros(gray.shape, dtype=np.uint8)
-
-        contours,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        filtered_contours = []
-        for c in contours:
-            if cv2.contourArea(c) > 40:
-                filtered_contours.append(c)
-
-        cv2.drawContours(canvas, filtered_contours, -1, color=255, thickness=cv2.FILLED)
-
-        return cv2.bitwise_and(frame, frame, mask=canvas)
-    
-    def remove_and_replace_gears(self, frame: MatLike, gear_size="large") -> MatLike:
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-        # Remove and replace large green gears
-        #TODO Add small gears to if statement
-        if gear_size == "large":
-            hsv_lower = (40, 30, 123)
-            hsv_upper = (85, 165, 215)
-            radius = 60
-        elif gear_size == "medium":
-            hsv_lower = (6, 76, 140)
-            hsv_upper = (24, 162, 255)
-            radius = 44
-        else:
-            return frame
-
-        gears = cv2.inRange(hsv, hsv_lower, hsv_upper)
-    
-        contours, _ = cv2.findContours(gears, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-        for c in contours:
-            if cv2.contourArea(c) < 200:
-                continue
-
-            M = cv2.moments(c)
-        
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-
-            start_x = int(cX - radius)
-            start_y = int(cY - radius)
-
-            cv2.circle(frame, (cX, cY), radius, (0, 0, 0), -1)
-
-            square = frame[start_y:start_y + 2*radius, start_x:start_x + 2*radius]
-
-            _, mask = cv2.threshold(cv2.cvtColor(square, cv2.COLOR_BGR2GRAY), 0, 255, cv2.THRESH_BINARY)
-
-            avg_color = cv2.mean(square, mask)
-
-            cv2.circle(frame, (cX, cY), radius + 3, avg_color, -1)
-        
-        return frame
-            
-    def locate_trays(self, table_image: MatLike, original: MatLike):
-        # Determine basic tray info for all trays
-        trays_on_table = {
-            Tray.SMALL_GEAR_TRAY: [],
-            Tray.MEDIUM_GEAR_TRAY: [],
-            Tray.LARGE_GEAR_TRAY: [],
-            Tray.M2L1_KIT_TRAY: [],
-            Tray.S2L2_KIT_TRAY:[]
-        }
-        
-        tray_contours, _ = cv2.findContours(
-            cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY),
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_NONE)
-        
-        for contour in tray_contours:
-            # Ignore contours under a size threshold
-            if cv2.contourArea(contour) < 200:
-                continue
-
-            # Approximate the contour as a polygon
-            peri = cv2.arcLength(contour, True)
-            poly = cv2.approxPolyDP(contour, 0.01 * peri, True)
-
-            # Fit a rotated rect bounding box to the poly
-            rect = cv2.minAreaRect(poly)
-            (_, _), (width, height), angle = rect
-
-            if width < height:
-                angle += 90
-
-            angle = math.radians(angle - 90)
-
-            aspect_ratio = min(width, height) / max(width, height)
-
-            # Calculate center of contour
-            box = cv2.boxPoints(rect)
-            box = box.astype(np.int32)
-
-            M = cv2.moments(box)
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-
-            # TODO: Update classifier to handle small gear tray and s2l2 kit tray
-
-            # Use aspect ratio to classify tray type
-            if aspect_ratio < 0.6:
-                trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY),angle))
-            elif aspect_ratio < 0.9:
-                trays_on_table[Tray.M2L1_KIT_TRAY].append(((cX,cY),angle))
-            else:
-                trays_on_table[Tray.MEDIUM_GEAR_TRAY].append(((cX,cY),angle))
-
-
-        # Sort trays_on_table lists based on location
-        for identifier, trays in trays_on_table.items():
-            if not len(trays) > 1:
-                continue
-
-            trays_on_table[identifier] = sorted(trays, key=lambda k: [k[0][1] , k[0][0]])
-
-    
-        return trays_on_table
-    
-    def determine_tray_info(self,trays_on_table,original):       
-        # Fill the trays info msg
-        tray_info = Trays()
-
-        for identifier, trays in trays_on_table.items():
-            for i, ((x,y), angle) in enumerate(trays):
-                # Gather info for publishing TF frames
-                tray_msg = Tray()
-                tray_msg.identifier = identifier
-                tray_msg.name = f'{FanucTable.tray_names[identifier]}_{i}'
-                table_x = (FanucTable.table_origin.x - (x * self.conversion_factor)) / 1000
-                table_y = (FanucTable.table_origin.y + (y * self.conversion_factor)) /1000
-
-                # Publish TF frames
-                tray_transform = self.generate_transform(tray_msg.name,table_x,table_y,angle)
-                self.tf_broadcaster.sendTransform(tray_transform)
-
-                for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
-                    # Begin filling info for whether slots are filled
-                    slot_info = SlotInfo()
-                    slot_info.name = f"{tray_msg.name}_{slot_name}"
-
-                    # Conversion from m to mm
-                    x_off *= 1000
-                    y_off *= 1000
-
-                    # Determination of the center of the slot based on the offset from the center of the tray
-                    slot_center = (
-                        int(x_off/self.conversion_factor * math.cos(angle) + y_off/self.conversion_factor * math.cos(angle - math.pi/2) + x),
-                        int(x_off/self.conversion_factor * math.sin(angle) + y_off/self.conversion_factor * math.sin(angle - math.pi/2) + y)
-                    )
-
-                    #TODO Add radius and hsv values for small gear
-
-                    if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
-                        slot_info.size = SlotInfo.SMALL
-                    elif "mg" in slot_info.name or identifier == Tray.MEDIUM_GEAR_TRAY:
-                        slot_info.size = SlotInfo.MEDIUM
-                        radius = 42
-                        hsv_lower = (6, 76, 140)
-                        hsv_upper = (24, 162, 255)
-                    elif "lg" in slot_info.name or identifier == Tray.LARGE_GEAR_TRAY:
-                        slot_info.size = SlotInfo.LARGE
-                        radius = 55
-                        hsv_lower = (40, 30, 123)
-                        hsv_upper = (85, 165, 215)
-                        
-                    start_x = int(slot_center[0] - radius)
-                    start_y = int(slot_center[1] - radius)
-
-                    square = original[start_y:start_y + 2*radius, start_x:start_x + 2*radius]
-
-                    gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), hsv_lower, hsv_upper)
-
-                    if cv2.countNonZero(gear) > 100:
-                        slot_info.occupied = True
-
-                    tray_msg.slots.append(slot_info)
-
-                if identifier in FanucTable.part_tray_types:
-                    tray_info.part_trays.append(tray_msg)
-                elif identifier in FanucTable.kit_tray_types:
-                    tray_info.kit_trays.append(tray_msg)
-
-        return tray_info
-    
-    def generate_transform(self,child_frame, x, y, rotation) -> TransformStamped:
+    def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, rotation: float) -> TransformStamped:
         t = TransformStamped()
 
         t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = 'fanuc_base'
+        t.header.frame_id = parent_frame
         t.child_frame_id = child_frame
 
-        t.transform.translation.x = x
-        t.transform.translation.y = y
-        t.transform.translation.z = 0.0
+        t.transform.translation.x = pt.x
+        t.transform.translation.y = pt.y
+        t.transform.translation.z = pt.z
         t.transform.rotation = self.quaternion_from_euler(0.0, 0.0, rotation)
 
         return t
@@ -474,22 +536,6 @@ class FanucTable(Node):
         img_msg.height = mat.shape[0]
         img_msg.width = mat.shape[1]
 
-        numpy_type_to_cvtype = {
-            'uint8': '8U',
-            'int8': '8S',
-            'uint16': '16U',
-            'int16': '16S',
-            'int32': '32S',
-            'float32': '32F',
-            'float64': '64F'
-        }
-
-        if len(mat.shape) < 3:
-            n_channels = 1
-        else:
-            n_channels = mat.shape[2]
-
-        # img_msg.encoding = f'{numpy_type_to_cvtype[mat.dtype.name]}C{n_channels}'
         img_msg.encoding = 'bgr8'
 
         if mat.dtype.byteorder == '>':
