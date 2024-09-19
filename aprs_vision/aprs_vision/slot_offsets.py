@@ -10,8 +10,8 @@ class SlotOffsets():
             'sg_2': (0.055, 0.04),
         },
         Object.LARGE_GEAR_TRAY: {
-            'slot_1': (0.0, -0.055),
-            'slot_2': (0.0, 0.055),
+            'slot_1': (0.0, 0.055),
+            'slot_2': (0.0, -0.055),
         },
         Object.MEDIUM_GEAR_TRAY: {
             'slot_1': (0.038, -0.038),

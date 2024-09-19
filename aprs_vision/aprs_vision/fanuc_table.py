@@ -265,10 +265,12 @@ class FanucTable(Node):
             rect = cv2.minAreaRect(poly)
             (_, _), (width, height), angle = rect
 
-            if width < height:
-                angle += 90
+            if width > height:
+                angle = (90 - angle)
+            else:
+                angle *= -1
 
-            angle = math.radians(angle - 90)
+            print(f'height:  {height}  width: {width} angle:  {angle}')      
 
             aspect_ratio = min(width, height) / max(width, height)
 
@@ -285,7 +287,8 @@ class FanucTable(Node):
 
             # Use aspect ratio to classify tray type
             if aspect_ratio < 0.6:
-                trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY), angle))
+                trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY), angle))                
+
             elif aspect_ratio < 0.9:
                 trays_on_table[Tray.M2L1_KIT_TRAY].append(((cX,cY), angle))
             else:
@@ -320,7 +323,7 @@ class FanucTable(Node):
                     z=(FanucTable.table_origin.z + self.tray_height)
                 )
 
-                theta = angle + math.pi
+                theta = math.radians(angle) + math.pi
 
                 # Publish TF frame
                 self.transforms.append(self.generate_transform('fanuc_base', tray_msg.name, tray_center, theta))
@@ -339,21 +342,31 @@ class FanucTable(Node):
 
                     # Generate tf transform for slot
                     slot_center_tray = Point(
-                        x=x_off,
-                        y=y_off, 
-                        z=self.gear_height
+                        x= -x_off,
+                        y= y_off, 
+                        z= self.gear_height
                     )
 
                     self.transforms.append(self.generate_transform(tray_msg.name, slot_info.name, slot_center_tray, 0.0))
 
                     # Store pixel coordinates for center of slot
                 
-                    x_off *= 1000 # convert to mm
-                    y_off *= 1000 # convert to mm
+                    x_px = 1000 * (x_off/self.conversion_factor)
+                    y_px = 1000 * (y_off/self.conversion_factor)
+
+                    length = math.sqrt(x_px **2 + y_px**2)
+
+                    alpha = math.radians(angle)
+
+                    beta = math.atan2(y_off, x_off)
+
+                    gamma = beta - alpha
+
+                    print(f'slot: {slot_info.name} alpha: {math.degrees(alpha)} beta: {math.degrees(beta)} gamma: {math.degrees(gamma)}')
 
                     self.slot_pixel_centers[slot_info.name] = (
-                        int(x_off/self.conversion_factor * math.cos(angle) + y_off/self.conversion_factor * math.sin(angle) + x),
-                        int(x_off/self.conversion_factor * math.sin(angle) + y_off/self.conversion_factor * math.cos(angle) + y)
+                        int(x - length * math.cos(gamma)),
+                        int(y - length * math.sin(gamma))
                     )
 
                     tray_msg.slots.append(slot_info)
