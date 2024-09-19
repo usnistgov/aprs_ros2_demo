@@ -131,13 +131,15 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   send_trajectory(plan.second);
 
+  // return std::make_pair(false, "Testing");
+
   open_gripper();
 
   sleep(0.5);
 
   // Move to pick pose
   geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + 0.02, 0.0);
+  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
 
   plan = plan_cartesian(pick_pose);
   
@@ -146,7 +148,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   send_trajectory(plan.second);
 
-  return std::make_pair(false, "Testing");
+  // return std::make_pair(false, "Testing");
 
   sleep(0.5);
 

@@ -35,8 +35,8 @@ class FanucTable(Node):
     kit_tray_types = [Tray.S2L2_KIT_TRAY, Tray.M2L1_KIT_TRAY]
     part_tray_types = [Tray.SMALL_GEAR_TRAY, Tray.MEDIUM_GEAR_TRAY, Tray.LARGE_GEAR_TRAY]
 
-    table_origin = Point(x=228.591, y=228.287, z=0.0)
-    tray_height = 0.02 # TODO: find real value
+    table_origin = Point(x=228.591, y=228.287, z=-0.01)
+    tray_height = 0.017 # TODO: find real value
     gear_height = 0.02 # TODO: find real value
 
     def __init__(self):
@@ -50,7 +50,7 @@ class FanucTable(Node):
 
         self.map_x = np.load(os.path.join(share_path, 'config', 'map_x.npy'))
         self.map_y = np.load(os.path.join(share_path, 'config', 'map_y.npy'))
-        self.base_background = cv2.imread(os.path.join(share_path, 'config', 'base_background.jpg'))
+        self.base_background = cv2.imread(os.path.join(share_path, 'config', 'background.jpg'))
 
         self.slot_pixel_centers: dict[str, tuple[int, int]] = {}
 
@@ -270,7 +270,7 @@ class FanucTable(Node):
             else:
                 angle *= -1
 
-            print(f'height:  {height}  width: {width} angle:  {angle}')      
+            # print(f'height:  {height}  width: {width} angle:  {angle}')      
 
             aspect_ratio = min(width, height) / max(width, height)
 
@@ -326,7 +326,7 @@ class FanucTable(Node):
                 theta = math.radians(angle) + math.pi
 
                 # Publish TF frame
-                self.transforms.append(self.generate_transform('fanuc_base', tray_msg.name, tray_center, theta))
+                self.transforms.append(self.generate_transform('fanuc_base_link', tray_msg.name, tray_center, theta))
  
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                     # Create slot info for each slot
@@ -362,7 +362,7 @@ class FanucTable(Node):
 
                     gamma = beta - alpha
 
-                    print(f'slot: {slot_info.name} alpha: {math.degrees(alpha)} beta: {math.degrees(beta)} gamma: {math.degrees(gamma)}')
+                    # print(f'slot: {slot_info.name} alpha: {math.degrees(alpha)} beta: {math.degrees(beta)} gamma: {math.degrees(gamma)}')
 
                     self.slot_pixel_centers[slot_info.name] = (
                         int(x - length * math.cos(gamma)),
