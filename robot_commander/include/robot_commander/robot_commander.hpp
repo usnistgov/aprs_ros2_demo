@@ -60,6 +60,9 @@ class RobotCommander : public rclcpp::Node
     rclcpp::Service<aprs_interfaces::srv::Place>::SharedPtr place_srv_;
     rclcpp::Service<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr move_to_named_pose_srv_;
 
+    // Callback groups
+    rclcpp::CallbackGroup::SharedPtr client_cb_group_;
+
     // Service Callbacks
     void pick_from_slot_cb(
       const std::shared_ptr<aprs_interfaces::srv::Pick::Request> request,
@@ -76,13 +79,25 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
 
+    // Response callbacks
+    void open_gripper_response_cb(rclcpp::Client<example_interfaces::srv::Trigger>::SharedFuture future);
+    void close_gripper_response_cb(rclcpp::Client<example_interfaces::srv::Trigger>::SharedFuture future);
+
+    // Reponse flags
+    bool recieved_open_gripper_response = false;
+    bool recieved_close_gripper_response = false;
+    example_interfaces::srv::Trigger::Response open_gripper_response;
+    example_interfaces::srv::Trigger::Response close_gripper_response;
+
     double vsf = 0.1;
     double asf = 0.5;
     double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
     double pick_offset = 0.1;
     double place_offset = 0.1;
-    double gripper_roll = M_PI;
-    double gripper_pitch = M_PI;
+    double gripper_roll = 0;
+    double gripper_pitch = M_PI_2;
+
+    double goal_joint_tolerance = 0.01;
     
     std::string base_link = "fanuc_base_link";
     std::string group_name;

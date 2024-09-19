@@ -34,11 +34,11 @@ class VisionBroadcaster(Node):
             
             self.tf_broadcaster.sendTransform(self.fanuc_transforms)
 
-        if self.motoman_transforms:
-            for transform in self.motoman_transforms: # Update timestamps
-                transform.header.stamp = self.get_clock().now().to_msg()
+        # if self.motoman_transforms:
+        #     for transform in self.motoman_transforms: # Update timestamps
+        #         transform.header.stamp = self.get_clock().now().to_msg()
             
-            self.tf_broadcaster.sendTransform(self.motoman_transforms)
+        #     self.tf_broadcaster.sendTransform(self.motoman_transforms)
 
     def build_frames(self, objects_msg: Objects) -> list[TransformStamped]:
         transforms: list[TransformStamped] = []
