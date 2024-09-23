@@ -4,15 +4,13 @@ PlacePartAction::PlacePartAction()
 : plansys2::ActionExecutorClient("place_part", std::chrono::milliseconds(250)),
     waiting_for_response_{false},
     service_called_{false}
-{}
+{
+    place_part_client = this->create_client<aprs_interfaces::srv::Place>("/place_in_slot");
+}
 
 void PlacePartAction::do_work() {
 
   if(!service_called_) {
-
-    rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client;
-
-    place_part_client = this->create_client<aprs_interfaces::srv::Place>("/place_from_slot");
 
     auto request = std::make_shared<aprs_interfaces::srv::Place::Request>();
 
@@ -48,7 +46,7 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv);
   auto node = std::make_shared<PlacePartAction>();
 
-  node->set_parameter(rclcpp::Parameter("action_name", "place_part"));
+  node->set_parameter(rclcpp::Parameter("action_name", "place"));
   node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
 
   rclcpp::spin(node->get_node_base_interface());

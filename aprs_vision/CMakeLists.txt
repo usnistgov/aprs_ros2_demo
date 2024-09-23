@@ -36,6 +36,7 @@ install(PROGRAMS
   nodes/vision_publisher_node.py
   nodes/vision_broadcaster_node.py
   nodes/fanuc_vision_node.py
+  nodes/teach_table_vision_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

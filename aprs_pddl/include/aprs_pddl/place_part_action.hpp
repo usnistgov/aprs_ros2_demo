@@ -17,6 +17,8 @@ protected:
 
 private:
 
+  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client;
+  
   // Service response callbacks
   void place_response_cb(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
 

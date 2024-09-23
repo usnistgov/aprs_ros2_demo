@@ -10,13 +10,13 @@ int main(int argc, char *argv[])
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(task_planner);
-  std::thread([&executor]() { executor.spin(); }).detach();
+  executor.spin();
 
-  while(rclcpp::ok()){
-    // RCLCPP_INFO(task_planner->get_logger(), "Test");
-  };
+  // while(rclcpp::ok()){
+  //   // RCLCPP_INFO(task_planner->get_logger(), "Test");
+  // };
 
-  rclcpp::shutdown();
+  // rclcpp::shutdown();
 
   return 0;
 }

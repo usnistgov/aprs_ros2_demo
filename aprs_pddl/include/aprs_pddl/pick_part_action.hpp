@@ -17,6 +17,8 @@ protected:
 
 private:
 
+  rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client;
+
   // Service response callbacks
   void pick_response_cb(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
 

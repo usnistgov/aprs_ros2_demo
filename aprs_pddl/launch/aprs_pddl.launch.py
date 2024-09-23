@@ -24,14 +24,14 @@ def launch_setup(context, *args, **kwargs):
     place_part_action = Node(
         package='aprs_pddl',
         executable='place_part_action_node',
-        name='place_part_node',
+        name='place',
         output='screen',
         parameters=[])
     
     pick_part_action = Node(
         package='aprs_pddl',
         executable='pick_part_action_node',
-        name='pick_part_node',
+        name='pick',
         output='screen',
         parameters=[])
 
