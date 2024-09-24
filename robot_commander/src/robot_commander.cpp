@@ -94,6 +94,9 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   if (std::find(named_targets.begin(), named_targets.end(), pose_name) == named_targets.end()) {
     return std::make_pair(false, "Pose " + pose_name + " not found");
   }
+  // planning_interface_.getCurrentState();
+
+  planning_interface_.setStartStateToCurrentState();
 
   // Set target
   planning_interface_.setNamedTarget(pose_name);
@@ -135,8 +138,6 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   send_trajectory(plan.second);
 
-  // return std::make_pair(false, "Testing");
-
   open_gripper();
 
   sleep(0.5);
@@ -151,8 +152,6 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
     return std::make_pair(false, "Unable to plan to pick pose");
 
   send_trajectory(plan.second);
-
-  // return std::make_pair(false, "Testing");
 
   sleep(0.5);
 
@@ -351,18 +350,7 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
 
     current_positions[2] -= current_positions[1];
 
-    RCLCPP_INFO(get_logger(), "\n\n");
-
-    int joint_num = 0; 
-    for (size_t i=0; i<current_positions.size(); i++) {
-      RCLCPP_INFO_STREAM(get_logger(), "Desired joint position for joint_" << joint_num << ": " << current_positions[i]);
-      RCLCPP_INFO_STREAM(get_logger(), "Actual joint position for joint_ " << joint_num << ": " << goal_positions[i]);
-      joint_num++;
-    }
-
     double error = largest_error(current_positions, goal_positions);
-
-    RCLCPP_INFO_STREAM(get_logger(), "Largest Joint Error: " << error);
 
     if (error < goal_joint_tolerance) {
       finished_motion = true;
@@ -381,10 +369,6 @@ double RobotCommander::largest_error(std::vector<double> v1, std::vector<double>
 
   for (size_t i=0; i<v1.size(); i++) {
     d.push_back(std::abs(v1[i] - v2[i]));
-  }
-
-  for (size_t i=0; i<=d.size(); i++) {
-    RCLCPP_INFO_STREAM(get_logger(), "Error for joint_" << i << ": " << d[i]);
   }
 
   return *std::max_element(std::begin(d), std::end(d));
