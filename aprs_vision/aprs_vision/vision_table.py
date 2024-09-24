@@ -89,6 +89,7 @@ class VisionTable(Node):
         self.read_frame_timer = self.create_timer(timer_period_sec=0.1, callback=self.read_frame)
 
     def locate_trays_cb(self, _, response: Trigger.Response) -> Trigger.Response:
+        self.get_logger().info("Inside locate trays")
         if self.trays_info is not None:
             response.message = "Trays already located"
             response.success = False
