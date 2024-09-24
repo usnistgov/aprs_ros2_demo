@@ -38,6 +38,7 @@ class RobotCommander : public rclcpp::Node
     // Utility Functions
     void handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory);
     geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
+    double largest_error(std::vector<double> v1, std::vector<double> v2);
 
     // MoveIt
     moveit::planning_interface::MoveGroupInterface planning_interface_;

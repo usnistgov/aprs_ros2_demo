@@ -4,20 +4,18 @@ PickPartAction::PickPartAction()
 : plansys2::ActionExecutorClient("pick_part", std::chrono::milliseconds(250)),
     waiting_for_response_{false},
     service_called_{false}
-{}
+{
+  pick_part_client = this->create_client<aprs_interfaces::srv::Pick>("/pick_from_slot");
+}
 
 void PickPartAction::do_work() {
-
+  RCLCPP_INFO(get_logger(),"Inside Do work");
   if(!service_called_) {
-
-    rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client;
-
-    pick_part_client = this->create_client<aprs_interfaces::srv::Pick>("/pick_from_slot");
 
     auto request = std::make_shared<aprs_interfaces::srv::Pick::Request>();
 
     request->frame_name = current_arguments_[1];
-
+    RCLCPP_INFO(get_logger(),"Sending request");
     pick_part_client->async_send_request(request,
     std::bind(&PickPartAction::pick_response_cb, this, std::placeholders::_1));
 
@@ -36,6 +34,7 @@ void PickPartAction::do_work() {
 }
 
 void PickPartAction::pick_response_cb(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future){
+  RCLCPP_INFO(get_logger(),"Inside pick response callback");
   auto result = future.get();
   if (!result->success) {
     finish(false, progress_, "Unable to Pick Part");
@@ -48,7 +47,7 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv);
   auto node = std::make_shared<PickPartAction>();
 
-  node->set_parameter(rclcpp::Parameter("action_name", "pick_part"));
+  node->set_parameter(rclcpp::Parameter("action_name", "pick"));
   node->trigger_transition(lifecycle_msgs::msg::Transition::TRANSITION_CONFIGURE);
 
   rclcpp::spin(node->get_node_base_interface());

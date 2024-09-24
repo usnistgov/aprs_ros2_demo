@@ -2,8 +2,8 @@
 
 TaskPlanner::TaskPlanner() : Node("task_planner")
 {
-  teach_trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach_trays_info", 10, bind(&TaskPlanner::TeachTraysInfoCallback, this, std::placeholders::_1));
-  fanuc_trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc_trays_info", 10, bind(&TaskPlanner::FanucTraysInfoCallback, this, std::placeholders::_1));
+  teach_trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach_table_vision/trays_info", 10, bind(&TaskPlanner::TeachTraysInfoCallback, this, std::placeholders::_1));
+  fanuc_trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc_vision/trays_info", 10, bind(&TaskPlanner::FanucTraysInfoCallback, this, std::placeholders::_1));
 
   generate_init_state_server_ = this->create_service<aprs_interfaces::srv::GenerateInitState>(
     "/generate_pddl_init_state",

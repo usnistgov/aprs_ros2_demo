@@ -94,6 +94,9 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   if (std::find(named_targets.begin(), named_targets.end(), pose_name) == named_targets.end()) {
     return std::make_pair(false, "Pose " + pose_name + " not found");
   }
+  // planning_interface_.getCurrentState();
+
+  planning_interface_.setStartStateToCurrentState();
 
   // Set target
   planning_interface_.setNamedTarget(pose_name);
@@ -118,7 +121,11 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   // Get slot transform from TF
   geometry_msgs::msg::Transform slot_t;
-  slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
+  try {
+    slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
+  } catch (tf2::LookupException& e) {
+    return std::make_pair(false, "Not a valid frame name");
+  }
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
@@ -130,8 +137,6 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
     return std::make_pair(false, "Unable to plan to above slot");
 
   send_trajectory(plan.second);
-
-  // return std::make_pair(false, "Testing");
 
   open_gripper();
 
@@ -147,8 +152,6 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
     return std::make_pair(false, "Unable to plan to pick pose");
 
   send_trajectory(plan.second);
-
-  // return std::make_pair(false, "Testing");
 
   sleep(0.5);
 
@@ -166,7 +169,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   send_trajectory(plan.second);
 
-  return std::make_pair(false, "Successfully picked part");
+  return std::make_pair(true, "Successfully picked part");
 }
 
 std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_name)
@@ -175,7 +178,12 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   // Get slot transform from TF
   geometry_msgs::msg::Transform slot_t;
-  slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
+
+  try {
+    slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
+  } catch (tf2::LookupException& e) {
+    return std::make_pair(false, "Not a valid frame name");
+  }
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
@@ -211,7 +219,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   send_trajectory(plan.second);
 
-  return std::make_pair(false, "Successfully placed part");
+  return std::make_pair(true, "Successfully placed part");
 }
 
 void RobotCommander::pick_from_slot_cb(
@@ -337,32 +345,36 @@ void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
 
   bool finished_motion = false;
 
-  auto compare_joint_positions = [] (std::vector<double> v1, std::vector<double> v2){
-    std::vector<double> d;
-
-    for (int i=0; i<=v1.size(); i++) {
-      d.push_back(std::abs(v1[i] - v2[i]));
-    }
-
-    return d;
-  };
-
   while (!finished_motion) {
     current_positions = planning_interface_.getCurrentJointValues();
 
     current_positions[2] -= current_positions[1];
 
-    auto distances = compare_joint_positions(goal_positions, current_positions);
+    double error = largest_error(current_positions, goal_positions);
 
-    double largest_error = *std::max_element(std::begin(distances), std::end(distances));
-
-    if (largest_error < goal_joint_tolerance) {
+    if (error < goal_joint_tolerance) {
       finished_motion = true;
     }
 
     sleep(0.1);
   }
+
+RCLCPP_INFO_STREAM(get_logger(), "Reached goal position");
+
 }
+
+double RobotCommander::largest_error(std::vector<double> v1, std::vector<double> v2)
+{
+  std::vector<double> d;
+
+  for (size_t i=0; i<v1.size(); i++) {
+    d.push_back(std::abs(v1[i] - v2[i]));
+  }
+
+  return *std::max_element(std::begin(d), std::end(d));
+} 
+
+
 
 void RobotCommander::handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory)
 {
