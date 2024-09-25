@@ -48,6 +48,20 @@ class VisionTable(Node):
     conversion_factor: float
     publish_frames: bool
 
+    top_left_x: int
+    top_left_y: int
+    bottom_left_x: int
+    bottom_left_y: int
+    top_right_x: int
+    top_right_y: int
+    bottom_right_x: int
+    bottom_right_y: int
+    grid_hsv_lower: tuple[int,int,int]
+    grid_hsv_upper: tuple[int,int,int]
+    calibrate_rows: int
+    calibrate_columns: int
+    generate_map_area: int
+
     gear_detection_values: dict[int, GearDetection]
 
     base_frame = ''
@@ -110,27 +124,32 @@ class VisionTable(Node):
         original_img = frame.copy()
 
         # Remove table backgroud
-        frame = self.remove_background(frame)
+        try:
+            frame = self.remove_background(frame)
 
         # Remove and replace and large gears present
-        frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
+            frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
         
         # Remove and replace any medium gears present
-        frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
+            frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
 
         # # Remove and replace any small gears present
-        frame = self.remove_and_replace_gears(frame,gear_size=SlotInfo.SMALL)
+            frame = self.remove_and_replace_gears(frame,gear_size=SlotInfo.SMALL)
 
-        trays_on_table = self.detect_trays(frame)
+            trays_on_table = self.detect_trays(frame)
 
         # Fill tray info message
-        self.trays_info = self.determine_tray_info(trays_on_table)
+            self.trays_info = self.determine_tray_info(trays_on_table)
 
         # Check if slots are occupied 
-        self.update_slots(original_img)
+            self.update_slots(original_img)
 
-        response.success = True
-        response.message = "Located trays"
+            response.success = True
+            response.message = "Located trays"
+        except:
+            response.success = False
+            response.message = "Unable to detect trays properly. Is the robot arm in the way?"
+
 
         return response
     
@@ -151,8 +170,20 @@ class VisionTable(Node):
     def calibrate_maps_cb(self, _, response: Trigger.Response) -> Trigger.Response:
         # TODO: Generate and save new maps for calibration
 
-        response.success = False
-        response.message = "Not yet implemented"
+        if self.current_frame is None:
+            response.message = "Unable to connect to camera"
+            response.success = False
+            return response
+        
+        background = self.generate_grid_maps(self.current_frame)
+
+        if background is None:
+            response.success = False
+            response.message = "Unable to Calibrate Map"
+        else:
+            response.success = True
+            response.message = "Map Calibrated"
+            # cv2.imwrite(f'src/aprs_ros2_demo/aprs_vision/testing/{self.background_image}', self.rectify_frame(background))
 
         return response
 
@@ -426,113 +457,118 @@ class VisionTable(Node):
         return False   
          
     # TODO: Fix
-    # def generate_grid_maps(self, frame: MatLike) -> Optional[MatLike]:
-    #     offset = 15
+    def generate_grid_maps(self, frame: MatLike) -> Optional[MatLike]:
+        offset = 15
 
-    #     # Corners are manually deduced from location of screw heads in table
-    #     top_left = (417 + offset, 180 + offset)
-    #     top_right = (1043 - offset, 179 + offset)
-    #     bottom_right = (1035 - offset, 955 - offset)
-    #     bottom_left = (428 + offset, 944 - offset)
+        # Corners are manually deduced from location of screw heads in table
+        top_left = (self.top_left_x + offset, self.top_left_y + offset)
+        top_right = (self.top_right_x - offset, self.top_right_y + offset)
+        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
+        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
 
-    #     # Black out everything from image that is not the active region
-    #     fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
+        # Black out everything from image that is not the active region
+        fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
 
-    #     maskImage = np.zeros(frame.shape, dtype=np.uint8)
-    #     cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
+        maskImage = np.zeros(frame.shape, dtype=np.uint8)
+        cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
 
-    #     active_region = cv2.bitwise_and(frame, maskImage)
+        active_region = cv2.bitwise_and(frame, maskImage)
 
-    #     # Detect optical table holes 
-    #     blur = cv2.GaussianBlur(active_region,(5,5),0)
+        # Detect optical table holes 
+        blur = cv2.GaussianBlur(active_region,(5,5),0)
 
-    #     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    #     threshold = cv2.inRange(hsv, (100, 0, 0), (255, 255, 120)) # type: ignore
+        # cv2.imwrite('hsv.jpg', hsv)
 
-    #     offset = 25
+        threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
-    #     top_left = (417 + offset, 180 + offset)
-    #     top_right = (1043 - offset, 179 + offset)
-    #     bottom_right = (1035 - offset, 955 - offset)
-    #     bottom_left = (428 + offset, 944 - offset)
+        offset = 25
 
-    #     corners = np.array([top_right, bottom_right, bottom_left, top_left])
+        top_left = (self.top_left_x + offset, self.top_left_y + offset)
+        top_right = (self.top_right_x - offset, self.top_right_y + offset)
+        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
+        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
 
-    #     mask2 = np.zeros(threshold.shape, dtype=np.uint8)
+        corners = np.array([top_right, bottom_right, bottom_left, top_left])
+
+        mask2 = np.zeros(threshold.shape, dtype=np.uint8)
         
-    #     cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
+        cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
 
-    #     just_holes = cv2.bitwise_and(threshold, mask2)
+    
+        just_holes = cv2.bitwise_and(threshold, mask2)
 
-    #     contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    #     filtered_contours = []
-    #     for contour in contours:
-    #         area = cv2.contourArea(contour)
-    #         if area >= 10:
-    #             filtered_contours.append(contour)
+        filtered_contours = []
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area >= self.generate_map_area:
+                filtered_contours.append(contour)
 
-    #     rows = 24
-    #     columns = 19
+        rows = self.calibrate_rows
+        columns = self.calibrate_columns
 
-    #     if not len(filtered_contours) == rows * columns:
-    #         self.get_logger().error("Not able to detect all holes")
-    #         return None
+        if not len(filtered_contours) == rows * columns:
+            self.get_logger().error("Not able to detect all holes")
+            return None
 
-    #     center_points = []
+        center_points = []
 
-    #     for contour in filtered_contours:
-    #         # Calculate moments for each contour
-    #         M = cv2.moments(contour)
+        for contour in filtered_contours:
+            # Calculate moments for each contour
+            M = cv2.moments(contour)
 
-    #         # Calculate center of contour
-    #         if M["m00"] != 0:
-    #             cX = int(M["m10"] / M["m00"])
-    #             cY = int(M["m01"] / M["m00"])
+            # Calculate center of contour
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
 
-    #             center_points.append((cX, cY))
+                center_points.append((cX, cY))
 
-    #     center_y = 210
-    #     sorted_points = []
-    #     working_points = []
+        center_y = 210
+        sorted_points = []
+        working_points = []
 
-    #     for i in range(rows):
-    #         for point in center_points:
-    #             if center_y - 18 <= point[1] <= center_y + 18:
-    #                 working_points.append(point)
+        for i in range(rows):
+            for point in center_points:
+                if center_y - 18 <= point[1] <= center_y + 18:
+                    working_points.append(point)
                 
-    #         sorted_points += sorted(working_points, key=lambda k: [k[0]])
+            sorted_points += sorted(working_points, key=lambda k: [k[0]])
 
-    #         working_points.clear()
+            working_points.clear()
 
-    #         center_y += 31
+            center_y += 31
 
-    #     if not len(sorted_points) == len(center_points):
-    #         self.get_logger().error("Not able to properly sort holes")
-    #         return
+        if not len(sorted_points) == len(center_points):
+            self.get_logger().error("Not able to properly sort holes")
+            return
         
-    #     actual_points = []
+        actual_points = []
 
-    #     for i in range(rows):
-    #         x = (i * 30)
-    #         for j in range(columns):
-    #             y = (j * 30)
-    #             actual_points.append([x, y])
+        for i in range(rows):
+            x = (i * 30)
+            for j in range(columns):
+                y = (j * 30)
+                actual_points.append([x, y])
 
-    #     grid_x, grid_y = np.mgrid[0:rows*30, 0:columns*30]
+        grid_x, grid_y = np.mgrid[0:rows*30, 0:columns*30]
 
-    #     destination = np.array(actual_points)
-    #     source = np.array(sorted_points)
+        destination = np.array(actual_points)
+        source = np.array(sorted_points)
 
-    #     grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
-    #     map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape(rows*30,columns*30)
-    #     map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape(rows*30,columns*30)
-    #     map_x_32 = map_x.astype('float32')
-    #     map_y_32 = map_y.astype('float32')
+        grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
+        map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape(rows*30,columns*30)
+        map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape(rows*30,columns*30)
+        map_x_32 = map_x.astype('float32')
+        map_y_32 = map_y.astype('float32')
 
-    #     np.save("src/vision_testing/map_x.npy", map_x_32)
-    #     np.save("src/vision_testing/map_y.npy", map_y_32)
+        np.save(f"src/aprs_ros2_demo/aprs_vision/testing/{self.map_x_image}.npy", map_x_32)
+        np.save(f"src/aprs_ros2_demo/aprs_vision/testing/{self.map_y_image}.npy", map_y_32)
+
+        return active_region[self.top_left_y + offset:self.bottom_right_y - offset, self.top_left_x + offset:self.bottom_right_x - offset]
 
     def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, rotation: float) -> TransformStamped:
         t = TransformStamped()

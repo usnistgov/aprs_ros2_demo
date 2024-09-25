@@ -12,6 +12,19 @@ class TeachTable(VisionTable):
     map_y_image = 'teach_table_map_y.npy'
     background_image = 'teach_table_background.jpg'
     publish_frames = False
+    top_left_x = 146
+    top_left_y = 144
+    bottom_left_x = 146
+    bottom_left_y = 502
+    top_right_x = 696
+    top_right_y = 142
+    bottom_right_x = 700
+    bottom_right_y = 499
+    grid_hsv_lower = (0, 0, 110)
+    grid_hsv_upper = (180, 255, 255)
+    calibrate_rows = 20
+    calibrate_columns = 32
+    generate_map_area = 6
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 

@@ -14,6 +14,20 @@ class FanucTable(VisionTable):
     background_image = 'fanuc_table_background.jpg'
     publish_frames = True
 
+    top_left_x = 417
+    top_left_y = 180
+    bottom_left_x = 428
+    bottom_left_y = 944
+    top_right_x = 1043
+    top_right_y = 179
+    bottom_right_x = 1035
+    bottom_right_y = 955
+    grid_hsv_lower = (100, 0, 0)
+    grid_hsv_upper = (255, 255, 120)
+    calibrate_rows = 24
+    calibrate_columns = 19
+    generate_map_area = 10
+
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
     background_threshold = 12
