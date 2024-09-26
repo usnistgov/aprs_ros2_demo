@@ -17,6 +17,9 @@ from ament_index_python.packages import get_package_share_directory
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 
 from aprs_vision.gear_detection import GearDetection
+from aprs_interfaces.srv import GenerateGridMaps
+
+from pathlib import Path
 
 from example_interfaces.srv import Trigger
 from sensor_msgs.msg import Image
@@ -87,7 +90,7 @@ class VisionTable(Node):
         # ROS Services
         self.locate_trays_srv = self.create_service(Trigger, 'locate_trays', self.locate_trays_cb)
         self.update_trays_info_srv = self.create_service(Trigger, 'update_slots', self.update_slots_cb)
-        self.calibrate_maps_srv = self.create_service(Trigger, 'calibrate_maps', self.calibrate_maps_cb)
+        self.calibrate_maps_srv = self.create_service(GenerateGridMaps, 'calibrate_maps', self.calibrate_maps_cb)
 
         # ROS Topics
         self.trays_info_pub = self.create_publisher(Trays, 'trays_info', qos_profile_default)
@@ -149,6 +152,8 @@ class VisionTable(Node):
         except:
             response.success = False
             response.message = "Unable to detect trays properly. Is the robot arm in the way?"
+            cv2.imshow('Error Reason', frame)
+            cv2.waitKey(0)
 
 
         return response
@@ -167,23 +172,26 @@ class VisionTable(Node):
 
         return response
     
-    def calibrate_maps_cb(self, _, response: Trigger.Response) -> Trigger.Response:
+    def calibrate_maps_cb(self, request: GenerateGridMaps.Request, response: GenerateGridMaps.Response) -> GenerateGridMaps.Response:
         # TODO: Generate and save new maps for calibration
 
         if self.current_frame is None:
             response.message = "Unable to connect to camera"
             response.success = False
             return response
-        
-        background = self.generate_grid_maps(self.current_frame)
+        if not os.path.exists(request.filepath):
+            response.message = "Provided filepath does not exist"
+            response.success = False
+            return response
 
-        if background is None:
+        if self.generate_grid_maps(self.current_frame,request.filepath) is False:
             response.success = False
             response.message = "Unable to Calibrate Map"
         else:
             response.success = True
             response.message = "Map Calibrated"
-            # cv2.imwrite(f'src/aprs_ros2_demo/aprs_vision/testing/{self.background_image}', self.rectify_frame(background))
+            if request.save_background_image:
+                cv2.imwrite(f'{request.filepath}{self.background_image}',cv2.remap(self.current_frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30])
 
         return response
 
@@ -457,7 +465,7 @@ class VisionTable(Node):
         return False   
          
     # TODO: Fix
-    def generate_grid_maps(self, frame: MatLike) -> Optional[MatLike]:
+    def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
         offset = 15
 
         # Corners are manually deduced from location of screw heads in table
@@ -512,7 +520,7 @@ class VisionTable(Node):
 
         if not len(filtered_contours) == rows * columns:
             self.get_logger().error("Not able to detect all holes")
-            return None
+            return False
 
         center_points = []
 
@@ -544,7 +552,7 @@ class VisionTable(Node):
 
         if not len(sorted_points) == len(center_points):
             self.get_logger().error("Not able to properly sort holes")
-            return
+            return False
         
         actual_points = []
 
@@ -565,11 +573,10 @@ class VisionTable(Node):
         map_x_32 = map_x.astype('float32')
         map_y_32 = map_y.astype('float32')
 
-        np.save(f"src/aprs_ros2_demo/aprs_vision/testing/{self.map_x_image}.npy", map_x_32)
-        np.save(f"src/aprs_ros2_demo/aprs_vision/testing/{self.map_y_image}.npy", map_y_32)
+        np.save(f"{filepath}{self.map_x_image}.npy", map_x_32)
+        np.save(f"{filepath}{self.map_y_image}.npy", map_y_32)
 
-        return active_region[self.top_left_y + offset:self.bottom_right_y - offset, self.top_left_x + offset:self.bottom_right_x - offset]
-
+        return True
     def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, rotation: float) -> TransformStamped:
         t = TransformStamped()
 

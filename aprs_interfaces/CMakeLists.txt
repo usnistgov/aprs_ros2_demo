@@ -28,6 +28,7 @@ set(srv_files
   "srv/Place.srv"
   "srv/GenerateInitState.srv"
   "srv/GeneratePlan.srv"
+  "srv/GenerateGridMaps.srv"
 )
 
 set(action_files
