@@ -107,8 +107,7 @@ class VisionTable(Node):
 
     def locate_trays_cb(self, _, response: Trigger.Response) -> Trigger.Response:
         if self.trays_info is not None:
-            response.message = "Trays already located"
-            response.success = False
+            self.trays_info = None
             return response
         
         if self.current_frame is None:
