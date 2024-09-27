@@ -34,6 +34,7 @@ ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_N
 install(PROGRAMS
   nodes/fanuc_vision_node.py
   nodes/teach_table_vision_node.py
+  nodes/motoman_vision_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

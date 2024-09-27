@@ -63,7 +63,7 @@ class VisionTable(Node):
     grid_hsv_upper: tuple[int,int,int]
     calibrate_rows: int
     calibrate_columns: int
-    generate_map_area: int
+    generate_map_area: float
 
     gear_detection_values: dict[int, GearDetection]
 
@@ -222,6 +222,8 @@ class VisionTable(Node):
             self.current_frame = None
 
     def rectify_frame(self, frame: MatLike) -> MatLike:
+        self.map_x = np.load('src/aprs_ros2_demo/aprs_vision/testing/motoman_table_map_x.npy')
+        self.map_y = np.load('src/aprs_ros2_demo/aprs_vision/testing/motoman_table_map_y.npy')
         return cv2.remap(frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30]
     
     def remove_background(self, frame: MatLike) -> MatLike:
@@ -486,7 +488,7 @@ class VisionTable(Node):
 
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-        # cv2.imwrite('hsv.jpg', hsv)
+        cv2.imwrite('hsv.jpg', hsv)
 
         threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
@@ -516,6 +518,10 @@ class VisionTable(Node):
 
         rows = self.calibrate_rows
         columns = self.calibrate_columns
+
+        cv2.drawContours(just_holes,filtered_contours,-1,120,2)
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
 
         if not len(filtered_contours) == rows * columns:
             self.get_logger().error("Not able to detect all holes")
@@ -547,7 +553,7 @@ class VisionTable(Node):
 
             working_points.clear()
 
-            center_y += 31
+            center_y += 25
 
         if not len(sorted_points) == len(center_points):
             self.get_logger().error("Not able to properly sort holes")
@@ -572,8 +578,8 @@ class VisionTable(Node):
         map_x_32 = map_x.astype('float32')
         map_y_32 = map_y.astype('float32')
 
-        np.save(f"{filepath}{self.map_x_image}.npy", map_x_32)
-        np.save(f"{filepath}{self.map_y_image}.npy", map_y_32)
+        np.save(f"{filepath}{self.map_x_image}", map_x_32)
+        np.save(f"{filepath}{self.map_y_image}", map_y_32)
 
         return True
     def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, rotation: float) -> TransformStamped:

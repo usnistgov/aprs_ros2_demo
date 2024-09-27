@@ -22,10 +22,17 @@ def launch_setup(context, *args, **kwargs):
         executable='teach_table_vision_node.py',
         output='screen'
     )
+
+    motoman_vision = Node(
+        package='aprs_vision',
+        executable='motoman_vision_node.py',
+        output='screen'
+    )
     
     nodes_to_start = [
         fanuc_vision,
         teach_table_vision,
+        motoman_vision,
     ]
 
     return nodes_to_start
