@@ -3,7 +3,7 @@ from rclpy.node import Node
 from tkinter import ttk
 import tkinter as tk
 from PIL import Image, ImageTk
-from sensor_msgs.msg import Image as ImageMsg
+from sensor_msgs.msg import Image as ImageMsg, JointState
 import rclpy
 from rclpy.qos import qos_profile_default
 from cv_bridge import CvBridge
@@ -13,6 +13,9 @@ from functools import partial
 from time import time
 from queue import Queue
 from example_interfaces.srv import Trigger
+from aprs_interfaces.msg import SlotPixel, PixelCenter, PixelSlotInfo
+from math import sin, cos, pi
+from copy import copy
 
 FRAMEWIDTH=1200
 FRAMEHEIGHT=750
@@ -21,6 +24,18 @@ LEFT_COLUMN=2
 MIDDLE_COLUMN = 3
 RIGHT_COLUMN = 4
 FAR_RIGHT_COLUMN = 5
+
+GEAR_COLORS_AND_SIZES = {
+    1: ("yellow",5),
+    2: ("orange", 6),
+    3: ("green", 8)
+}
+
+GEAR_TRAY_COLORS_AND_SIZES = {
+    13: ("red", (13, 13)),
+    14: ("blue", (22,22)),
+    15: ("red", (10, 22))
+}
 
 class DemoControlWindow(Node):
     def __init__(self):
@@ -52,6 +67,10 @@ class DemoControlWindow(Node):
         self.most_recent_teach_time = -100
         self.fanuc_image = None
         self.teach_image = None
+
+        # ROBOT CONNECTIONS
+        self.most_recent_joint_states_time = -100
+        self.most_recent_joint_states = None
         
         self.notebook = ttk.Notebook(self.main_window)
         
@@ -60,7 +79,7 @@ class DemoControlWindow(Node):
         self.notebook.add(self.vision_frame, text="Run Demo")
         self.setup_vision_tab()
         
-        self.notebook.grid(pady=10, column=LEFT_COLUMN, columnspan = 2, sticky=tk.E+tk.W+tk.N+tk.S)
+        self.notebook.grid(pady=10, column=LEFT_COLUMN, columnspan = 3, sticky=tk.E+tk.W+tk.N+tk.S)
         
         # ROS2 SUBSCRIBERS
         self.fanuc_image_subscriber = self.create_subscription(
@@ -74,6 +93,27 @@ class DemoControlWindow(Node):
             '/teach_table_vision/raw_image',
             self.teach_table_image_cb,
             qos_profile_default)
+        
+        self.fanuc_pixel_subscriber = self.create_subscription(
+            SlotPixel,
+            "/fanuc/slot_pixel_centers",
+            self.update_fanuc_canvas,
+            qos_profile_default
+        )
+
+        self.teach_table_pixel_subscriber = self.create_subscription(
+            SlotPixel,
+            "/teach_table/slot_pixel_centers",
+            self.update_teach_table_canvas,
+            qos_profile_default
+        )
+
+        self.joint_stats_subscriber = self.create_subscription(
+            JointState,
+            "/joint_states",
+            self.joint_state_cb,
+            10
+        )
         
         # ROS2 SERVICE CLIENTS
         self.locate_fanuc_trays_client = self.create_client(
@@ -94,6 +134,12 @@ class DemoControlWindow(Node):
         )
         
         vision_connection_timer = self.create_timer(0.5, self.vision_connection_cb)
+        joint_states_timer = self.create_timer(0.5, self.robot_connection_cb)
+
+        # Robot Status Labels
+        ctk.CTkLabel(self.main_window, text="Robot Status:").grid(column = LEFT_COLUMN, row = 3)
+        self.robot_status_label = ctk.CTkLabel(self.main_window, text="Not Connected", text_color="red")
+        self.robot_status_label.grid(column = RIGHT_COLUMN, row = 1, padx=5) 
         
     # VISION FUNCTIONS
     def setup_vision_tab(self):
@@ -237,3 +283,56 @@ class DemoControlWindow(Node):
             if time()-start >= 5.0:
                 self.get_logger().warn("Unable to update teach table slots. Be sure that there is nothing blocking the teach table")
                 return
+    
+
+    # Pixel callbacks
+    def update_fanuc_canvas(self, msg: SlotPixel):
+        self.fanuc_canvas.delete("all")
+        for tray in msg.kit_trays:
+            tray: PixelCenter
+            self.draw_kitting_tray(self.fanuc_canvas, tray.x, tray.y, angle=tray.angle)
+            for slot in tray.slots:
+                slot: PixelSlotInfo
+                if slot.occupied:
+                    self.draw_gear(self.fanuc_canvas, slot.slot_center_x, slot.slot_center_y, slot.size)
+        for tray in msg.part_trays:
+            tray: PixelCenter
+            self.draw_gear_tray(self.fanuc_canvas, tray.x, tray.y, tray.identifier, angle=tray.angle)
+            for slot in tray.slots:
+                slot: PixelSlotInfo
+                if slot.occupied:
+                    self.draw_gear(self.fanuc_canvas, slot.slot_center_x, slot.slot_center_y, slot.size)
+
+    # Draw on canvas
+    def draw_gear(self, canvas: tk.Canvas, center_x, center_y, gear_type):
+        color, size = GEAR_COLORS_AND_SIZES[gear_type]
+        canvas.create_oval(center_x-size, center_y-size, center_x+size, center_y+size, fill=color)
+    
+    def draw_gear_tray(self, canvas: tk.Canvas, center_x, center_y, tray_type, angle = 0.0):
+        color, size = GEAR_TRAY_COLORS_AND_SIZES[tray_type]
+        points = [center_x-size[0], center_y-size[1], center_x-size[0], center_y+size[1], center_x+size[0], center_y+size[1], center_x+size[0], center_y-size[1]]
+        self.rotate_shape(center_x, center_y, points, angle)
+        canvas.create_polygon(points, fill=color)
+    
+    def draw_kitting_tray(self, canvas: tk.Canvas, center_x, center_y, angle = 0.0):
+        points = [center_x-17,center_y-21, center_x+8,center_y-21, center_x+17,center_y-10, center_x+17, center_y+10, center_x+8,center_y+21, center_x-17, center_y+21]
+        self.rotate_shape(center_x, center_y, points, angle)
+        canvas.create_polygon(points, fill="brown")
+        
+    def rotate_shape(self, center_x, center_y, points, rotation):
+        for i in range(0,len(points),2):
+            original_x = copy(points[i] - center_x)
+            original_y = copy(points[i+1] - center_y)
+            points[i] = int((original_x * cos(rotation) + original_y * sin(rotation))) + center_x
+            points[i+1] = int((-1 * original_x * sin(rotation) + original_y * cos(rotation))) + center_y
+
+    # Robot Connections
+    def joint_state_cb(self, msg: JointState):
+        self.most_recent_joint_states_time = time()
+        self.most_recent_joint_states = msg
+
+    def robot_connection_cb(self):
+        if time() - self.most_recent_joint_states_time:
+            self.robot_status_label.configure(text="Connected", text_color="green")
+        else:
+            self.robot_status_label.configure(text="Not Connected", text_color="red")

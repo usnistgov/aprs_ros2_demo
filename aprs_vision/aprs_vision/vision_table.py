@@ -17,10 +17,13 @@ from ament_index_python.packages import get_package_share_directory
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 
 from aprs_vision.gear_detection import GearDetection
+from aprs_interfaces.srv import GenerateGridMaps
+
+from pathlib import Path
 
 from example_interfaces.srv import Trigger
 from sensor_msgs.msg import Image
-from aprs_interfaces.msg import Trays, Tray, SlotInfo
+from aprs_interfaces.msg import Trays, Tray, SlotInfo, PixelCenter, SlotPixel, PixelSlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
 from geometry_msgs.msg import TransformStamped, Point, Quaternion
     
@@ -48,6 +51,20 @@ class VisionTable(Node):
     conversion_factor: float
     publish_frames: bool
 
+    top_left_x: int
+    top_left_y: int
+    bottom_left_x: int
+    bottom_left_y: int
+    top_right_x: int
+    top_right_y: int
+    bottom_right_x: int
+    bottom_right_y: int
+    grid_hsv_lower: tuple[int,int,int]
+    grid_hsv_upper: tuple[int,int,int]
+    calibrate_rows: int
+    calibrate_columns: int
+    generate_map_area: float
+
     gear_detection_values: dict[int, GearDetection]
 
     base_frame = ''
@@ -64,6 +81,7 @@ class VisionTable(Node):
         self.base_background = cv2.imread(os.path.join(share_path, 'config', self.background_image))
 
         self.slot_pixel_centers: dict[str, tuple[int, int]] = {}
+        self.slot_pixel_center_pub: Optional[SlotPixel] = None
         self.current_frame: Optional[MatLike] = None
 
         # ROS Messages
@@ -73,12 +91,13 @@ class VisionTable(Node):
         # ROS Services
         self.locate_trays_srv = self.create_service(Trigger, 'locate_trays', self.locate_trays_cb)
         self.update_trays_info_srv = self.create_service(Trigger, 'update_slots', self.update_slots_cb)
-        self.calibrate_maps_srv = self.create_service(Trigger, 'calibrate_maps', self.calibrate_maps_cb)
+        self.calibrate_maps_srv = self.create_service(GenerateGridMaps, 'calibrate_maps', self.calibrate_maps_cb)
 
         # ROS Topics
         self.trays_info_pub = self.create_publisher(Trays, 'trays_info', qos_profile_default)
         self.raw_image_pub = self.create_publisher(Image, 'raw_image', 10)
         self.detected_trays_image_pub = self.create_publisher(Image, 'detected_trays_image', qos_profile_default)
+        self.slot_centers_pub = self.create_publisher(SlotPixel,'slot_pixel_centers', qos_profile_default)
     
         # TF Broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -89,11 +108,9 @@ class VisionTable(Node):
         self.read_frame_timer = self.create_timer(timer_period_sec=0.1, callback=self.read_frame)
 
     def locate_trays_cb(self, _, response: Trigger.Response) -> Trigger.Response:
-        self.get_logger().info("Inside locate trays")
         if self.trays_info is not None:
-            response.message = "Trays already located"
-            response.success = False
-            return response
+            self.trays_info = None
+            self.slot_pixel_center_pub = None
         
         if self.current_frame is None:
             response.message = "Unable to connect to camera"
@@ -111,27 +128,41 @@ class VisionTable(Node):
         original_img = frame.copy()
 
         # Remove table backgroud
-        frame = self.remove_background(frame)
+        try:
+            response.message = "Nothing"
+            frame = self.remove_background(frame)
+            response.message = "Background Removed"
 
         # Remove and replace and large gears present
-        frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
+            frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
+            response.message = "Large Gear Removed"
         
         # Remove and replace any medium gears present
-        frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
+            frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
 
         # # Remove and replace any small gears present
-        frame = self.remove_and_replace_gears(frame,gear_size=SlotInfo.SMALL)
+            frame = self.remove_and_replace_gears(frame,gear_size=SlotInfo.SMALL)
 
-        trays_on_table = self.detect_trays(frame)
+            trays_on_table = self.detect_trays(frame)
 
         # Fill tray info message
-        self.trays_info = self.determine_tray_info(trays_on_table)
+            self.trays_info = self.determine_tray_info(trays_on_table)
+            self.slot_centers_pub.publish(self.slot_pixel_center_pub)
 
         # Check if slots are occupied 
-        self.update_slots(original_img)
+            self.update_slots(original_img)
 
-        response.success = True
-        response.message = "Located trays"
+            cv2.imshow('window', frame)
+            cv2.waitKey(0)
+
+            response.success = True
+            response.message = "Located trays"
+        except:
+            response.success = False
+            # response.message = "Unable to detect trays properly. Is the robot arm in the way?"
+            cv2.imshow('Error Reason', frame)
+            cv2.waitKey(0)
+
 
         return response
     
@@ -149,11 +180,26 @@ class VisionTable(Node):
 
         return response
     
-    def calibrate_maps_cb(self, _, response: Trigger.Response) -> Trigger.Response:
+    def calibrate_maps_cb(self, request: GenerateGridMaps.Request, response: GenerateGridMaps.Response) -> GenerateGridMaps.Response:
         # TODO: Generate and save new maps for calibration
 
-        response.success = False
-        response.message = "Not yet implemented"
+        if self.current_frame is None:
+            response.message = "Unable to connect to camera"
+            response.success = False
+            return response
+        if not os.path.exists(request.filepath):
+            response.message = "Provided filepath does not exist"
+            response.success = False
+            return response
+
+        if self.generate_grid_maps(self.current_frame,request.filepath) is False:
+            response.success = False
+            response.message = "Unable to Calibrate Map"
+        else:
+            response.success = True
+            response.message = "Map Calibrated"
+            if request.save_background_image:
+                cv2.imwrite(f'{request.filepath}{self.background_image}',cv2.remap(self.current_frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30])
 
         return response
 
@@ -165,6 +211,7 @@ class VisionTable(Node):
         # Publish trays info
         if self.trays_info is not None:
             self.trays_info_pub.publish(self.trays_info)
+            self.slot_centers_pub.publish(self.slot_pixel_center_pub)
 
         # Update timestamps and send TF transforms
         for t in self.transforms:
@@ -190,7 +237,13 @@ class VisionTable(Node):
     def remove_background(self, frame: MatLike) -> MatLike:
         delta = cv2.subtract(self.base_background, frame)
 
+        # cv2.imshow('window', delta)
+        # cv2.waitKey(0)
+
         gray = cv2.cvtColor(delta, cv2.COLOR_BGR2GRAY)
+
+        # cv2.imshow('window', gray)
+        # cv2.waitKey(0)
 
         _, mask = cv2.threshold(gray, self.background_threshold, 255, cv2.THRESH_BINARY)
 
@@ -204,11 +257,16 @@ class VisionTable(Node):
                 filtered_contours.append(c)
 
         cv2.drawContours(canvas, filtered_contours, -1, color=255, thickness=cv2.FILLED) # type: ignore
+        
+        # cv2.imshow('window', canvas)
+        # cv2.waitKey(0)
 
         return cv2.bitwise_and(frame, frame, mask=canvas)
     
     def remove_and_replace_gears(self, frame: MatLike, gear_size: int) -> MatLike:
         detection_params = self.gear_detection_values[gear_size]
+
+        # cv2.imwrite(f"gear_image{gear_size}", frame)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -287,8 +345,6 @@ class VisionTable(Node):
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
 
-            # TODO: Update classifier to handle small gear tray and s2l2 kit tray
-
             # Use aspect ratio to classify tray type
             if aspect_ratio < 0.6:
                 trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY), angle))              
@@ -317,6 +373,7 @@ class VisionTable(Node):
     def determine_tray_info(self, trays_on_table: dict[int, list[tuple[tuple[int, int], float]]]) -> Trays:       
         # Fill the trays info msg
         tray_info = Trays()
+        pixel_tray_info = SlotPixel()
 
         # Clear list of transforms
         self.transforms.clear()
@@ -327,6 +384,13 @@ class VisionTable(Node):
                 tray_msg = Tray()
                 tray_msg.identifier = identifier
                 tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}'
+
+                pixel_tray_msg = PixelCenter()
+                pixel_tray_msg.identifier = identifier
+                pixel_tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}'
+                pixel_tray_msg.x = x
+                pixel_tray_msg.y = y
+                pixel_tray_msg.angle = angle
 
                 if self.publish_frames:
                     tray_center = Point(
@@ -343,14 +407,19 @@ class VisionTable(Node):
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                     # Create slot info for each slot
                     slot_info = SlotInfo()
+                    pixel_slot_info = PixelSlotInfo()
                     slot_info.name = f"{tray_msg.name}_{slot_name}"
+                    pixel_slot_info.name = f"{tray_msg.name}_{slot_name}"
 
                     if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
                         slot_info.size = SlotInfo.SMALL
+                        pixel_slot_info.size = SlotInfo.SMALL
                     elif "mg" in slot_info.name or identifier == Tray.MEDIUM_GEAR_TRAY:
                         slot_info.size = SlotInfo.MEDIUM
+                        pixel_slot_info.size = SlotInfo.MEDIUM
                     elif "lg" in slot_info.name or identifier == Tray.LARGE_GEAR_TRAY:
                         slot_info.size = SlotInfo.LARGE
+                        pixel_slot_info.size = SlotInfo.LARGE
 
                     # Generate tf transform for slot
                     if self.publish_frames:
@@ -381,13 +450,19 @@ class VisionTable(Node):
                         int(x - length * math.cos(gamma)),
                         int(y - length * math.sin(gamma))
                     )
+                    pixel_slot_info.slot_center_x = int(x - length * math.cos(gamma))
+                    pixel_slot_info.slot_center_y = int(y - length * math.sin(gamma))
 
                     tray_msg.slots.append(slot_info)
+                    pixel_tray_msg.slots.append(pixel_slot_info)
 
                 if identifier in VisionTable.part_tray_types:
                     tray_info.part_trays.append(tray_msg)
+                    pixel_tray_info.part_trays.append(pixel_tray_msg)
                 elif identifier in VisionTable.kit_tray_types:
-                    tray_info.kit_trays.append(tray_msg)   
+                    tray_info.kit_trays.append(tray_msg)
+                    pixel_tray_info.kit_trays.append(pixel_tray_msg)   
+            self.slot_pixel_center_pub = pixel_tray_info
         
         return tray_info
     
@@ -427,114 +502,122 @@ class VisionTable(Node):
         return False   
          
     # TODO: Fix
-    # def generate_grid_maps(self, frame: MatLike) -> Optional[MatLike]:
-    #     offset = 15
+    def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
+        offset = 15
 
-    #     # Corners are manually deduced from location of screw heads in table
-    #     top_left = (417 + offset, 180 + offset)
-    #     top_right = (1043 - offset, 179 + offset)
-    #     bottom_right = (1035 - offset, 955 - offset)
-    #     bottom_left = (428 + offset, 944 - offset)
+        # Corners are manually deduced from location of screw heads in table
+        top_left = (self.top_left_x + offset, self.top_left_y + offset)
+        top_right = (self.top_right_x - offset, self.top_right_y + offset)
+        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
+        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
 
-    #     # Black out everything from image that is not the active region
-    #     fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
+        # Black out everything from image that is not the active region
+        fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
 
-    #     maskImage = np.zeros(frame.shape, dtype=np.uint8)
-    #     cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
+        maskImage = np.zeros(frame.shape, dtype=np.uint8)
+        cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
 
-    #     active_region = cv2.bitwise_and(frame, maskImage)
+        active_region = cv2.bitwise_and(frame, maskImage)
 
-    #     # Detect optical table holes 
-    #     blur = cv2.GaussianBlur(active_region,(5,5),0)
+        # Detect optical table holes 
+        blur = cv2.GaussianBlur(active_region,(5,5),0)
 
-    #     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    #     threshold = cv2.inRange(hsv, (100, 0, 0), (255, 255, 120)) # type: ignore
+        cv2.imwrite('hsv.jpg', hsv)
 
-    #     offset = 25
+        threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
-    #     top_left = (417 + offset, 180 + offset)
-    #     top_right = (1043 - offset, 179 + offset)
-    #     bottom_right = (1035 - offset, 955 - offset)
-    #     bottom_left = (428 + offset, 944 - offset)
+        offset = 25
 
-    #     corners = np.array([top_right, bottom_right, bottom_left, top_left])
+        top_left = (self.top_left_x + offset, self.top_left_y + offset)
+        top_right = (self.top_right_x - offset, self.top_right_y + offset)
+        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
+        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
 
-    #     mask2 = np.zeros(threshold.shape, dtype=np.uint8)
+        corners = np.array([top_right, bottom_right, bottom_left, top_left])
+
+        mask2 = np.zeros(threshold.shape, dtype=np.uint8)
         
-    #     cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
+        cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
 
-    #     just_holes = cv2.bitwise_and(threshold, mask2)
+    
+        just_holes = cv2.bitwise_and(threshold, mask2)
 
-    #     contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    #     filtered_contours = []
-    #     for contour in contours:
-    #         area = cv2.contourArea(contour)
-    #         if area >= 10:
-    #             filtered_contours.append(contour)
+        filtered_contours = []
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area >= self.generate_map_area:
+                filtered_contours.append(contour)
 
-    #     rows = 24
-    #     columns = 19
+        rows = self.calibrate_rows
+        columns = self.calibrate_columns
 
-    #     if not len(filtered_contours) == rows * columns:
-    #         self.get_logger().error("Not able to detect all holes")
-    #         return None
+        cv2.drawContours(just_holes,filtered_contours,-1,120,2)
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
 
-    #     center_points = []
+        if not len(filtered_contours) == rows * columns:
+            self.get_logger().error("Not able to detect all holes")
+            return False
 
-    #     for contour in filtered_contours:
-    #         # Calculate moments for each contour
-    #         M = cv2.moments(contour)
+        center_points = []
 
-    #         # Calculate center of contour
-    #         if M["m00"] != 0:
-    #             cX = int(M["m10"] / M["m00"])
-    #             cY = int(M["m01"] / M["m00"])
+        for contour in filtered_contours:
+            # Calculate moments for each contour
+            M = cv2.moments(contour)
 
-    #             center_points.append((cX, cY))
+            # Calculate center of contour
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
 
-    #     center_y = 210
-    #     sorted_points = []
-    #     working_points = []
+                center_points.append((cX, cY))
 
-    #     for i in range(rows):
-    #         for point in center_points:
-    #             if center_y - 18 <= point[1] <= center_y + 18:
-    #                 working_points.append(point)
+        center_y = 210
+        sorted_points = []
+        working_points = []
+
+        for i in range(rows):
+            for point in center_points:
+                if center_y - 18 <= point[1] <= center_y + 18:
+                    working_points.append(point)
                 
-    #         sorted_points += sorted(working_points, key=lambda k: [k[0]])
+            sorted_points += sorted(working_points, key=lambda k: [k[0]])
 
-    #         working_points.clear()
+            working_points.clear()
 
-    #         center_y += 31
+            center_y += 25
 
-    #     if not len(sorted_points) == len(center_points):
-    #         self.get_logger().error("Not able to properly sort holes")
-    #         return
+        if not len(sorted_points) == len(center_points):
+            self.get_logger().error("Not able to properly sort holes")
+            return False
         
-    #     actual_points = []
+        actual_points = []
 
-    #     for i in range(rows):
-    #         x = (i * 30)
-    #         for j in range(columns):
-    #             y = (j * 30)
-    #             actual_points.append([x, y])
+        for i in range(rows):
+            x = (i * 30)
+            for j in range(columns):
+                y = (j * 30)
+                actual_points.append([x, y])
 
-    #     grid_x, grid_y = np.mgrid[0:rows*30, 0:columns*30]
+        grid_x, grid_y = np.mgrid[0:rows*30, 0:columns*30]
 
-    #     destination = np.array(actual_points)
-    #     source = np.array(sorted_points)
+        destination = np.array(actual_points)
+        source = np.array(sorted_points)
 
-    #     grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
-    #     map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape(rows*30,columns*30)
-    #     map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape(rows*30,columns*30)
-    #     map_x_32 = map_x.astype('float32')
-    #     map_y_32 = map_y.astype('float32')
+        grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
+        map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape(rows*30,columns*30)
+        map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape(rows*30,columns*30)
+        map_x_32 = map_x.astype('float32')
+        map_y_32 = map_y.astype('float32')
 
-    #     np.save("src/vision_testing/map_x.npy", map_x_32)
-    #     np.save("src/vision_testing/map_y.npy", map_y_32)
+        np.save(f"{filepath}{self.map_x_image}", map_x_32)
+        np.save(f"{filepath}{self.map_y_image}", map_y_32)
 
+        return True
     def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, rotation: float) -> TransformStamped:
         t = TransformStamped()
 
