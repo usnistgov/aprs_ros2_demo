@@ -15,6 +15,9 @@ set(msg_files
   "msg/Tray.msg"
   "msg/Trays.msg"
   "msg/SlotInfo.msg"
+  "msg/PixelCenter.msg"
+  "msg/SlotPixel.msg"
+  "msg/PixelSlotInfo.msg"
 )
 set(srv_files
   "srv/MoveToNamedPose.srv"
