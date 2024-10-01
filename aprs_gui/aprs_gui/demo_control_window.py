@@ -139,7 +139,7 @@ class DemoControlWindow(Node):
         # Robot Status Labels
         ctk.CTkLabel(self.main_window, text="Robot Status:").grid(column = LEFT_COLUMN, row = 3)
         self.robot_status_label = ctk.CTkLabel(self.main_window, text="Not Connected", text_color="red")
-        self.robot_status_label.grid(column = RIGHT_COLUMN, row = 1, padx=5) 
+        self.robot_status_label.grid(column = RIGHT_COLUMN, row = 3, padx=5) 
         
     # VISION FUNCTIONS
     def setup_vision_tab(self):
@@ -302,24 +302,41 @@ class DemoControlWindow(Node):
                 slot: PixelSlotInfo
                 if slot.occupied:
                     self.draw_gear(self.fanuc_canvas, slot.slot_center_x, slot.slot_center_y, slot.size)
+    
+    def update_teach_table_canvas(self, msg: SlotPixel):
+        self.teach_table_canvas.delete("all")
+        for tray in msg.kit_trays:
+            tray: PixelCenter
+            self.draw_kitting_tray(self.teach_table_canvas, tray.x, tray.y, angle=tray.angle)
+            for slot in tray.slots:
+                slot: PixelSlotInfo
+                if slot.occupied:
+                    self.draw_gear(self.teach_table_canvas, slot.slot_center_x, slot.slot_center_y, slot.size)
+        for tray in msg.part_trays:
+            tray: PixelCenter
+            self.draw_gear_tray(self.teach_table_canvas, tray.x, tray.y, tray.identifier, angle=tray.angle)
+            for slot in tray.slots:
+                slot: PixelSlotInfo
+                if slot.occupied:
+                    self.draw_gear(self.teach_table_canvas, slot.slot_center_x, slot.slot_center_y, slot.size)
 
     # Draw on canvas
-    def draw_gear(self, canvas: tk.Canvas, center_x, center_y, gear_type):
+    def draw_gear(self, canvas: tk.Canvas, center_x: int, center_y: int, gear_type: int):
         color, size = GEAR_COLORS_AND_SIZES[gear_type]
         canvas.create_oval(center_x-size, center_y-size, center_x+size, center_y+size, fill=color)
     
-    def draw_gear_tray(self, canvas: tk.Canvas, center_x, center_y, tray_type, angle = 0.0):
+    def draw_gear_tray(self, canvas: tk.Canvas, center_x: int, center_y: int, tray_type, angle: float = 0.0):
         color, size = GEAR_TRAY_COLORS_AND_SIZES[tray_type]
         points = [center_x-size[0], center_y-size[1], center_x-size[0], center_y+size[1], center_x+size[0], center_y+size[1], center_x+size[0], center_y-size[1]]
         self.rotate_shape(center_x, center_y, points, angle)
         canvas.create_polygon(points, fill=color)
     
-    def draw_kitting_tray(self, canvas: tk.Canvas, center_x, center_y, angle = 0.0):
+    def draw_kitting_tray(self, canvas: tk.Canvas, center_x: int, center_y: int, angle: float = 0.0):
         points = [center_x-17,center_y-21, center_x+8,center_y-21, center_x+17,center_y-10, center_x+17, center_y+10, center_x+8,center_y+21, center_x-17, center_y+21]
         self.rotate_shape(center_x, center_y, points, angle)
         canvas.create_polygon(points, fill="brown")
         
-    def rotate_shape(self, center_x, center_y, points, rotation):
+    def rotate_shape(self, center_x: int, center_y: int, points, rotation: float):
         for i in range(0,len(points),2):
             original_x = copy(points[i] - center_x)
             original_y = copy(points[i+1] - center_y)
@@ -332,7 +349,7 @@ class DemoControlWindow(Node):
         self.most_recent_joint_states = msg
 
     def robot_connection_cb(self):
-        if time() - self.most_recent_joint_states_time:
+        if time() - self.most_recent_joint_states_time <= 3.0:
             self.robot_status_label.configure(text="Connected", text_color="green")
         else:
             self.robot_status_label.configure(text="Not Connected", text_color="red")
