@@ -6,11 +6,7 @@ The software is provided 'as is' without any warranty of any kind, either expres
 Distributions of NIST software should also include copyright and licensing statements of any third-party software that are legally bundled with the code in compliance with the conditions of those licenses.
 */
 
-#include <aprs_controllers/gripper_controller.hpp>
-
-#include <exception>
-
-#include <controller_interface/controller_interface.hpp>
+#include <aprs_controllers/pneumatic_gripper_controller.hpp>
 
 namespace aprs_controllers {
 
@@ -39,7 +35,9 @@ controller_interface::return_type PneumaticGripperController::update(
   const rclcpp::Duration& /*period*/) 
 {
 
-  command_interfaces_.set_value(gripper_command);
+  for (auto& cmd_interface : command_interfaces_) {
+    cmd_interface.set_value(gripper_command);
+  }
 
   return controller_interface::return_type::OK;
 }
@@ -48,7 +46,7 @@ CallbackReturn PneumaticGripperController::on_init() {
   try
   {
     auto_declare<std::vector<std::string>>("joints", {});
-    change_gripper_state_ = create_service<aprs_interfaces::srv::PneumaticGripperControl>(
+    change_gripper_state_ = get_node()->create_service<aprs_interfaces::srv::PneumaticGripperControl>(
     "/change_gripper_state", 
     std::bind(&PneumaticGripperController::update_gripper_command, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS()
@@ -84,18 +82,18 @@ void PneumaticGripperController::update_gripper_command(
   std::shared_ptr<aprs_interfaces::srv::PneumaticGripperControl::Response> response)
 {
 
-  if (result->enable == true && state_interfaces_.at(0).get_value() != 0){
+  if (request->enable == true && state_interfaces_.at(0).get_value() != 0){
     gripper_command = 0;
-    response->status = "Opening gripper"
+    response->status = "Opening gripper";
     response->success = true;
   }
-  else if (result->enable == false && state_interfaces_.at(0).get_value() != gripper_stroke_){
+  else if (request->enable == false && state_interfaces_.at(0).get_value() != gripper_stroke_){
     gripper_command = gripper_stroke_;
-    response->status = "Closing gripper"
+    response->status = "Closing gripper";
     response->success = true;
   }
   else{
-    response->status = "Gripper is already in requested state"
+    response->status = "Gripper is already in requested state";
     response->success = false;
   }
 }

@@ -11,6 +11,7 @@ endif()
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
+  aprs_interfaces
   controller_interface
   pluginlib
   rclcpp_lifecycle
@@ -25,7 +26,7 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
 endforeach()
 
 add_library(${PROJECT_NAME} SHARED
-  src/gripper_controller.cpp
+  src/pneumatic_gripper_controller.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

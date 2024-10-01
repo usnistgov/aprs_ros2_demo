@@ -8,10 +8,13 @@ Distributions of NIST software should also include copyright and licensing state
 
 #pragma once
 
-#include <string>
-#include <controller_interface/controller_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <controller_interface/controller_interface.hpp>
 #include <aprs_interfaces/srv/pneumatic_gripper_control.hpp>
+
+#include <exception>
+#include <string>
+
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -26,6 +29,8 @@ class PneumaticGripperController : public controller_interface::ControllerInterf
   CallbackReturn on_init() override;
   CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
+  void update_gripper_command(const std::shared_ptr<aprs_interfaces::srv::PneumaticGripperControl::Request> request,
+                                  std::shared_ptr<aprs_interfaces::srv::PneumaticGripperControl::Response> response);
 
   rclcpp::Service<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr change_gripper_state_;
 
