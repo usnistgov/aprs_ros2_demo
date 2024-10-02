@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="motoman_ros2_control" params="name">
+
+    <ros2_control name="motoman" type="system">
+      <hardware>
+        <plugin>motoman_hardware/MotomanHardwareInterface</plugin>
+      </hardware>
+      
+      <joint name="joint_s">
+          <command_interface name="position">
+          <param name="min">{-2*pi}</param>
+          <param name="max">{2*pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+      
+      <joint name="joint_l">
+          <command_interface name="position">
+          <param name="min">{-2*pi}</param>
+          <param name="max">{2*pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+      <joint name="joint_e">
+          <command_interface name="position">
+          <param name="min">{-pi}</param>
+          <param name="max">{pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+      <joint name="joint_u">
+          <command_interface name="position">
+          <param name="min">{-2*pi}</param>
+          <param name="max">{2*pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+      <joint name="joint_r">
+          <command_interface name="position">
+          <param name="min">{-2*pi}</param>
+          <param name="max">{2*pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+      <joint name="joint_b">
+          <command_interface name="position">
+          <param name="min">{-2*pi}</param>
+          <param name="max">{2*pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+      <joint name="joint_t">
+          <command_interface name="position">
+          <param name="min">{-2*pi}</param>
+          <param name="max">{2*pi}</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+    </ros2_control>
+
+  </xacro:macro>
+
+</robot>
