@@ -11,11 +11,36 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
 
+struct statusMsg{
+  int msg_type;
+  int comm_type;
+  int reply_code;
+  int drives_powered;
+  int e_stopped;
+  int error_code;
+  int in_error;
+  int in_motion;
+  int mode;
+  int motion_possible;
+};
+
+struct jointFeedbackMsg{
+  int msg_type;
+  int comm_type;
+  int reply_code;
+  int robot_id;
+  int valid_fields;
+  float time;
+  std::vector<float> positions;
+  std::vector<float> velocities;
+  std::vector<float> accelerations;
+};
 
 namespace motoman_hardware {
 
   class MotomanHardwareInterface : public hardware_interface::SystemInterface {
-
+  enum message_lengths {STATUS = 40, JOINT_FEEDBACK = 144};
+  
   public:
     CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
 
@@ -44,7 +69,15 @@ namespace motoman_hardware {
     void read_joints();
     void write_joints();
 
-    int bin_to_int(char *);
+    int get_packet_length();
+
+    float bin_to_float(char*);
+
+    statusMsg read_status_msg(char *);
+    jointFeedbackMsg read_joint_feedback_msg(char *);
+
+    statusMsg current_status_;
+    jointFeedbackMsg current_joint_feedback_;
 
     int number_of_joints_ = 7;
 

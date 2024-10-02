@@ -222,63 +222,141 @@ namespace motoman_hardware {
     close(io_socket_);
   }
 
-  int MotomanHardwareInterface::bin_to_int(char* data)
+  int MotomanHardwareInterface::get_packet_length()
   {
-    int result;
+    char *length_packet = new char[4];
 
-    char reversed[4] = {data[3], data[2], data[1], data[0]};
+    ssize_t ret = socket_read::read_socket(state_socket_, length_packet, 4);
 
-    std::memcpy(&result, reversed, sizeof(int));
+    if (ret < 0){
+      RCLCPP_ERROR(get_logger(), "Unable to read from socket");
+      return -1;
+    }
 
-    return result;
+    int length = ntohl(*(uint32_t*)length_packet);
+
+    delete[] length_packet;
+
+    return length;
   }
 
   void MotomanHardwareInterface::read_joints(){
+    /*
+    get both a status and feed back packet
+    read 4 bytes to get length
+    read length into byte stream
+    pass byte stream into corresponding function (feedback or status)
+    Don't return function until feedback has been read in
+    */
+    int length;
 
-    // int length = get_packet_length();
+    for(int i = 0; i < 2; i++){
+      length = get_packet_length();
+      char *data = new char[length];
+      ssize_t ret = socket_read::read_socket(state_socket_, data, length);
+      switch(length){
+        case STATUS:
+          current_status_ = read_status_msg(data);
+          break;
+        case JOINT_FEEDBACK:
+          current_joint_feedback_ = read_joint_feedback_msg(data);
+          break;
+        default:
+          RCLCPP_ERROR(get_logger(), "Unknown message type received");
+          return;
+      }
+    }
+  }
 
-    // if (length < 0){
-    //   RCLCPP_ERROR(get_logger(), "Issue with socket...reconnecting");
+  statusMsg MotomanHardwareInterface::read_status_msg(char *byte_stream){
+    std::vector<int> status_vector;
+    char temp[4];
+    for(int i = 0; i < 10; i++){
+      for(int j = 0; j < 4; j++){
+        temp[j] = *(byte_stream+j);
+      }
+      byte_stream+=4;
+      status_vector.push_back(ntohl(*(uint32_t*)temp));
+    }
+    statusMsg status;
+    status.msg_type = status_vector[0];
+    status.comm_type = status_vector[1];
+    status.reply_code = status_vector[2];
+    status.drives_powered = status_vector[3];
+    status.e_stopped = status_vector[4];
+    status.error_code = status_vector[5];
+    status.in_error = status_vector[6];
+    status.in_motion = status_vector[7];
+    status.mode = status_vector[8];
+    status.motion_possible = status_vector[9];
 
-    //   close(state_sock_);
-    //   state_sock_ = socket(AF_INET, SOCK_STREAM, 0);
-    //   connect(state_sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_));
+    return status;
+  }
 
-    //   return std::make_pair(false, joint_positions);
-    // }
+  jointFeedbackMsg MotomanHardwareInterface::read_joint_feedback_msg(char *byte_stream){
+    std::vector<int> feedback_vector;
+    char temp[4];
+    for(int i = 0; i < 5; i++){
+      for(int j = 0; j < 4; j++){
+        temp[j] = *(byte_stream+j);
+      }
+      byte_stream+=4;
+      feedback_vector.push_back(ntohl(*(uint32_t*)temp));
+    }
+    jointFeedbackMsg joint_feedback;
+    joint_feedback.msg_type = feedback_vector[0];
+    joint_feedback.comm_type = feedback_vector[1];
+    joint_feedback.reply_code = feedback_vector[2];
+    joint_feedback.robot_id = feedback_vector[3];
+    joint_feedback.valid_fields = feedback_vector[4];
 
-    // if (length != state_buffer_length_) {
-    //   if(length == 40){
-    //     char *status_packet = new char[40];
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    joint_feedback.time = bin_to_float(temp);
 
-    //     socket_read::read_socket(state_sock_, status_packet, 40);
+    for(int i = 0; i < 10; i++){
+      for(int j = 0; j < 4; j++){
+        temp[j] = *(byte_stream+j);
+      }
+      byte_stream+=4;
+      joint_feedback.positions.push_back(bin_to_float(temp));
+    }
+    for(int i = 0; i < 10; i++){
+      for(int j = 0; j < 4; j++){
+        temp[j] = *(byte_stream+j);
+      }
+      byte_stream+=4;
+      joint_feedback.velocities.push_back(bin_to_float(temp));
+    }
+    for(int i = 0; i < 10; i++){
+      for(int j = 0; j < 4; j++){
+        temp[j] = *(byte_stream+j);
+      }
+      byte_stream+=4;
+      joint_feedback.accelerations.push_back(bin_to_float(temp));
+    }
 
-    //     std::vector<std::string> status_labels = {"msg_type", "comm_type", "reply_code", "drives_powered", "estopped", "error_code", "in_error", "in_motion", "mode", "motion_possible"};
-    //     int start = 0;
-    //     int val;
-    //     RCLCPP_INFO_STREAM(get_logger(), "Packet length: " << length);
-    //     for (auto label : status_labels){
-    //       char bytes[4] = {status_packet[start], status_packet[start+1], status_packet[start+2], status_packet[start+3]};
-    //       val = bin_to_int(bytes);
-    //       RCLCPP_INFO_STREAM(get_logger(), label << ": " << val);
-    //       start+=4;
-    //     }
-    //     RCLCPP_INFO(get_logger(), "\n");
-    //   }
-    //   else{
-    //     RCLCPP_INFO_STREAM(get_logger(), "Reading garbage data of length " << length);
-
-    //     char *throwaway = new char[length];
-        
-    //     socket_read::read_socket(state_socket_, throwaway, length);
-
-    //     delete[] throwaway;
-    //   }
-    // }
+    for(int i = 0; i < 7; i++){
+      joint_positions_[i] = joint_feedback.positions[i];
+    }
+    return joint_feedback;
   }
 
   void MotomanHardwareInterface::write_joints(){
 
+  }
+
+  float MotomanHardwareInterface::bin_to_float(char* data)
+  {
+    float result;
+
+    char reversed[4] = {data[3], data[2], data[1], data[0]};
+
+    std::memcpy(&result, reversed, sizeof(float));
+
+    return result;
   }
 }
 
