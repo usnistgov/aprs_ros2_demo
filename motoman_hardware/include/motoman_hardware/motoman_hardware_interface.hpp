@@ -37,45 +37,37 @@ namespace motoman_hardware {
   private:
     rclcpp::Logger get_logger();
 
-    bool flag = false;
+    bool setup_sockets();
+    bool connect_sockets();
+    void close_sockets();
 
-    std::pair<bool, std::vector<float>> read_joints();
-    std::pair<bool, const std::vector<uint8_t>> write_joints();
+    void read_joints();
+    void write_joints();
 
-    int get_packet_length();
-
-    int bin_to_int(char* data);
-    
-    float bin_to_float(char* data);
-
-    uint32_t float_to_ieee754(float value);
+    int bin_to_int(char *);
 
     int number_of_joints_ = 7;
 
-    union FloatUnion {
-      float f;
-      uint32_t i;
-    };
-
     std::vector<double> hw_commands_;
     std::vector<double> hw_states_;
-    std::vector<double> prev_hw_states_;
-    std::vector<double> prev_hw_commands_;
 
+    std::vector<double> joint_positions_;
 
     const char *robot_ip_ = "192.168.1.33";
-    const int state_port_ = 11002;
-    const int motion_port_ = 11000;
-    const int state_buffer_length_ = 56;
-    const int motion_buffer_length_ = 64;
+    const int state_port_ = 50241;
+    const int motion_port_ = 50240;
+    const int io_port_ = 50242;
 
-    struct sockaddr_in state_socket_;
-    struct sockaddr_in motion_socket_;
+    struct sockaddr_in state_socket_address_;
+    struct sockaddr_in motion_socket_address_;
+    struct sockaddr_in io_socket_address_;
 
-    int state_sock_ = 0;
-    int motion_sock_ = 0;
-    bool state_socket_created_{false};
-    bool motion_socket_created_{false};
+    int state_socket_ = 0;
+    int motion_socket_ = 0;
+    int io_socket_ = 0;
+
+    bool activated = false;
+    bool motion_requested = false;
   };
 
 }

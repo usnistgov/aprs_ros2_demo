@@ -17,43 +17,14 @@ namespace motoman_hardware {
       return hardware_interface::CallbackReturn::ERROR;
     }
 
-    // Create socket
-    if((state_sock_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "State Socket creation error" );
-      return hardware_interface::CallbackReturn::FAILURE;
+    if(!setup_sockets()){
+      RCLCPP_FATAL(get_logger(), "Unable to setup sockets");
+      return hardware_interface::CallbackReturn::ERROR;
     }
-
-    state_socket_.sin_family = AF_INET;
-    state_socket_.sin_port = htons(state_port_);
-
-    // Convert IP addresses from text to binary form
-    if(inet_pton(AF_INET, robot_ip_, &state_socket_.sin_addr) <= 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "Invalid address / Address not supported");
-      return hardware_interface::CallbackReturn::FAILURE;
-    }
-
-    // Create motion socket
-    if((motion_sock_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "Motion Socket creation error" );
-      return hardware_interface::CallbackReturn::FAILURE;
-    }
-
-    motion_socket_.sin_family = AF_INET;
-    motion_socket_.sin_port = htons(motion_port_);
-
-    // Convert IP addresses from text to binary form
-    if(inet_pton(AF_INET, robot_ip_, &motion_socket_.sin_addr) <= 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "Invalid address / Address not supported");
-      return hardware_interface::CallbackReturn::FAILURE;
-    }
-
 
     hw_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
     hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+    joint_positions_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -77,47 +48,24 @@ namespace motoman_hardware {
   {
     (void)previous_state;
 
-    // Connect to the State server
-    if(connect(state_sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_)) < 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "Connection failed");
-      return hardware_interface::CallbackReturn::FAILURE;
+    // Connect to sockets
+    if(!connect_sockets()){
+      RCLCPP_FATAL(get_logger(), "Unable to connect to sockets");
+      return hardware_interface::CallbackReturn::ERROR;
     }
 
-    state_socket_created_ = true;
+    read_joints();
 
-    // Connect to the Motion server
-    if(connect(motion_sock_, (struct sockaddr *)&motion_socket_, sizeof(motion_socket_)) < 0) 
-    {
-      RCLCPP_ERROR(get_logger(), "Connection failed");
-      return hardware_interface::CallbackReturn::FAILURE;
-    }
-
-    motion_socket_created_ = true;
-
-    auto ret = read_joints();
-
-    while(!ret.first){
-      ret = read_joints();
-    }
-
-    // if (!ret.first){
-    //   return hardware_interface::CallbackReturn::FAILURE;
-    // }
-
-    std::vector<float> current_positions = ret.second;
-
+    // Set commands equal to current state
     for (uint i = 0; i < hw_states_.size(); i++)
     {
-      hw_states_[i] = current_positions[i];
-      hw_commands_[i] = current_positions[i];
+      hw_states_[i] = joint_positions_[i];
+      hw_commands_[i] = joint_positions_[i];
     }
 
-    prev_hw_commands_ = hw_commands_;
-
-    flag = true;
-
     RCLCPP_INFO(get_logger(), "Successfully activated!");
+
+    activated = true;
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -125,14 +73,8 @@ namespace motoman_hardware {
   hardware_interface::CallbackReturn MotomanHardwareInterface::on_deactivate(const rclcpp_lifecycle::State& previous_state)
   {
     (void)previous_state;
-
-    if (state_socket_created_){
-      close(state_sock_);
-    }
-
-    if (motion_socket_created_){
-      close(motion_sock_);
-    }
+      
+    close_sockets();
 
     RCLCPP_INFO(get_logger(), "Successfully deactivated!");
 
@@ -143,18 +85,17 @@ namespace motoman_hardware {
   {
     (void)time;
     (void)period;
-
-    auto ret = read_joints();
-
-    if (!ret.first){
+    
+    if(!activated){
       return hardware_interface::return_type::OK;
     }
+    
+    read_joints();
 
-    std::vector<float> current_positions = ret.second;
 
     for (uint i = 0; i < hw_states_.size(); i++)
     {
-      hw_states_[i] = current_positions[i];
+      hw_states_[i] = joint_positions_[i];
     }
 
     return hardware_interface::return_type::OK;
@@ -165,29 +106,12 @@ namespace motoman_hardware {
     (void)time;
     (void)period;
 
-    if (prev_hw_commands_ != hw_commands_ && flag)
-    {
-      auto ret = write_joints();
+    if(!activated){
+      return hardware_interface::return_type::OK;
+    }
 
-      if (!ret.first){
-        return hardware_interface::return_type::OK;
-      }
-
-      if (send(motion_sock_, ret.second.data(), ret.second.size(), 0) < 0)
-      {
-        RCLCPP_INFO(get_logger(), "Send failed");
-        return hardware_interface::return_type::OK;
-      }
-      
-      char buffer[1024] = {0};
-
-      if (recv(motion_sock_, buffer, sizeof(buffer)-1,0) < 0)
-      {
-        RCLCPP_INFO(get_logger(),  "Receive failed");
-        return hardware_interface::return_type::OK;
-      }
-
-      prev_hw_commands_ = hw_commands_;
+    if(motion_requested){
+      write_joints();
     }
 
     return hardware_interface::return_type::OK;
@@ -223,134 +147,79 @@ namespace motoman_hardware {
     return rclcpp::get_logger("MotomanHardwareInterface");
   }
 
-  std::pair<bool, std::vector<float>> MotomanHardwareInterface::read_joints(){
-
-    std::vector<float> joint_positions = {0, 0, 0, 0, 0, 0};
-
-    // RCLCPP_INFO(get_logger(), "Reading joint states");
-    
-    // Read 4 bytes from socket to length of next packet 
-    int length = get_packet_length();
-
-    if (length < 0){
-      RCLCPP_ERROR(get_logger(), "Issue with socket...reconnecting");
-
-      close(state_sock_);
-      state_sock_ = socket(AF_INET, SOCK_STREAM, 0);
-      connect(state_sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_));
-      length = get_packet_length();
+  bool MotomanHardwareInterface::setup_sockets(){
+    // Create state socket
+    if((state_socket_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+    {
+      return false;
     }
 
-    if (length == 40){
-      char *status_packet = new char[40];
-      
-      socket_read::read_socket(state_sock_, status_packet, 40);
+    state_socket_address_.sin_family = AF_INET;
+    state_socket_address_.sin_port = htons(state_port_);
 
-      delete[] status_packet;
-
-      length = get_packet_length();
+    // Convert IP addresses from text to binary form
+    if(inet_pton(AF_INET, robot_ip_, &state_socket_address_.sin_addr) <= 0) 
+    {
+      return false;
     }
 
-    if (length == state_buffer_length_){
-
-      char *state_packet = new char[state_buffer_length_];
-      
-      socket_read::read_socket(state_sock_, state_packet, state_buffer_length_);
-
-      // Check that the message type is correct
-      char msg_type[4] = {state_packet[0], state_packet[1], state_packet[2], state_packet[3]};
-
-      if (bin_to_int(msg_type) != 10){
-        RCLCPP_INFO(get_logger(), "Message type is not Joint Position");
-        return std::make_pair(false, joint_positions);
-      }
-
-      int start = 0;
-      float joint_value = 0.0;
-      joint_positions.clear();
-
-      for (int i=0; i<6; i++){
-        start = 16 + (4*i);
-        
-        char joint_bytes[4] = {state_packet[start], state_packet[start+1], state_packet[start+2], state_packet[start+3]};
-
-        joint_value = bin_to_float(joint_bytes);
-
-        joint_positions.push_back(joint_value);
-
-        // RCLCPP_INFO_STREAM(get_logger(), "Joint " << std::to_string(i+1).c_str()  << ": " << std::to_string(joint_value));
-      }
-
-      // Correct for J2/J3 Interaction
-
-      joint_positions[2] += joint_positions[1];
-
-      delete[] state_packet;
-
-      return std::make_pair(true, joint_positions);
+    // Create motion socket
+    if((motion_socket_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+    {
+      return false;
     }
 
-    RCLCPP_WARN_STREAM(get_logger(), "Packet length: " << std::to_string(length).c_str());
-    return std::make_pair(false, joint_positions);
+    motion_socket_address_.sin_family = AF_INET;
+    motion_socket_address_.sin_port = htons(motion_port_);
+
+    // Convert IP addresses from text to binary form
+    if(inet_pton(AF_INET, robot_ip_, &motion_socket_address_.sin_addr) <= 0) 
+    {
+      return false;
+    }
+
+    // Create io socket
+    if((io_socket_ = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+    {
+      return false;
+    }
+
+    io_socket_address_.sin_family = AF_INET;
+    io_socket_address_.sin_port = htons(io_port_);
+
+    // Convert IP addresses from text to binary form
+    if(inet_pton(AF_INET, robot_ip_, &io_socket_address_.sin_addr) <= 0) 
+    {
+      return false;
+    }
+    return true;
   }
 
-  std::pair<bool, const std::vector<uint8_t>> MotomanHardwareInterface::write_joints(){
-
-    float velocity = 0.1;
-    float duration = 10.0;
-    std::vector<uint8_t> byte_array;
-
-    uint32_t prefix_length = htonl(0x00000040);
-    uint32_t msg_type = htonl(0x0000000b);
-    uint32_t comm_type = htonl(0x00000002);
-    uint32_t reply_code = 0x00;
-    uint32_t sequence = htonl(0x00000001);
-
-    std::vector<uint32_t> joint_data;
-    for (float val : hw_commands_) {
-        joint_data.push_back(float_to_ieee754(val));
-    }
-    while (joint_data.size() < 10) {
-        joint_data.push_back(0x00000000);
+  bool MotomanHardwareInterface::connect_sockets(){
+    // Connect to the state server
+    if(connect(state_socket_, (struct sockaddr *)&state_socket_address_, sizeof(state_socket_address_)) < 0) 
+    {
+      return false;
     }
 
-    uint32_t velocity_ieee754 = float_to_ieee754(velocity);
-    uint32_t duration_ieee754 = float_to_ieee754(duration);
-
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&prefix_length), reinterpret_cast<uint8_t*>(&prefix_length) + 4);
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&msg_type), reinterpret_cast<uint8_t*>(&msg_type) + 4);
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&comm_type), reinterpret_cast<uint8_t*>(&comm_type) + 4);
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&reply_code), reinterpret_cast<uint8_t*>(&reply_code) + 4);
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&sequence), reinterpret_cast<uint8_t*>(&sequence) + 4);
-
-    for (uint32_t data : joint_data) {
-        byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&data), reinterpret_cast<uint8_t*>(&data) + 4);
+    // Connect to the motion server
+    if(connect(motion_socket_, (struct sockaddr *)&motion_socket_address_, sizeof(motion_socket_address_)) < 0) 
+    {
+      return false;
     }
 
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&velocity_ieee754), reinterpret_cast<uint8_t*>(&velocity_ieee754) + 4);
-    byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&duration_ieee754), reinterpret_cast<uint8_t*>(&duration_ieee754) + 4);
-
-    return std::make_pair(true, byte_array);
-
+    // Connect to the io server
+    if(connect(io_socket_, (struct sockaddr *)&io_socket_address_, sizeof(io_socket_address_)) < 0) 
+    {
+      return false;
+    }
+    return true;
   }
 
-  int MotomanHardwareInterface::get_packet_length()
-  {
-    char *length_packet = new char[4];
-
-    ssize_t ret = socket_read::read_socket(state_sock_, length_packet, 4);
-
-    if (ret < 0){
-      RCLCPP_ERROR(get_logger(), "Unable to read from socket");
-      return -1;
-    }
-
-    // Reverse packet 
-    int length =  bin_to_int(length_packet);
-
-    delete[] length_packet;
-
-    return length;
+  void MotomanHardwareInterface::close_sockets(){
+    close(state_socket_);
+    close(motion_socket_);
+    close(io_socket_);
   }
 
   int MotomanHardwareInterface::bin_to_int(char* data)
@@ -364,23 +233,55 @@ namespace motoman_hardware {
     return result;
   }
 
-  float MotomanHardwareInterface::bin_to_float(char* data)
-  {
-    float result;
+  void MotomanHardwareInterface::read_joints(){
 
-    char reversed[4] = {data[3], data[2], data[1], data[0]};
+    // int length = get_packet_length();
 
-    std::memcpy(&result, reversed, sizeof(float));
+    // if (length < 0){
+    //   RCLCPP_ERROR(get_logger(), "Issue with socket...reconnecting");
 
-    return result;
+    //   close(state_sock_);
+    //   state_sock_ = socket(AF_INET, SOCK_STREAM, 0);
+    //   connect(state_sock_, (struct sockaddr *)&state_socket_, sizeof(state_socket_));
+
+    //   return std::make_pair(false, joint_positions);
+    // }
+
+    // if (length != state_buffer_length_) {
+    //   if(length == 40){
+    //     char *status_packet = new char[40];
+
+    //     socket_read::read_socket(state_sock_, status_packet, 40);
+
+    //     std::vector<std::string> status_labels = {"msg_type", "comm_type", "reply_code", "drives_powered", "estopped", "error_code", "in_error", "in_motion", "mode", "motion_possible"};
+    //     int start = 0;
+    //     int val;
+    //     RCLCPP_INFO_STREAM(get_logger(), "Packet length: " << length);
+    //     for (auto label : status_labels){
+    //       char bytes[4] = {status_packet[start], status_packet[start+1], status_packet[start+2], status_packet[start+3]};
+    //       val = bin_to_int(bytes);
+    //       RCLCPP_INFO_STREAM(get_logger(), label << ": " << val);
+    //       start+=4;
+    //     }
+    //     RCLCPP_INFO(get_logger(), "\n");
+    //   }
+    //   else{
+    //     RCLCPP_INFO_STREAM(get_logger(), "Reading garbage data of length " << length);
+
+    //     char *throwaway = new char[length];
+        
+    //     socket_read::read_socket(state_socket_, throwaway, length);
+
+    //     delete[] throwaway;
+    //   }
+    // }
   }
 
-  uint32_t MotomanHardwareInterface::float_to_ieee754(float value) {
-    FloatUnion fu;
-    fu.f = value;
-    return htonl(fu.i);
+  void MotomanHardwareInterface::write_joints(){
+
   }
 }
+
 
 
 ssize_t socket_read::read_socket(int __fd, void *__buf, size_t __nbytes) {
