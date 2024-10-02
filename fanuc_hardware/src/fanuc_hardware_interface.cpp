@@ -121,7 +121,7 @@ namespace fanuc_hardware {
     gripper_socket_created_ = true;
 
     // Open Gripper
-    send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
+    // send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
     gripper_state_ = 0;
 
     auto ret = read_joints();
@@ -219,10 +219,10 @@ namespace fanuc_hardware {
     }
 
     // Check if gripper state was changed if so write gripper
-    if (flag && prev_hw_commands_[6] != hw_commands_[6])
-    {
-      auto ret = write_gripper();
-    }
+    // if (flag && prev_hw_commands_[6] != hw_commands_[6])
+    // {
+    //   auto ret = write_gripper();
+    // }
 
     prev_hw_commands_ = hw_commands_;
 
@@ -323,11 +323,11 @@ namespace fanuc_hardware {
 
       delete[] state_packet;
 
-      if (gripper_state_) {
-        joint_positions.push_back(0);
-      } else {
-        joint_positions.push_back(gripper_stroke_);
-      }
+      // if (gripper_state_) {
+      //   joint_positions.push_back(0);
+      // } else {
+      //   joint_positions.push_back(gripper_stroke_);
+      // }
 
       return std::make_pair(true, joint_positions);
     }
@@ -385,7 +385,7 @@ namespace fanuc_hardware {
       send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
       gripper_state_ = gripper_stroke_;
     } else {
-      RCLCPP_ERROR(get_logger(), "Gripper Command Not Valid");
+     // RCLCPP_ERROR(get_logger(), "Gripper Command Not Valid");
     }
 
     return true;

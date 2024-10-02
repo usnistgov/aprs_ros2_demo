@@ -8,6 +8,8 @@ controller_manager:
     forward_position_controller:
       type: forward_command_controller/ForwardCommandController
 
+    gripper_controller:
+      type: aprs_controllers/PneumaticGripperController
 
 forward_position_controller:
   ros__parameters:
@@ -20,3 +22,7 @@ forward_position_controller:
       - joint_6
       
     interface_name: position
+
+# gripper_controller:
+#   ros_parameters:
+    

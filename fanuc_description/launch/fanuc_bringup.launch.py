@@ -53,6 +53,12 @@ def launch_setup(context, *args, **kwargs):
         arguments=['forward_position_controller',],
     )
 
+    gripper_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=['gripper_controller'],
+    )
+
     fanuc_gripper_control = Node(
         package="fanuc_hardware",
         executable="fanuc_gripper_control.py",
@@ -88,8 +94,9 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher,
         joint_state_broadcaster,
         forward_position_controller,
-        fanuc_gripper_control,
-        rviz_node
+        # fanuc_gripper_control,
+        rviz_node,
+        gripper_controller
     ]
 
     return nodes_to_start
