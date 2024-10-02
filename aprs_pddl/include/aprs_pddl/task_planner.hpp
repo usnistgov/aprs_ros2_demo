@@ -16,6 +16,7 @@
 
 #include "aprs_interfaces/srv/generate_init_state.hpp"
 #include "aprs_interfaces/srv/generate_plan.hpp"
+#include "aprs_interfaces/srv/clear_current_state.hpp"
 #include "aprs_interfaces/action/execute_plan.hpp"
 #include "aprs_interfaces/msg/trays.hpp"
 #include "aprs_interfaces/msg/slot_info.hpp"
@@ -41,6 +42,7 @@ public:
   std::shared_ptr<plansys2::ExecutorClient> executor_client_; 
 
   rclcpp::Service<aprs_interfaces::srv::GenerateInitState>::SharedPtr generate_init_state_server_;
+  rclcpp::Service<aprs_interfaces::srv::ClearCurrentState>::SharedPtr clear_current_state_server_;
   rclcpp::Service<aprs_interfaces::srv::GeneratePlan>::SharedPtr generate_plan_server_;
   rclcpp_action::Server<aprs_interfaces::action::ExecutePlan>::SharedPtr execute_plan_action_;
 
@@ -73,6 +75,10 @@ public:
   void GeneratePlanCallback(
     const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request,
     const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response
+  );
+  void ClearCurrentStateCallback(
+    const std::shared_ptr<aprs_interfaces::srv::ClearCurrentState::Request> request,
+    const std::shared_ptr<aprs_interfaces::srv::ClearCurrentState::Response> response
   );
 
   rclcpp_action::GoalResponse ExecutePlanHandelGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const aprs_interfaces::action::ExecutePlan::Goal> goal);

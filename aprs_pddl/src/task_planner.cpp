@@ -20,6 +20,10 @@ TaskPlanner::TaskPlanner() : Node("task_planner")
     std::bind(&TaskPlanner::ExecutePlanHandelCancel, this, std::placeholders::_1),
     std::bind(&TaskPlanner::ExecutePlanHandelAccept, this, std::placeholders::_1));
 
+  clear_current_state_server_ = this->create_service<aprs_interfaces::srv::ClearCurrentState>(
+    "/clear_pddl_current_state",
+    std::bind(&TaskPlanner::ClearCurrentStateCallback, this, std::placeholders::_1, std::placeholders::_2));
+
   domain_expert_ = std::make_shared<plansys2::DomainExpertClient>();
   planner_client_ = std::make_shared<plansys2::PlannerClient>();
   problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>();
@@ -51,7 +55,7 @@ void TaskPlanner::TeachTraysInfoCallback(const aprs_interfaces::msg::Trays::Shar
 }
 
 void TaskPlanner::GenerateInitStateCallback(const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Request> request,
-                                const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Response> response)
+                                            const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Response> response)
 {
   (void)request;
   init_world_state();
@@ -61,15 +65,119 @@ void TaskPlanner::GenerateInitStateCallback(const std::shared_ptr<aprs_interface
   response->status = "Successfully Created Plansys2 Problem File";
 }
 
-void TaskPlanner::GeneratePlanCallback(const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request,
-    const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response){
-    // Todo 
+void TaskPlanner::ClearCurrentStateCallback(const std::shared_ptr<aprs_interfaces::srv::ClearCurrentState::Request> request,
+                                            const std::shared_ptr<aprs_interfaces::srv::ClearCurrentState::Response> response)
+{
+  (void)request;
+  problem_expert_->clearGoal();
+  problem_expert_->clearKnowledge();
+  goal_str_ = "(and";
+  response->success = true;
+  response->status = "Successfully Cleared Current State";
 }
 
-rclcpp_action::GoalResponse TaskPlanner::ExecutePlanHandelGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const aprs_interfaces::action::ExecutePlan::Goal> goal){}
-rclcpp_action::CancelResponse TaskPlanner::ExecutePlanHandelCancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){}
-void TaskPlanner::ExecutePlanHandelAccept(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){}
-void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){}
+void TaskPlanner::GeneratePlanCallback(const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request,
+                                        const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response){
+  (void)request;
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (!plan.has_value()){
+    RCLCPP_ERROR(this->get_logger(), "Could not generate plan");
+    response->success = false;
+    response->status = "Could not generate plan";
+    return;
+  }
+
+  response->success = true;
+  response->plan = plan.value();
+  response->status = "Successfully Generated Plan";
+}
+
+rclcpp_action::GoalResponse TaskPlanner::ExecutePlanHandelGoal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const aprs_interfaces::action::ExecutePlan::Goal> goal){
+  RCLCPP_INFO(this->get_logger(), "Received goal request with actions:");
+  for (auto& action : goal->plan.items){
+    RCLCPP_INFO(this->get_logger(), "%s", action.action.c_str());
+  }
+  (void)uuid;
+  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+rclcpp_action::CancelResponse TaskPlanner::ExecutePlanHandelCancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){
+  RCLCPP_INFO(this->get_logger(), "Received request to cancel goal" );
+  (void)goal_handle;
+  return rclcpp_action::CancelResponse::ACCEPT;
+}
+void TaskPlanner::ExecutePlanHandelAccept(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){
+   using namespace std::placeholders;
+    // this needs to return quickly to avoid blocking the executor, so spin up a new thread
+    std::thread{std::bind(&TaskPlanner::ExecutePlanExecute, this, _1), goal_handle}.detach();
+}
+void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle){
+  rclcpp::Rate loop_rate(1);
+  const auto goal = goal_handle->get_goal();
+  plansys2_msgs::action::ExecutePlan::Feedback plansys_feedback;
+  auto feedback = std::make_shared<aprs_interfaces::action::ExecutePlan::Feedback>();
+  auto result = std::make_shared<aprs_interfaces::action::ExecutePlan::Result>();
+
+  if (goal->plan.items.empty()){
+    RCLCPP_ERROR(this->get_logger(), "Received plan is null");
+    result->success = false;
+    result->status = "Plan is null";
+    goal_handle->abort(result);
+    return;
+  }
+
+  if (!executor_client_->start_plan_execution(goal->plan)){
+    RCLCPP_ERROR(this->get_logger(), "Error starting plan execution");
+    result->success = false;    
+    result->status = "Error starting plan execution";
+    goal_handle->abort(result);
+    return;
+  }
+
+  while (executor_client_->execute_and_check_plan()){
+
+    if (goal_handle->is_canceling()){
+      RCLCPP_INFO(this->get_logger(), "Goal canceled");
+      executor_client_->cancel_plan_execution();
+      result->success = false;
+      result->status = "Goal canceled";
+      goal_handle->canceled(result);
+      return;
+    }
+
+    plansys_feedback = executor_client_->getFeedBack();
+
+    for (auto& action_feedback : plansys_feedback.action_execution_status){
+      if (action_feedback.status == plansys2_msgs::msg::ActionExecutionInfo::EXECUTING){
+        feedback->current_action = action_feedback.action;
+      }
+    }
+  }
+
+  auto plansys_result = executor_client_->getResult();
+
+  if (plansys_result->success){
+    RCLCPP_INFO(this->get_logger(), "Plan executed successfully");
+    result->success = true;
+    result->status = "Plan executed successfully";
+    goal_handle->succeed(result);
+    return;
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Error executing plan");
+    auto action_execution_status = plansys_result->action_execution_status;
+    for (auto& action_status : action_execution_status){
+      if (action_status.status == plansys2_msgs::msg::ActionExecutionInfo::FAILED){
+        RCLCPP_ERROR(this->get_logger(), ("Action " + action_status.action + " failed").c_str());
+        result->success = false;
+        result->status = "Action " + action_status.action + " failed";
+        goal_handle->abort(result);
+        return;
+      }
+    }
+  }
+}
 
 void TaskPlanner::init_world_state(){
 
