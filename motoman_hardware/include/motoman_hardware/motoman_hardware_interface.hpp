@@ -75,6 +75,8 @@ namespace motoman_hardware {
     std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
+    ~MotomanHardwareInterface();
+
   private:
     rclcpp::Logger get_logger();
 

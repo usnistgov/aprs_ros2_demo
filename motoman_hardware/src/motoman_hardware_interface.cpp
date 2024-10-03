@@ -406,6 +406,10 @@ namespace motoman_hardware {
     prev_hw_commands_ = hw_commands_;
     return true;
   }
+
+  MotomanHardwareInterface::~MotomanHardwareInterface(){
+    on_deactivate(rclcpp_lifecycle::State());
+  }
 }
 
 JointTrajPtFull::JointTrajPtFull(int sequence, std::vector<float> goal_positions, jointFeedbackMsg current_position){
