@@ -38,16 +38,18 @@ struct jointFeedbackMsg{
   std::vector<float> accelerations;
 };
 
-struct MotoMotionReply{
-  int msg_type;
-  int comm_type;
-  int reply_code;
-  int robot_id;
-  int sequence;
-  int command;
-  int result;
-  int subcode;
-  std::vector<float> data;
+class MotoMotionReply{
+  public:
+    MotoMotionReply(char*);
+    int msg_type;
+    int comm_type;
+    int reply_code;
+    int robot_id;
+    int sequence;
+    int command;
+    int result;
+    int subcode;
+    std::vector<float> data;
 };
 
 namespace motoman_hardware {
@@ -83,7 +85,7 @@ namespace motoman_hardware {
     void read_joints();
     bool write_joints();
 
-    int get_packet_length();
+    int get_packet_length(int);
 
     statusMsg read_status_msg(char *);
     jointFeedbackMsg read_joint_feedback_msg(char *);
@@ -142,10 +144,8 @@ class JointTrajPtFull{
 class MotoMotionCtrl{
   public:
     MotoMotionCtrl(std::string);
-    MotoMotionReply send_msg_and_get_feedback(int);
-  private:
     std::vector<uint8_t> to_bytes();
-
+  private:
     std::map<std::string, int> command_types_ = { {"CHECK_MOTION_READY", 200101}, 
                                                   {"CHECK_QUEUE_CNT", 200102}, 
                                                   {"STOP_MOTION", 200111}, 
@@ -228,37 +228,6 @@ int get_reply_packet_length(int socket)
   delete[] length_packet;
 
   return length;
-}
-
-MotoMotionReply make_moto_motion_reply(char* byte_stream){
-  std::vector<int> feedback_vector;
-  char temp[4];
-  for(int i = 0; i < 8; i++){
-    for(int j = 0; j < 4; j++){
-      temp[j] = *(byte_stream+j);
-    }
-    byte_stream+=4;
-    feedback_vector.push_back(ntohl(*(uint32_t*)temp));
-  }
-  MotoMotionReply reply;
-  reply.msg_type = feedback_vector[0];
-  reply.comm_type = feedback_vector[1];
-  reply.reply_code = feedback_vector[2];
-  reply.robot_id = feedback_vector[3];
-  reply.sequence = feedback_vector[4];
-  reply.command = feedback_vector[5];
-  reply.result = feedback_vector[6];
-  reply.subcode = feedback_vector[7];
-
-  std::vector<float> data;
-  for(int i = 0; i < 10; i++){
-    for(int j = 0; j < 4; j++){
-      temp[j] = *(byte_stream+j);
-    }
-    byte_stream+=4;
-    reply.data.push_back(bin_to_float(temp));
-  }
-  return reply;
 }
 
 #endif  // MOTOMAN_HARDWARE__MOTOMAN_HARDWARE_INTERFACE_

@@ -61,12 +61,25 @@ namespace motoman_hardware {
     }
 
     MotoMotionCtrl start_traj_mode("START_TRAJ_MODE");
-    MotoMotionReply reply = start_traj_mode.send_msg_and_get_feedback(motion_socket_);
 
-    if(reply.result != 0){
-      RCLCPP_FATAL_STREAM(get_logger(), "Unable to start trajectory mode. Result code: "<<reply.result << " Subcode: " << reply.subcode);
-      return hardware_interface::CallbackReturn::ERROR;
+    std::vector<uint8_t> start_traj_mode_bytes = start_traj_mode.to_bytes();
+    socket_write::write_socket(motion_socket_, start_traj_mode_bytes.data(), start_traj_mode_bytes.size());
+
+    int length = get_packet_length(motion_socket_);
+
+    if(length == 72){
+      char *data = new char[length];
+      socket_read::read_socket(motion_socket_, data, length);
+      MotoMotionReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_FATAL_STREAM(get_logger(), "Unable to start trajectory mode. Result code: "<<reply.result << " Subcode: " << reply.subcode);
+        return hardware_interface::CallbackReturn::ERROR;
+      }
     }
+    else{
+      RCLCPP_ERROR(get_logger(), "Message recieved from motion socket not a motion reply.");
+    }
+    
 
     read_joints();
 
@@ -89,9 +102,28 @@ namespace motoman_hardware {
   {
     (void)previous_state;
 
-    MotoMotionCtrl start_traj_mode("STOP_TRAJ_MODE");
-    MotoMotionReply reply = start_traj_mode.send_msg_and_get_feedback(motion_socket_);
-      
+    RCLCPP_INFO(get_logger(), "Inside on_deactivate");
+
+    MotoMotionCtrl stop_traj_mode("STOP_TRAJ_MODE");
+
+    std::vector<uint8_t> stop_traj_mode_bytes = stop_traj_mode.to_bytes();
+    socket_write::write_socket(motion_socket_, stop_traj_mode_bytes.data(), stop_traj_mode_bytes.size());
+
+    int length = get_packet_length(motion_socket_);
+
+    if(length == 72){
+      char *data = new char[length];
+      socket_read::read_socket(motion_socket_, data, length);
+      MotoMotionReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_FATAL_STREAM(get_logger(), "Unable to stop trajectory mode. Result code: "<<reply.result << " Subcode: " << reply.subcode);
+        return hardware_interface::CallbackReturn::ERROR;
+      }
+    }
+    else{
+      RCLCPP_ERROR(get_logger(), "Message recieved from motion socket not a motion reply.");
+    }
+
     close_sockets();
 
     RCLCPP_INFO(get_logger(), "Successfully deactivated!");
@@ -253,11 +285,11 @@ namespace motoman_hardware {
     close(io_socket_);
   }
 
-  int MotomanHardwareInterface::get_packet_length()
+  int MotomanHardwareInterface::get_packet_length(int socket)
   {
     char *length_packet = new char[4];
 
-    ssize_t ret = socket_read::read_socket(state_socket_, length_packet, 4);
+    ssize_t ret = socket_read::read_socket(socket, length_packet, 4);
 
     if (ret < 0){
       RCLCPP_ERROR(get_logger(), "Unable to read from socket");
@@ -275,7 +307,7 @@ namespace motoman_hardware {
     int length;
 
     for(int i = 0; i < 2; i++){
-      length = get_packet_length();
+      length = get_packet_length(state_socket_);
       char *data = new char[length];
       socket_read::read_socket(state_socket_, data, length);
       switch(length){
@@ -423,11 +455,7 @@ std::vector<uint8_t> JointTrajPtFull::to_bytes(){
 
 MotoMotionReply JointTrajPtFull::send_msg_and_get_feedback(int motion_socket){
   std::vector<uint8_t> msg_bytes = to_bytes();
-  MotoMotionReply reply;
-  if (send(motion_socket, msg_bytes.data(), msg_bytes.size(), 0) < 0)
-  {
-    return reply;
-  }
+  send(motion_socket, msg_bytes.data(), msg_bytes.size(), 0);
   
   int reply_length = get_reply_packet_length(motion_socket);
 
@@ -435,7 +463,7 @@ MotoMotionReply JointTrajPtFull::send_msg_and_get_feedback(int motion_socket){
 
   socket_read::read_socket(motion_socket, data, reply_length);
   
-  return make_moto_motion_reply(data);
+  return MotoMotionReply(data);
 }
 
 MotoMotionCtrl::MotoMotionCtrl(std::string command_type){
@@ -460,21 +488,33 @@ std::vector<uint8_t> MotoMotionCtrl::to_bytes(){
   return byte_array;
 }
 
-MotoMotionReply MotoMotionCtrl::send_msg_and_get_feedback(int motion_socket){
-  std::vector<uint8_t> msg_bytes = to_bytes();
-  MotoMotionReply reply;
-  if (send(motion_socket, msg_bytes.data(), msg_bytes.size(), 0) < 0)
-  {
-    return reply;
+MotoMotionReply::MotoMotionReply(char* byte_stream){
+  std::vector<int> feedback_vector;
+  char temp[4];
+  for(int i = 0; i < 8; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    feedback_vector.push_back(ntohl(*(uint32_t*)temp));
   }
-  
-  int reply_length = get_reply_packet_length(motion_socket);
+  msg_type = feedback_vector[0];
+  comm_type = feedback_vector[1];
+  reply_code = feedback_vector[2];
+  robot_id = feedback_vector[3];
+  sequence = feedback_vector[4];
+  command = feedback_vector[5];
+  result = feedback_vector[6];
+  subcode = feedback_vector[7];
 
-  char *data = new char[reply_length];
-
-  socket_read::read_socket(motion_socket, data, reply_length);
-  
-  return make_moto_motion_reply(data);
+  std::vector<float> data;
+  for(int i = 0; i < 10; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    data.push_back(bin_to_float(temp));
+  }
 }
 
 ssize_t socket_read::read_socket(int __fd, void *__buf, size_t __nbytes) {
