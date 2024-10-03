@@ -14,6 +14,10 @@
           </command_interface>
           <state_interface name="position">
           </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
+          </state_interface>
       </joint>
       
       <joint name="joint_l">
@@ -22,6 +26,10 @@
           <param name="max">{1.9198}</param>
           </command_interface>
           <state_interface name="position">
+          </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
           </state_interface>
       </joint>
 
@@ -32,6 +40,10 @@
           </command_interface>
           <state_interface name="position">
           </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
+          </state_interface>
       </joint>
 
       <joint name="joint_u">
@@ -40,6 +52,10 @@
           <param name="max">{2.2689}</param>
           </command_interface>
           <state_interface name="position">
+          </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
           </state_interface>
       </joint>
 
@@ -50,6 +66,10 @@
           </command_interface>
           <state_interface name="position">
           </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
+          </state_interface>
       </joint>
 
       <joint name="joint_b">
@@ -59,6 +79,10 @@
           </command_interface>
           <state_interface name="position">
           </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
+          </state_interface>
       </joint>
 
       <joint name="joint_t">
@@ -67,6 +91,10 @@
           <param name="max">{pi}</param>
           </command_interface>
           <state_interface name="position">
+          </state_interface>
+          <state_interface name="velocity">
+          </state_interface>
+          <state_interface name="effort">
           </state_interface>
       </joint>
 

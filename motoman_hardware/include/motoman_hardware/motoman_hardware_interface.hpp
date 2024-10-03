@@ -11,6 +11,8 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
 
+#include <cmath>
+
 struct statusMsg{
   int msg_type;
   int comm_type;
@@ -34,6 +36,18 @@ struct jointFeedbackMsg{
   std::vector<float> positions;
   std::vector<float> velocities;
   std::vector<float> accelerations;
+};
+
+struct MotoMotionReply{
+  int msg_type;
+  int comm_type;
+  int reply_code;
+  int robot_id;
+  int sequence;
+  int command;
+  int result;
+  int subcode;
+  std::vector<float> data;
 };
 
 namespace motoman_hardware {
@@ -67,11 +81,9 @@ namespace motoman_hardware {
     void close_sockets();
 
     void read_joints();
-    void write_joints();
+    bool write_joints();
 
     int get_packet_length();
-
-    float bin_to_float(char*);
 
     statusMsg read_status_msg(char *);
     jointFeedbackMsg read_joint_feedback_msg(char *);
@@ -82,9 +94,11 @@ namespace motoman_hardware {
     int number_of_joints_ = 7;
 
     std::vector<double> hw_commands_;
-    std::vector<double> hw_states_;
+    std::vector<double> prev_hw_commands_;
 
-    std::vector<double> joint_positions_;
+    std::vector<double> hw_positions_;
+    std::vector<double> hw_velocities_;
+    std::vector<double> hw_accelerations_;
 
     const char *robot_ip_ = "192.168.1.33";
     const int state_port_ = 50241;
@@ -105,6 +119,91 @@ namespace motoman_hardware {
 
 }
 
+class JointTrajPtFull{
+  public:
+    JointTrajPtFull(int, std::vector<float>, jointFeedbackMsg);
+    MotoMotionReply send_msg_and_get_feedback(int);
+  private:
+    std::vector<uint8_t> to_bytes();
+
+    int length = 136;
+    int msg_type = 14;
+    int comm_type = 2;
+    int reply_code = 0;
+    int robot_id = 0;
+    int seq;
+    int valid_fields = 7;
+    float time;
+    std::vector<float> positions;
+    std::vector<float> velocities = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::vector<float> accelerations = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+};
+
+class MotoMotionCtrl{
+  public:
+    MotoMotionCtrl(std::string);
+    MotoMotionReply send_msg_and_get_feedback(int);
+  private:
+    std::vector<uint8_t> to_bytes();
+
+    std::map<std::string, int> command_types_ = { {"CHECK_MOTION_READY", 200101}, 
+                                                  {"CHECK_QUEUE_CNT", 200102}, 
+                                                  {"STOP_MOTION", 200111}, 
+                                                  {"START_TRAJ_MODE", 200121},
+                                                  {"STOP_TRAJ_MODE", 200122} };
+    int length = 64;
+    int msg_type = 2001;
+    int comm_type = 2;
+    int reply_code = 0;
+    int robot_id = 0;
+    int seq = 0;
+    int command;
+    std::vector<float> data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+};
+
+template <typename T,
+          typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+std::vector<uint8_t> splitValueToBytes(T const& value)
+{
+    std::vector<uint8_t> bytes;
+
+    for (size_t i = 0; i < sizeof(value); i++)
+    {
+        uint8_t byte = value >> (i * 8);
+        bytes.insert(bytes.begin(), byte);
+    }
+
+    return bytes;
+}
+
+template <typename T>
+void to_byte_and_insert(std::vector<uint8_t>& byte_array, T value){
+  std::vector<uint8_t> temp = splitValueToBytes(value);
+  byte_array.insert(byte_array.end(), temp.begin(), temp.end());
+}
+
+union FloatUnion {
+  float f;
+  uint32_t i;
+};
+
+uint32_t float_to_ieee754(float value) {
+  FloatUnion fu;
+  fu.f = value;
+  return htonl(fu.i);
+}
+
+float bin_to_float(char* data)
+{
+  float result; 
+
+  char reversed[4] = {data[3], data[2], data[1], data[0]};
+
+  std::memcpy(&result, reversed, sizeof(float));
+
+  return result;
+}
+
 #include <unistd.h>
 
 namespace socket_read {
@@ -112,6 +211,54 @@ namespace socket_read {
 }
 namespace socket_write {
   ssize_t write_socket(int __fd, void *__buf, size_t __nbytes);
+}
+
+int get_reply_packet_length(int socket)
+{
+  char *length_packet = new char[4];
+
+  ssize_t ret = socket_read::read_socket(socket, length_packet, 4);
+
+  if (ret < 0){
+    return -1;
+  }
+
+  int length = ntohl(*(uint32_t*)length_packet);
+
+  delete[] length_packet;
+
+  return length;
+}
+
+MotoMotionReply make_moto_motion_reply(char* byte_stream){
+  std::vector<int> feedback_vector;
+  char temp[4];
+  for(int i = 0; i < 8; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    feedback_vector.push_back(ntohl(*(uint32_t*)temp));
+  }
+  MotoMotionReply reply;
+  reply.msg_type = feedback_vector[0];
+  reply.comm_type = feedback_vector[1];
+  reply.reply_code = feedback_vector[2];
+  reply.robot_id = feedback_vector[3];
+  reply.sequence = feedback_vector[4];
+  reply.command = feedback_vector[5];
+  reply.result = feedback_vector[6];
+  reply.subcode = feedback_vector[7];
+
+  std::vector<float> data;
+  for(int i = 0; i < 10; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    reply.data.push_back(bin_to_float(temp));
+  }
+  return reply;
 }
 
 #endif  // MOTOMAN_HARDWARE__MOTOMAN_HARDWARE_INTERFACE_

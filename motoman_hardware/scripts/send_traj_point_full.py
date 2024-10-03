@@ -243,6 +243,7 @@ def main():
                 
                 received_joint_values = True
     
+    input()
     
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
@@ -267,44 +268,50 @@ def main():
                 
         sleep(1)
     
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect(("192.168.1.33", 50242))
-        open_gripper(sock)
-        check_if_gripper_closed = ReadIOBit(10010)
-        response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
-        print(response[-2])
-        check_if_gripper_closed = ReadIOBit(10011)
-        response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
-        print(response[-2])
-        sleep(10)
-        close_gripper(sock)
-        check_if_gripper_closed = ReadIOBit(10010)
-        response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
-        print(response[-2])
-        check_if_gripper_closed = ReadIOBit(10011)
-        response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
-        print(response[-2])
-        # velocities = [0.0] * 7
-        # accelerations = [0.0] * 7
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    #     sock.connect(("192.168.1.33", 50242))
+    #     open_gripper(sock)
+    #     check_if_gripper_closed = ReadIOBit(10010)
+    #     response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
+    #     print(response[-2])
+    #     check_if_gripper_closed = ReadIOBit(10011)
+    #     response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
+    #     print(response[-2])
+    #     sleep(10)
+    #     close_gripper(sock)
+    #     check_if_gripper_closed = ReadIOBit(10010)
+    #     response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
+    #     print(response[-2])
+    #     check_if_gripper_closed = ReadIOBit(10011)
+    #     response = check_if_gripper_closed.send_msg_and_get_feedback(sock)
+    #     print(response[-2])
+        velocities = [0.0] * 7
+        accelerations = [0.0] * 7
     
-        # init_trajectory = JointTrajPtFull(0, 0.0, joint_positions, velocities, accelerations)
-        # reply = init_trajectory.send_msg_and_get_feedback(s)
-        # print(f"Message type: {reply.command}")
-        # print(f"Initial Trajectory pt sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
+        init_trajectory = JointTrajPtFull(0, 0.0, joint_positions, velocities, accelerations)
+        reply = init_trajectory.send_msg_and_get_feedback(s)
+        print(f"Message type: {reply.command}")
+        print(f"Initial Trajectory pt sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
         
-        # # sleep(5)
-        
-        # joint_positions[0] -= 0.5
-        # # velocities = [0.01] * 7
-        # # accelerations = [0.01] * 7
-        # motion_time = 15.0
+        sleep(1)
+        # joint_positions[0] = -1.5707
+        # joint_positions[1] = 0.0
+        # joint_positions[2] = 0.0
+        # joint_positions[3] = 1.5707
+        # joint_positions[4] = 0.0
+        # joint_positions[5] = 1.5707
+        # joint_positions[6] = 3.1415
+        joint_positions[6] -= 0.5
+        # velocities = [0.01] * 7
+        # accelerations = [0.01] * 7
+        motion_time = 7.0
                 
-        # pt_1 = JointTrajPtFull(1, motion_time, joint_positions, velocities, accelerations)
-        # reply = pt_1.send_msg_and_get_feedback(s, 1.0)
-        # print(f"Message type: {reply.command}")
-        # print(f"Point 1 sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
+        pt_1 = JointTrajPtFull(1, motion_time, joint_positions, velocities, accelerations)
+        reply = pt_1.send_msg_and_get_feedback(s, 1.0)
+        print(f"Message type: {reply.command}")
+        print(f"Point 1 sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
         
-        # sleep(motion_time+1)
+        sleep(motion_time+1)
         
         # stop_motion = MotoMotionCtrl("STOP_MOTION")
         # reply = stop_motion.send_msg_and_get_feedback(s)
@@ -316,8 +323,8 @@ def main():
         # print(f"Message type: {reply.command}")
         # print(f"Sequence: {reply.sequence}\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
     
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(("192.168.1.33", 50240))
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # s.connect(("192.168.1.33", 50240))
         stop_traj_msg = MotoMotionCtrl("STOP_TRAJ_MODE")
         reply = stop_traj_msg.send_msg_and_get_feedback(s)
         print(f"Message type: {reply.command}")
