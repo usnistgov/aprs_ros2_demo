@@ -399,6 +399,34 @@ namespace motoman_hardware {
     }
   }
 
+  bool MotomanHardwareInterface::open_gripper(){
+    WriteIOBit open_gripper_io(10010, "on");
+    std::vector<uint8_t> byte_stream = open_gripper_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    
+    WriteIOBit close_gripper_io(10011, "off");
+    std::vector<uint8_t> byte_stream = close_gripper_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    
+    WriteIOBit air_io(10012, "on");
+    std::vector<uint8_t> byte_stream = air_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+  }
+
+  bool MotomanHardwareInterface::close_gripper(){
+    WriteIOBit open_gripper_io(10010, "off");
+    std::vector<uint8_t> byte_stream = open_gripper_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    
+    WriteIOBit close_gripper_io(10011, "on");
+    std::vector<uint8_t> byte_stream = close_gripper_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    
+    WriteIOBit air_io(10012, "off");
+    std::vector<uint8_t> byte_stream = air_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+  }
+
   MotomanHardwareInterface::~MotomanHardwareInterface(){
     on_deactivate(rclcpp_lifecycle::State());
   }
@@ -522,17 +550,60 @@ MotoMotionReply::MotoMotionReply(char* byte_stream){
     result = -1;
     subcode = -1;
     for(int i = 0; i < 10; i++){
-      data.pushback(-1);
+      data.push_back(-1);
     }
   }
 }
 
 void MotoMotionReply::output_data(){
-  RCLCPP_INFO_STREAM(get_logger(), "Reply information:\n");
-  RCLCPP_INFO_STREAM(get_logger(), "\tRobot ID: " << robot_id);
-  RCLCPP_INFO_STREAM(get_logger(), "\tSequence: " << sequence);
-  RCLCPP_INFO_STREAM(get_logger(), "\tCommand: " << command_codes_to_str_[command]);
-  RCLCPP_INFO_STREAM(get_logger(), "\tResult: " << result_codes_to_str_[result]);
+  // RCLCPP_INFO_STREAM(get_logger(), "Reply information:\n");
+  // RCLCPP_INFO_STREAM(get_logger(), "\tRobot ID: " << robot_id);
+  // RCLCPP_INFO_STREAM(get_logger(), "\tSequence: " << sequence);
+  // RCLCPP_INFO_STREAM(get_logger(), "\tCommand: " << command_codes_to_str_[command]);
+  // RCLCPP_INFO_STREAM(get_logger(), "\tResult: " << result_codes_to_str_[result]);
+}
+
+WriteIOBit::WriteIOBit(int target_address, std::string str_val){
+  address = target_address;
+  value = values_str_to_int_[str_val];
+}
+
+std::vector<uint8_t> WriteIOBit::to_bytes(){
+  std::vector<uint8_t> byte_array;
+
+  to_byte_and_insert(byte_array, length);
+  to_byte_and_insert(byte_array, msg_type);
+  to_byte_and_insert(byte_array, comm_type);
+  to_byte_and_insert(byte_array, reply_code);
+  to_byte_and_insert(byte_array, target_address);
+  to_byte_and_insert(byte_array, value);
+
+  return byte_array;
+}
+
+ReadSocketReply::ReadSocketReply(char* byte_stream){
+  if(strlen(byte_stream) > 1){
+    std::vector<int> socket_info_vector;
+    char temp[4];
+    for(int i = 0; i < 5; i++){
+      for(int j = 0; j < 4; j++){
+        temp[j] = *(byte_stream+j);
+      }
+      byte_stream+=4;
+      socket_info_vector.push_back(ntohl(*(uint32_t*)temp));
+    }
+    msg_type = socket_info_vector[0];
+    comm_type = socket_info_vector[1];
+    reply_code = socket_info_vector[2];
+    value = socket_info_vector[3];
+    result = socket_info_vector[4];
+  } else {
+    msg_type = -1;
+    comm_type = -1;
+    reply_code = -1;
+    value = -1;
+    result = -1;
+  }
 }
 
 ssize_t socket_read::read_socket(int __fd, void *__buf, size_t __nbytes) {

@@ -59,7 +59,7 @@ class MotoMotionReply{
                                                         {200111, "STOP_MOTION"}, 
                                                         {200121, "START_TRAJ_MODE"},
                                                         {200122, "STOP_TRAJ_MODE"}};
-                                                        
+
     std::map<int, std::string> result_codes_to_str_ = {{-1, "NON_CONTROLLER_ERROR"},
                                                        {0, "SUCCESS/TRUE"},
                                                        {1, "BUSY"}, 
@@ -69,7 +69,7 @@ class MotoMotionReply{
                                                        {5, "NOT_READY"},
                                                        {6, "MP_FAILURE"}};
 
-    std::map<int, std::string> subcode_codes_to_str_ = {{-1, "NON_CONTROLLER_ERROR"}
+    std::map<int, std::string> subcode_codes_to_str_ = {{-1, "NON_CONTROLLER_ERROR"},
                                                         {0, "ROS_RESULT_SUCCESS/ROS_RESULT_TRUE"},
                                                         {1, "ROS_RESULT_BUSY"},
                                                         {2, "ROS_RESULT_FAILURE/ROS_RESULT_FALSE"},
@@ -111,6 +111,17 @@ class MotoMotionReply{
                                                        
 };
 
+class ReadSocketReply{
+  public:
+    ReadSocketReply(char*);
+    void output_data();
+    int msg_type;
+    int comm_type;
+    int reply_code;
+    int value;
+    int result;
+};
+
 namespace motoman_hardware {
 
   class MotomanHardwareInterface : public hardware_interface::SystemInterface {
@@ -145,6 +156,9 @@ namespace motoman_hardware {
 
     void read_joints();
     bool write_joints();
+
+    bool open_gripper();
+    bool close_gripper();
 
     int get_packet_length(int);
 
@@ -223,6 +237,26 @@ class MotoMotionCtrl{
     int command;
     std::vector<float> data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
+
+class WriteIOBit{
+  public:
+    MotoMotionCtrl(int, std::string);
+    std::vector<uint8_t> to_bytes();
+  private:
+    int length = 25;
+    int msg_type = 2005;
+    int comm_type = 2;
+    int reply_code = 0;
+    int address = 0;
+    int value;
+    std::map<std::string, int> values_str_to_int_ = { {"on", 1}, 
+                                                      {"off", 0} };
+};
+
+class ReadIOBit{
+  public:
+    ReadIOBit()
+}
 
 template <typename T,
           typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
