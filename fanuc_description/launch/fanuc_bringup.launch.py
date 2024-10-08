@@ -96,7 +96,7 @@ def launch_setup(context, *args, **kwargs):
         forward_position_controller,
         # fanuc_gripper_control,
         rviz_node,
-        gripper_controller
+        # gripper_controller
     ]
 
     return nodes_to_start

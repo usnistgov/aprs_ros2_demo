@@ -121,7 +121,7 @@ namespace fanuc_hardware {
     gripper_socket_created_ = true;
 
     // Open Gripper
-    // send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
+    send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
     gripper_state_ = 0;
 
     auto ret = read_joints();
@@ -133,7 +133,7 @@ namespace fanuc_hardware {
     // if (!ret.first){
     //   return hardware_interface::CallbackReturn::FAILURE;
     // }
-
+    
     std::vector<float> current_positions = ret.second;
 
     for (uint i = 0; i < hw_states_.size(); i++)

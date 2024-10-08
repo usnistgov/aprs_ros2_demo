@@ -39,6 +39,18 @@
     <xacro:property name="joint6velocity" value="17.45"/>
     <xacro:property name="joint6effort" value="-1"/>
 
+    <!-- fanuc_prism1 -->
+    <xacro:property name="fanuc_prism1upper" value="0.05"/>
+    <xacro:property name="fanuc_prism1lower" value="-0.05"/>
+    <xacro:property name="fanuc_prism1velocity" value="1000"/>
+    <xacro:property name="fanuc_prism1effort" value="1000"/>
+
+    <!-- fanuc_prism2 -->
+    <xacro:property name="fanuc_prism2upper" value="0.05"/>
+    <xacro:property name="fanuc_prism2lower" value="-0.05"/>
+    <xacro:property name="fanuc_prism2velocity" value="1000"/>
+    <xacro:property name="fanuc_prism2effort" value="1000"/>
+
     <!-- links -->
     <link name="fanuc_base_link">
       <visual>
@@ -191,28 +203,28 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/link_6.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/fanuc_link_6.STL" />
         </geometry>
         <material name="">
-            <color rgba="0.15 0.15 0.15 1.0" />
+            <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
         </material>
       </visual>
 
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/collision/link_6.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/fanuc_link_6.STL" />
         </geometry>
       </collision>
 
       <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="1" />
-        <inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+        <origin xyz="0.0527422480911949 6.99319839614222E-06 -8.7188473017611E-06" rpy="0 0 0" />
+        <mass value="4" />
+        <inertia ixx="1" ixy="-5.4019E-07" ixz="8.6008E-08" iyy="1" iyz="1.4109E-07" izz="1" />
       </inertial>
     </link>
 
-    <link name="tool0">
+    <!-- <link name="tool0">
       <visual>
         <origin rpy="0 1.571 0" xyz="-.085 0 0" />
         <geometry>
@@ -222,6 +234,56 @@
           <color rgba="0.278431372549 0.278431372549 0.278431372549 1.0" />
         </material>
       </visual>
+    </link> -->
+
+    <link name="fanuc_finger_2">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find fanuc_description)/meshes/fanuc_finger_2.STL" />
+        </geometry>
+        <material name="">
+          <color rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find fanuc_description)/meshes/fanuc_finger_2.STL" />
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="0.0080676 -0.0097788 -0.012214" rpy="0 0 0" />
+        <mass value="3" />
+        <inertia ixx="1" ixy="5.4019E-07" ixz="-8.6008E-08" iyy="1" iyz="1.4109E-07" izz="1" />
+      </inertial>
+    </link>
+
+    <link name="fanuc_finger_1">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find fanuc_description)/meshes/fanuc_finger_1.STL" />
+        </geometry>
+        <material name="">
+          <color rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+      </visual>
+      
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find fanuc_description)/meshes/fanuc_finger_1.STL" />
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="-0.011932 0.0097788 0.012214" rpy="0 0 0" />
+        <mass value="3" />
+        <inertia ixx="1" ixy="-5.4019E-07" ixz="8.6008E-08" iyy="1" iyz="1.4109E-07" izz="1" />
+      </inertial>
     </link>
 
     <!-- joints --> 
@@ -278,11 +340,27 @@
         <axis xyz="-1 0 0"/>
         <limit effort="${joint6effort}" lower="${joint6lower}" upper="${joint6upper}" velocity="${joint6velocity}" />
     </joint>
-
+<!-- 
     <joint name="tool" type="fixed">
         <origin xyz=".17 0 0" rpy="0 0 0"/>
         <parent link="link_6"/>
         <child link="tool0"/>
+    </joint> -->
+
+    <joint name="fanuc_prism1" type="prismatic">
+      <origin xyz="0.1401 0.02 0.010995" rpy="3.1416 6.123E-17 1.5708" />
+      <parent link="link_6" />
+      <child link="fanuc_finger_1" />
+      <axis xyz="-1 0 0" />
+      <limit effort="${fanuc_prism1effort}" lower="${fanuc_prism1lower}" upper="${fanuc_prism1upper}" velocity="${fanuc_prism1velocity}" />
+    </joint>
+
+    <joint name="fanuc_prism2" type="prismatic">
+      <origin xyz="0.1401 0 -0.010995" rpy="3.1416 -6.123E-17 -1.5708" />
+      <parent link="link_6" />
+      <child link="fanuc_finger_2" />
+      <axis xyz="1 0 0" />
+      <limit effort="${fanuc_prism2effort}" lower="${fanuc_prism2lower}" upper="${fanuc_prism2upper}" velocity="${fanuc_prism2velocity}" />
     </joint>
 
   </xacro:macro>

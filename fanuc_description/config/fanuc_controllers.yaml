@@ -8,8 +8,8 @@ controller_manager:
     forward_position_controller:
       type: forward_command_controller/ForwardCommandController
 
-    gripper_controller:
-      type: aprs_controllers/PneumaticGripperController
+    # gripper_controller:
+    #   type: aprs_controllers/PneumaticGripperController
 
 forward_position_controller:
   ros__parameters:
