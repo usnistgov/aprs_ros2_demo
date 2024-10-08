@@ -53,14 +53,36 @@ def launch_setup(context, *args, **kwargs):
         arguments=['forward_position_controller',],
     )
     
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("motoman_description"), "config", "motoman.rviz"]
+    )
 
+    moveit_config = (
+        MoveItConfigsBuilder("motoman", package_name="motoman_moveit_config")
+        .robot_description(urdf)
+        .robot_description_semantic(file_path="config/motoman.srdf")
+        .trajectory_execution(file_path="config/controllers.yaml")
+        .planning_pipelines(pipelines=["ompl"])
+        .to_moveit_configs()
+    )
+
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        output="log",
+        arguments=["-d", rviz_config_file],
+        parameters=[
+            moveit_config.to_dict(),
+        ],
+    )
+    
     nodes_to_start = [
         control_node,
         robot_state_publisher,
         joint_state_broadcaster,
         forward_position_controller,
         # motoman_gripper_control,
-        # rviz_node
+        rviz_node
     ]
 
     return nodes_to_start

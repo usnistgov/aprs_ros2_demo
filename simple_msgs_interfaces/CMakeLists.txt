@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(motoman_hardware)
+project(simple_msgs_interfaces)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -13,37 +13,28 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(hardware_interface REQUIRED)
-find_package(pluginlib REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(rclpy)
 find_package(example_interfaces)
 find_package(ament_cmake_python REQUIRED)
-find_package(simple_msgs_interfaces REQUIRED)
 
-add_library(motoman_hardware
+add_library(simple_msgs_interface
   SHARED
-  src/motoman_hardware_interface.cpp
+  src/simple_msgs_interface.cpp
 )
 
 target_include_directories(
-  motoman_hardware
+  simple_msgs_interface
   PRIVATE
   include
 )
 
 ament_target_dependencies(
-  motoman_hardware
-  hardware_interface
-  simple_msgs_interfaces
-  pluginlib
+  simple_msgs_interface
   rclcpp
 )
 
-pluginlib_export_plugin_description_file(hardware_interface motoman_hardware.xml)
-
 install(
-  TARGETS motoman_hardware
+  TARGETS simple_msgs_interface
   DESTINATION lib
 )
 
@@ -58,12 +49,10 @@ ament_export_include_directories(
 )
 
 ament_export_libraries(
-  motoman_hardware
+  simple_msgs_interface
 )
 
 ament_export_dependencies(
-  hardware_interface
-  pluginlib
   rclcpp
 )
 

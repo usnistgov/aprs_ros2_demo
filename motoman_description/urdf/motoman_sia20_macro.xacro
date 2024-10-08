@@ -50,7 +50,7 @@
 			<child link = "motoman_base_link"/>
       	</joint>
 
-		<joint name="joint_r" type="revolute">
+		<joint name="joint_s" type="revolute">
 			<xacro:origin_joint_r/>
 			<parent link="motoman_base_link"/>
 			<child  link="link_s"/>
@@ -78,11 +78,11 @@
 		</link>
 
 		<!-- joint_e (link_s | joint_e) -->
-		<joint name="joint_e" type="revolute">
+		<joint name="joint_l" type="revolute">
 			<xacro:origin_joint_e/>
 			<parent link="link_s"/>
 			<child  link="link_l"/>
-			<axis xyz="0 0 1"/>
+			<axis xyz="0 0 -1"/>
 			<limit lower="-1.9198" upper="1.9198" effort="1000" velocity="2.2698"/>
 			<xacro:default_joint_misc/>
 		</joint>
@@ -105,7 +105,7 @@
 		</link>
 
 		<!-- joint_l (link_l | joint_l) -->
-		<joint name="joint_l" type="revolute">
+		<joint name="joint_e" type="revolute">
 			<xacro:origin_joint_l/>
 			<parent link="link_l"/>
 			<child  link="link_e"/>
@@ -132,7 +132,7 @@
 		</link>
 
 		<!-- joint_t (link_e | joint_t) -->
-		<joint name="joint_t" type="revolute">
+		<joint name="joint_u" type="revolute">
 			<xacro:origin_joint_t/>
 			<parent link="link_e"/>
 			<child  link="link_u"/>
@@ -159,11 +159,11 @@
 		</link>
 
 		<!-- joint_u (link_u | joint_u) -->
-		<joint name="joint_u" type="revolute">
+		<joint name="joint_r" type="revolute">
 			<xacro:origin_joint_u/>
 			<parent link="link_u"/>
 			<child  link="link_r"/>
-			<axis xyz="0 1 0"/>
+			<axis xyz="0 -1 0"/>
 			<limit lower="-3.1415" upper="3.1415" effort="1000" velocity="3.4906"/>
 			<xacro:default_joint_misc/>
 		</joint>
@@ -186,7 +186,7 @@
 		</link>
 
 		<!-- joint_s (link_r | joint_s) -->
-		<joint name="joint_s" type="revolute">
+		<joint name="joint_b" type="revolute">
 			<xacro:origin_joint_s/>
 			<parent link="link_r"/>
 			<child  link="link_b"/>
@@ -213,11 +213,11 @@
 		</link>
 
 		<!-- joint_b (link_b | joint_b) -->
-		<joint name="joint_b" type="revolute">
+		<joint name="joint_t" type="revolute">
 			<xacro:origin_joint_b/>
 			<parent link="link_b"/>
 			<child  link="link_t"/>
-			<axis xyz="0 1 0"/>
+			<axis xyz="0 -1 0"/>
 			<limit lower="-3.1415" upper="3.1415" effort="1000" velocity="7.0"/>
 			<xacro:default_joint_misc/>
 		</joint>
