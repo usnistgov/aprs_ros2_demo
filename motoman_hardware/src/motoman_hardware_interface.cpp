@@ -60,18 +60,11 @@ namespace motoman_hardware {
       return hardware_interface::CallbackReturn::ERROR;
     }
 
-    MotoMotionCtrl stop_traj_mode("STOP_TRAJ_MODE");
-
-    std::vector<uint8_t> stop_traj_mode_bytes = stop_traj_mode.to_bytes();
-    MotoMotionReply reply = send_motion_msg(stop_traj_mode_bytes);
-
-    RCLCPP_INFO_STREAM(get_logger(), "Stop traj mode result: " << reply.result);
-
     MotoMotionCtrl start_traj_mode("START_TRAJ_MODE");
 
     std::vector<uint8_t> start_traj_mode_bytes = start_traj_mode.to_bytes();
     
-    reply = send_motion_msg(start_traj_mode_bytes);
+    MotoMotionReply reply = send_motion_msg(start_traj_mode_bytes);
 
     read_joints();
 
