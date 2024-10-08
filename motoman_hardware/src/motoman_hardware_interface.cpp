@@ -21,10 +21,10 @@ namespace motoman_hardware {
       return hardware_interface::CallbackReturn::ERROR;
     }
 
-    hw_positions_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-    hw_velocities_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-    hw_accelerations_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-    hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+    hw_positions_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
+    hw_velocities_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
+    hw_accelerations_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
+    hw_commands_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
 
     current_joint_feedback_.positions = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     current_joint_feedback_.velocities = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -72,7 +72,6 @@ namespace motoman_hardware {
     std::vector<uint8_t> start_traj_mode_bytes = start_traj_mode.to_bytes();
     
     reply = send_motion_msg(start_traj_mode_bytes);
-
 
     read_joints();
 
@@ -374,12 +373,48 @@ namespace motoman_hardware {
       joint_feedback.accelerations.push_back(bin_to_float(temp));
     }
 
+    ReadIOBit check_gripper_open(10010);
+    std::vector<uint8_t> gripper_byte_stream = check_gripper_open.to_bytes();
+    socket_write::write_socket(io_socket_, gripper_byte_stream.data(), gripper_byte_stream.size());
+    int length = get_packet_length(io_socket_);
+    if (length == 20){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      ReadIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to read open_gripper address");
+      } else {
+        joint_feedback.positions[7] = reply.value;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
+    }
+
     return joint_feedback;
   }
 
   bool MotomanHardwareInterface::write_joints(){
-    // JointTrajPtFull initial_trajectory_point(1, current_joint_feedback_.positions, current_joint_feedback_);
-    // MotoMotionReply reply = initial_trajectory_point.send_msg_and_get_feedback(motion_socket_);
+    JointTrajPtFull initial_trajectory_point(1, current_joint_feedback_.positions, current_joint_feedback_);
+    MotoMotionReply reply = initial_trajectory_point.send_msg_and_get_feedback(motion_socket_);
+
+    std::vector<float> new_positions;
+    for(int i = 0; i < 7; i++){
+      new_positions.push_back(hw_commands_[i]);
+    }
+    for(int i = 0; i < 3; i++){
+      new_positions.push_back(0.0);
+    }
+
+    JointTrajPtFull target_trajectory_point(2, current_joint_feedback_.positions, current_joint_feedback_);
+    reply = target_trajectory_point.send_msg_and_get_feedback(motion_socket_);
+
+    if(prev_hw_commands_[7] != hw_commands_[7]){
+      if(hw_commands_[7] == 1){
+        open_gripper();
+      } else {
+        close_gripper();
+      }
+    }
     
     prev_hw_commands_ = hw_commands_;
     return true;

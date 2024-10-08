@@ -222,7 +222,7 @@
 			<xacro:default_joint_misc/>
 		</joint>
 
-		<joint name = "motoman_link_t_to_gripper" type = "fixed">
+		<joint name = "motoman_gripper" type = "fixed">
 			<origin xyz = "0 0.02 0" rpy = "-1.57 0 0"/>
 			<parent link = "link_t"/>
 			<child link = "motoman_gripper_link"/>

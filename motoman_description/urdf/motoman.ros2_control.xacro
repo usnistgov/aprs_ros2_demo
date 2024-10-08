@@ -98,6 +98,13 @@
           </state_interface>
       </joint>
 
+      <joint name="motoman_gripper">
+          <command_interface name="position">
+          <param name="min">0</param>
+          <param name="max">1</param>
+          </command_interface>
+      </joint>
+
     </ros2_control>
 
   </xacro:macro>

@@ -180,7 +180,7 @@ namespace motoman_hardware {
     statusMsg current_status_;
     jointFeedbackMsg current_joint_feedback_;
 
-    int number_of_joints_ = 7;
+    int number_of_joints_ = 8;
 
     std::vector<double> hw_commands_;
     std::vector<double> prev_hw_commands_;
