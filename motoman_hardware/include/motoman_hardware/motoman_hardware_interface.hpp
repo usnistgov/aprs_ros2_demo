@@ -111,9 +111,19 @@ class MotoMotionReply{
                                                        
 };
 
-class ReadSocketReply{
+class WriteIOReply{
   public:
-    ReadSocketReply(char*);
+    WriteIOReply(char*);
+    void output_data();
+    int msg_type;
+    int comm_type;
+    int reply_code;
+    int result;
+};
+
+class ReadIOReply{
+  public:
+    ReadIOReply(char*);
     void output_data();
     int msg_type;
     int comm_type;
@@ -240,7 +250,7 @@ class MotoMotionCtrl{
 
 class WriteIOBit{
   public:
-    MotoMotionCtrl(int, std::string);
+    WriteIOBit(int, std::string);
     std::vector<uint8_t> to_bytes();
   private:
     int length = 25;
@@ -255,8 +265,15 @@ class WriteIOBit{
 
 class ReadIOBit{
   public:
-    ReadIOBit()
-}
+    ReadIOBit(int);
+    std::vector<uint8_t> to_bytes();
+  private:
+    int length = 16;
+    int msg_type = 2003;
+    int comm_type = 2;
+    int reply_code = 0;
+    int address;
+};
 
 template <typename T,
           typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>

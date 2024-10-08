@@ -60,12 +60,19 @@ namespace motoman_hardware {
       return hardware_interface::CallbackReturn::ERROR;
     }
 
+    MotoMotionCtrl stop_traj_mode("STOP_TRAJ_MODE");
+
+    std::vector<uint8_t> stop_traj_mode_bytes = stop_traj_mode.to_bytes();
+    MotoMotionReply reply = send_motion_msg(stop_traj_mode_bytes);
+
+    RCLCPP_INFO_STREAM(get_logger(), "Stop traj mode result: " << reply.result);
+
     MotoMotionCtrl start_traj_mode("START_TRAJ_MODE");
 
     std::vector<uint8_t> start_traj_mode_bytes = start_traj_mode.to_bytes();
     
-    MotoMotionReply reply = send_motion_msg(start_traj_mode_bytes);
-    
+    reply = send_motion_msg(start_traj_mode_bytes);
+
 
     read_joints();
 
@@ -388,43 +395,179 @@ namespace motoman_hardware {
       socket_read::read_socket(motion_socket_, data, length);
       MotoMotionReply reply(data);
       if(reply.result != 0){
-        RCLCPP_FATAL_STREAM(get_logger(), "Unable to start trajectory mode. Result code: "<<reply.result << " Subcode: " << reply.subcode);
+        RCLCPP_FATAL_STREAM(get_logger(), "Unable to send motion control message with command type: " << reply.comm_type << ". Result code: "<<reply.result << " Subcode: " << reply.subcode);
       }
       return reply;
     }
     else{
-      MotoMotionReply dummy_reply("");
+      char* dummy_str;
+      MotoMotionReply dummy_reply(dummy_str);
       RCLCPP_ERROR(get_logger(), "Message recieved from motion socket not a motion reply.");
       return dummy_reply;
     }
   }
 
   bool MotomanHardwareInterface::open_gripper(){
-    WriteIOBit open_gripper_io(10010, "on");
-    std::vector<uint8_t> byte_stream = open_gripper_io.to_bytes();
+    ReadIOBit check_gripper_open(10010);
+    std::vector<uint8_t> byte_stream = check_gripper_open.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    int length = get_packet_length(io_socket_);
+    if (length == 20){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      ReadIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to read open_gripper address");
+        return false;
+      }
+      if(reply.value == 1){
+        RCLCPP_INFO(get_logger(), "Gripper should already be opened");
+        return true;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
+      return false;
+    }
+    WriteIOBit open_gripper_io(10010, "on");
+    byte_stream = open_gripper_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write open_gripper to true to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
     
     WriteIOBit close_gripper_io(10011, "off");
-    std::vector<uint8_t> byte_stream = close_gripper_io.to_bytes();
+    byte_stream = close_gripper_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+
+    length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write close_gripper to false to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
     
     WriteIOBit air_io(10012, "on");
-    std::vector<uint8_t> byte_stream = air_io.to_bytes();
+    byte_stream = air_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write air to true to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
+
+    return true;
   }
 
   bool MotomanHardwareInterface::close_gripper(){
-    WriteIOBit open_gripper_io(10010, "off");
-    std::vector<uint8_t> byte_stream = open_gripper_io.to_bytes();
+    ReadIOBit check_gripper_open(10011);
+    std::vector<uint8_t> byte_stream = check_gripper_open.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    int length = get_packet_length(io_socket_);
+    if (length == 20){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      ReadIOReply reply(data);
+
+      // RCLCPP_INFO_STREAM(get_logger(), "Reply result: "<< reply.result << ". Value: " << reply.value);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to read close_gripper address");
+        return false;
+      }
+      if(reply.value == 1){
+        RCLCPP_INFO(get_logger(), "Gripper should already be closed");
+        return true;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
+      return false;
+    }
+
+    WriteIOBit open_gripper_io(10010, "off");
+    byte_stream = open_gripper_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+
+    length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write open_gripper to false to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
     
     WriteIOBit close_gripper_io(10011, "on");
-    std::vector<uint8_t> byte_stream = close_gripper_io.to_bytes();
+    byte_stream = close_gripper_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+
+    length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write close_gripper to true to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
     
     WriteIOBit air_io(10012, "off");
-    std::vector<uint8_t> byte_stream = air_io.to_bytes();
+    byte_stream = air_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+
+    length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write air to false to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
+    
+    return true;
   }
 
   MotomanHardwareInterface::~MotomanHardwareInterface(){
@@ -513,46 +656,46 @@ std::vector<uint8_t> MotoMotionCtrl::to_bytes(){
 }
 
 MotoMotionReply::MotoMotionReply(char* byte_stream){
-  if(strlen(byte_stream) > 1){
-    std::vector<int> feedback_vector;
-    char temp[4];
-    for(int i = 0; i < 8; i++){
-      for(int j = 0; j < 4; j++){
-        temp[j] = *(byte_stream+j);
-      }
-      byte_stream+=4;
-      feedback_vector.push_back(ntohl(*(uint32_t*)temp));
+  // if(strlen(byte_stream) > 1){
+  std::vector<int> feedback_vector;
+  char temp[4];
+  for(int i = 0; i < 8; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
     }
-    msg_type = feedback_vector[0];
-    comm_type = feedback_vector[1];
-    reply_code = feedback_vector[2];
-    robot_id = feedback_vector[3];
-    sequence = feedback_vector[4];
-    command = feedback_vector[5];
-    result = feedback_vector[6];
-    subcode = feedback_vector[7];
-
-    std::vector<float> data;
-    for(int i = 0; i < 10; i++){
-      for(int j = 0; j < 4; j++){
-        temp[j] = *(byte_stream+j);
-      }
-      byte_stream+=4;
-      data.push_back(bin_to_float(temp));
-    }
-  } else {
-    msg_type = -1;
-    comm_type = -1;
-    reply_code = -1;
-    robot_id = -1;
-    sequence = -1;
-    command = -1;
-    result = -1;
-    subcode = -1;
-    for(int i = 0; i < 10; i++){
-      data.push_back(-1);
-    }
+    byte_stream+=4;
+    feedback_vector.push_back(ntohl(*(uint32_t*)temp));
   }
+  msg_type = feedback_vector[0];
+  comm_type = feedback_vector[1];
+  reply_code = feedback_vector[2];
+  robot_id = feedback_vector[3];
+  sequence = feedback_vector[4];
+  command = feedback_vector[5];
+  result = feedback_vector[6];
+  subcode = feedback_vector[7];
+
+  std::vector<float> data;
+  for(int i = 0; i < 10; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    data.push_back(bin_to_float(temp));
+  }
+  // } else {
+  //   msg_type = -1;
+  //   comm_type = -1;
+  //   reply_code = -1;
+  //   robot_id = -1;
+  //   sequence = -1;
+  //   command = -1;
+  //   result = -1;
+  //   subcode = -1;
+  //   for(int i = 0; i < 10; i++){
+  //     data.push_back(-1);
+  //   }
+  // }
 }
 
 void MotoMotionReply::output_data(){
@@ -575,35 +718,59 @@ std::vector<uint8_t> WriteIOBit::to_bytes(){
   to_byte_and_insert(byte_array, msg_type);
   to_byte_and_insert(byte_array, comm_type);
   to_byte_and_insert(byte_array, reply_code);
-  to_byte_and_insert(byte_array, target_address);
+  to_byte_and_insert(byte_array, address);
   to_byte_and_insert(byte_array, value);
 
   return byte_array;
 }
 
-ReadSocketReply::ReadSocketReply(char* byte_stream){
-  if(strlen(byte_stream) > 1){
-    std::vector<int> socket_info_vector;
-    char temp[4];
-    for(int i = 0; i < 5; i++){
-      for(int j = 0; j < 4; j++){
-        temp[j] = *(byte_stream+j);
-      }
-      byte_stream+=4;
-      socket_info_vector.push_back(ntohl(*(uint32_t*)temp));
+WriteIOReply::WriteIOReply(char* byte_stream){
+  std::vector<int> socket_info_vector;
+  char temp[4];
+  for(int i = 0; i < 4; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
     }
-    msg_type = socket_info_vector[0];
-    comm_type = socket_info_vector[1];
-    reply_code = socket_info_vector[2];
-    value = socket_info_vector[3];
-    result = socket_info_vector[4];
-  } else {
-    msg_type = -1;
-    comm_type = -1;
-    reply_code = -1;
-    value = -1;
-    result = -1;
+    byte_stream+=4;
+    socket_info_vector.push_back(ntohl(*(uint32_t*)temp));
   }
+  msg_type = socket_info_vector[0];
+  comm_type = socket_info_vector[1];
+  reply_code = socket_info_vector[2];
+  result = socket_info_vector[3];
+}
+
+ReadIOBit::ReadIOBit(int target_address){
+  address = target_address;
+}
+
+std::vector<uint8_t> ReadIOBit::to_bytes(){
+  std::vector<uint8_t> byte_array;
+
+  to_byte_and_insert(byte_array, length);
+  to_byte_and_insert(byte_array, msg_type);
+  to_byte_and_insert(byte_array, comm_type);
+  to_byte_and_insert(byte_array, reply_code);
+  to_byte_and_insert(byte_array, address);
+
+  return byte_array;
+}
+
+ReadIOReply::ReadIOReply(char* byte_stream){
+  std::vector<int> socket_info_vector;
+  char temp[4];
+  for(int i = 0; i < 5; i++){
+    for(int j = 0; j < 4; j++){
+      temp[j] = *(byte_stream+j);
+    }
+    byte_stream+=4;
+    socket_info_vector.push_back(ntohl(*(uint32_t*)temp));
+  }
+  msg_type = socket_info_vector[0];
+  comm_type = socket_info_vector[1];
+  reply_code = socket_info_vector[2];
+  value = socket_info_vector[3];
+  result = socket_info_vector[4];
 }
 
 ssize_t socket_read::read_socket(int __fd, void *__buf, size_t __nbytes) {
