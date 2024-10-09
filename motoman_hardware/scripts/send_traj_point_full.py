@@ -64,7 +64,7 @@ class MotoMotionCtrl:
         
         response = struct.unpack('>3I 5I 10f', s.recv(length))
         
-        return MotoMotionReply(response)
+        return MotoMotionReply(list(response))
         
 class JointTrajPtFull:
     def __init__(self, 
@@ -112,7 +112,7 @@ class JointTrajPtFull:
         
         response = struct.unpack('>3I 5I 10f', s.recv(length))
         
-        return MotoMotionReply(response)
+        return MotoMotionReply(list(response))
     
 class WriteIOBIT:
     def __init__(self, 
@@ -146,7 +146,7 @@ class WriteIOBIT:
         print(length)
         response = struct.unpack('>3I 1I', s.recv(length))
         
-        return response
+        return MotoMotionReply(list(response))
 
 class ReadIOBit:
     def __init__(self, 
@@ -167,7 +167,7 @@ class ReadIOBit:
             self.io_address
         )
     
-    def send_msg_and_get_feedback(self, s: socket.socket, sleep_before_reply: int = 0) -> MotoMotionReply:
+    def send_msg_and_get_feedback(self, s: socket.socket, sleep_before_reply: int = 0) -> ReadSocketReply:
         s.send(self.to_bytes())
 
         sleep(sleep_before_reply)
@@ -177,7 +177,7 @@ class ReadIOBit:
         print(length)
         response = struct.unpack('>3I 2I', s.recv(length))
         
-        return ReadSocketReply
+        return ReadSocketReply(list(response))
 
 def open_gripper(s: socket.socket):
     print("Openning gripper")
@@ -242,9 +242,7 @@ def main():
                     print(f'Joint {name}: {math.degrees(pos)}')
                 
                 received_joint_values = True
-    
-    input()
-    
+        
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         s.connect(("192.168.1.33", 50240))
@@ -287,7 +285,8 @@ def main():
     #     print(response[-2])
         velocities = [0.0] * 7
         accelerations = [0.0] * 7
-    
+
+        print("\n".join([str(val) for val in joint_positions]))
         init_trajectory = JointTrajPtFull(0, 0.0, joint_positions, velocities, accelerations)
         reply = init_trajectory.send_msg_and_get_feedback(s)
         print(f"Message type: {reply.command}")
@@ -301,17 +300,23 @@ def main():
         # joint_positions[4] = 0.0
         # joint_positions[5] = 1.5707
         # joint_positions[6] = 3.1415
-        joint_positions[6] -= 0.5
-        # velocities = [0.01] * 7
-        # accelerations = [0.01] * 7
-        motion_time = 7.0
+        # joint_positions[6] -= 0.5
+        # # velocities = [0.01] * 7
+        # # accelerations = [0.01] * 7
+        # motion_time = 7.0
                 
-        pt_1 = JointTrajPtFull(1, motion_time, joint_positions, velocities, accelerations)
-        reply = pt_1.send_msg_and_get_feedback(s, 1.0)
-        print(f"Message type: {reply.command}")
-        print(f"Point 1 sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
+        # pt_1 = JointTrajPtFull(1, motion_time, joint_positions, velocities, accelerations)
+        # reply = pt_1.send_msg_and_get_feedback(s, 1)
+        # print(f"Message type: {reply.command}")
+        # print(f"Point 1 sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
         
-        sleep(motion_time+1)
+        # sleep(motion_time+1)
+
+        while True:
+            try:
+                sleep(0.1)
+            except KeyboardInterrupt:
+                break
         
         # stop_motion = MotoMotionCtrl("STOP_MOTION")
         # reply = stop_motion.send_msg_and_get_feedback(s)

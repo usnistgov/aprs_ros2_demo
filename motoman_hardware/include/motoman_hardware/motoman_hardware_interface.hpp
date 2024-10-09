@@ -53,6 +53,8 @@ namespace motoman_hardware {
     bool open_gripper();
     bool close_gripper();
 
+    bool is_gripper_opened();
+
     int get_packet_length(int);
 
     statusMsg read_status_msg(char *);
@@ -63,7 +65,8 @@ namespace motoman_hardware {
     statusMsg current_status_;
     jointFeedbackMsg current_joint_feedback_;
 
-    int number_of_joints_ = 8;
+    int num_urdf_joints_ = 9;
+    int num_robot_joints_ = 7;
 
     std::vector<double> hw_commands_;
     std::vector<double> prev_hw_commands_;
@@ -85,8 +88,9 @@ namespace motoman_hardware {
     int motion_socket_ = 0;
     int io_socket_ = 0;
 
+    int sequence = 0;
+
     bool activated = false;
-    bool motion_requested = false;
   };
 
 }

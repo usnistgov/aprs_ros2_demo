@@ -41,9 +41,6 @@
 				<xacro:default_mesh name="link_s"/>
 			</collision>
 		</link>
-
-		<link name="motoman_gripper_link"/>
-
 		<joint name = "motoman_base_joint" type = "fixed">
 			<origin rpy = "0 0 0" xyz = "0 0 0"/>
 			<parent link = "${parent}"/>
@@ -220,12 +217,6 @@
 			<axis xyz="0 -1 0"/>
 			<limit lower="-3.1415" upper="3.1415" effort="1000" velocity="7.0"/>
 			<xacro:default_joint_misc/>
-		</joint>
-
-		<joint name = "motoman_gripper" type = "fixed">
-			<origin xyz = "0 0.02 0" rpy = "-1.57 0 0"/>
-			<parent link = "link_t"/>
-			<child link = "motoman_gripper_link"/>
 		</joint>
 
   </xacro:macro>

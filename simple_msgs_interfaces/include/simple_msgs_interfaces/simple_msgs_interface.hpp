@@ -33,7 +33,7 @@ struct jointFeedbackMsg{
 class MotoMotionReply{
   public:
     MotoMotionReply(char*);
-    void output_data();
+    std::string output_data();
     int msg_type;
     int comm_type;
     int reply_code;
@@ -136,7 +136,7 @@ class JointTrajPtFull{
     int seq;
     int valid_fields = 7;
     float time;
-    std::vector<float> positions;
+    std::vector<float> positions = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     std::vector<float> velocities = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     std::vector<float> accelerations = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 };
@@ -203,10 +203,16 @@ std::vector<uint8_t> splitValueToBytes(T const& value)
     return bytes;
 }
 
-template <typename T>
-void to_byte_and_insert(std::vector<uint8_t>& byte_array, T value){
-  std::vector<uint8_t> temp = splitValueToBytes(value);
-  byte_array.insert(byte_array.end(), temp.begin(), temp.end());
+// template <typename T>
+void to_byte_and_insert(std::vector<uint8_t>& byte_array, u_int32_t data){
+  // std::vector<uint8_t> temp;
+  // for (size_t i = 0; i < sizeof(data); i++)
+  //   {
+  //     uint8_t byte = data >> (i * 8);
+  //     temp.insert(bytes.begin(), byte);
+  //   }
+
+  byte_array.insert(byte_array.end(), reinterpret_cast<uint8_t*>(&data), reinterpret_cast<uint8_t*>(&data) + 4);
 }
 
 union FloatUnion {
@@ -229,4 +235,22 @@ float bin_to_float(char* data)
   std::memcpy(&result, reversed, sizeof(float));
 
   return result;
+}
+
+std::vector<double> slicing(std::vector<double>& arr,
+                    int X, int Y)
+{
+ 
+    // Starting and Ending iterators
+    auto start = arr.begin() + X;
+    auto end = arr.begin() + Y + 1;
+ 
+    // To store the sliced vector
+    std::vector<double> result(Y - X + 1);
+ 
+    // Copy vector using copy function()
+    copy(start, end, result.begin());
+ 
+    // Return the final sliced vector
+    return result;
 }

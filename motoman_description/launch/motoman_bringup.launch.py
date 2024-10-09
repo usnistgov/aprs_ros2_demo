@@ -25,7 +25,8 @@ def launch_setup(context, *args, **kwargs):
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[robot_controllers],
+        parameters=[
+            robot_controllers],
         output="both",
         remappings=[
             ("~/robot_description", "/robot_description"),
@@ -52,28 +53,34 @@ def launch_setup(context, *args, **kwargs):
         executable="spawner",
         arguments=['forward_position_controller',],
     )
+
+    gripper_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=['gripper_controller',],
+    )
     
     rviz_config_file = PathJoinSubstitution(
         [FindPackageShare("motoman_description"), "config", "motoman.rviz"]
     )
 
-    moveit_config = (
-        MoveItConfigsBuilder("motoman", package_name="motoman_moveit_config")
-        .robot_description(urdf)
-        .robot_description_semantic(file_path="config/motoman.srdf")
-        .trajectory_execution(file_path="config/controllers.yaml")
-        .planning_pipelines(pipelines=["ompl"])
-        .to_moveit_configs()
-    )
+    # moveit_config = (
+    #     MoveItConfigsBuilder("motoman", package_name="motoman_moveit_config")
+    #     .robot_description(urdf)
+    #     .robot_description_semantic(file_path="config/motoman.srdf")
+    #     .trajectory_execution(file_path="config/controllers.yaml")
+    #     .planning_pipelines(pipelines=["ompl"])
+    #     .to_moveit_configs()
+    # )
 
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        parameters=[
-            moveit_config.to_dict(),
-        ],
+        # parameters=[
+        #     moveit_config.to_dict(),
+        # ],
     )
     
     nodes_to_start = [
@@ -81,7 +88,7 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher,
         joint_state_broadcaster,
         forward_position_controller,
-        # motoman_gripper_control,
+        gripper_controller,
         rviz_node
     ]
 

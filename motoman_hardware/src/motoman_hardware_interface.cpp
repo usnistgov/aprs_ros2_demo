@@ -11,20 +11,20 @@ namespace motoman_hardware {
       return hardware_interface::CallbackReturn::ERROR;
     }
 
-    if (int(info_.joints.size()) != number_of_joints_) {
-      RCLCPP_FATAL(get_logger(), "Got %d joints. Expected %d.", int(info_.joints.size()), number_of_joints_);
+    if (int(info_.joints.size()) != num_urdf_joints_) {
+      RCLCPP_ERROR(get_logger(), "Got %d joints. Expected %d.", int(info_.joints.size()), num_urdf_joints_);
       return hardware_interface::CallbackReturn::ERROR;
     }
 
     if(!setup_sockets()){
-      RCLCPP_FATAL(get_logger(), "Unable to setup sockets");
+      RCLCPP_ERROR(get_logger(), "Unable to setup sockets");
       return hardware_interface::CallbackReturn::ERROR;
     }
 
-    hw_positions_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
-    hw_velocities_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
-    hw_accelerations_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
-    hw_commands_.resize(info_.joints.size() + 1, std::numeric_limits<double>::quiet_NaN());
+    hw_positions_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
+    hw_velocities_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
+    hw_accelerations_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
+    hw_commands_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
 
     current_joint_feedback_.positions = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     current_joint_feedback_.velocities = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -56,7 +56,7 @@ namespace motoman_hardware {
 
     // Connect to sockets
     if(!connect_sockets()){
-      RCLCPP_FATAL(get_logger(), "Unable to connect to sockets");
+      RCLCPP_ERROR(get_logger(), "Unable to connect to sockets");
       return hardware_interface::CallbackReturn::ERROR;
     }
 
@@ -66,16 +66,34 @@ namespace motoman_hardware {
     
     MotoMotionReply reply = send_motion_msg(start_traj_mode_bytes);
 
+    sleep(1);
+
     read_joints();
 
+    if(is_gripper_opened()){
+      hw_positions_[7] = 0.02;
+      hw_positions_[8] = 0.02;
+    } else {
+      hw_positions_[7] = 0.0;
+      hw_positions_[8] = 0.0;
+    }
+
+    hw_commands_[7] = hw_positions_[7];
+    hw_commands_[8] = hw_positions_[8];
+
     // Set commands equal to current state
-    for (int i = 0; i < number_of_joints_; i++)
+    for (int i = 0; i < num_robot_joints_; i++)
     {
       hw_positions_[i] = current_joint_feedback_.positions[i];
       hw_commands_[i] = current_joint_feedback_.positions[i];
     }
 
     prev_hw_commands_ = hw_commands_;
+
+    RCLCPP_INFO_STREAM(get_logger(), reply.output_data());
+
+    sequence++;
+
     RCLCPP_INFO(get_logger(), "Successfully activated!");
 
     activated = true;
@@ -110,13 +128,22 @@ namespace motoman_hardware {
       return hardware_interface::return_type::OK;
     }
     
-    read_joints();
+    read_joints();    
 
-    for (int i = 0; i < number_of_joints_; i++)
+    for (int i = 0; i < num_robot_joints_; i++)
     {
+      // RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << current_joint_feedback_.positions[i]);
       hw_positions_[i] = current_joint_feedback_.positions[i];
       hw_velocities_[i] = current_joint_feedback_.velocities[i];
       hw_accelerations_[i] = current_joint_feedback_.accelerations[i];
+    }
+
+    if(is_gripper_opened()){
+      hw_positions_[7] = 0.02;
+      hw_positions_[8] = 0.02;
+    } else {
+      hw_positions_[7] = 0.0;
+      hw_positions_[8] = 0.0;
     }
 
     return hardware_interface::return_type::OK;
@@ -131,16 +158,34 @@ namespace motoman_hardware {
       return hardware_interface::return_type::OK;
     }
 
-    motion_requested = (prev_hw_commands_ != hw_commands_);
-
-    if(motion_requested){
-      bool ret = write_joints();
-      if(!ret){
-        return hardware_interface::return_type::OK;
+    bool motion_requested = false;
+    for(int i = 0; i < num_robot_joints_; i++){
+      if(prev_hw_commands_[i] != hw_commands_[i]){
+        motion_requested = true;
+        break;
       }
-      prev_hw_commands_ = hw_commands_;
     }
 
+    bool gripper_requested = (prev_hw_commands_[7] != hw_commands_[7]) && (hw_commands_[7] != hw_positions_[7]);
+
+    if(gripper_requested){
+      if(hw_commands_[7] == 0.0){
+        close_gripper();
+        } 
+      else{
+        open_gripper();
+      }
+    }
+
+    if(motion_requested){
+      RCLCPP_INFO(get_logger(), "Motion requested true");
+    }
+
+    if(motion_requested){
+      write_joints();
+    }
+
+    prev_hw_commands_ = hw_commands_;
     return hardware_interface::return_type::OK;
   }
 
@@ -148,16 +193,18 @@ namespace motoman_hardware {
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     
-    for (uint i = 0; i < info_.joints.size(); i++)
+    for (uint i = 0; i < num_urdf_joints_; i++)
     {
       state_interfaces.emplace_back(hardware_interface::StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[i]));
       
-      state_interfaces.emplace_back(hardware_interface::StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[i]));
+      if (i < num_robot_joints_) {
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+          info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[i]));
 
-      state_interfaces.emplace_back(hardware_interface::StateInterface(
-        info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_accelerations_[i]));
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+          info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_accelerations_[i]));
+      }  
     }
 
     return state_interfaces;
@@ -167,7 +214,7 @@ namespace motoman_hardware {
   {
     std::vector<hardware_interface::CommandInterface> command_interfaces;
     
-    for (uint i = 0; i < info_.joints.size(); i++)
+    for (uint i = 0; i < num_urdf_joints_; i++)
     {
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_[i]));
@@ -251,7 +298,7 @@ namespace motoman_hardware {
 
   void MotomanHardwareInterface::close_sockets(){
     close(state_socket_);
-    // close(motion_socket_);
+    close(motion_socket_);
     close(io_socket_);
   }
 
@@ -366,64 +413,50 @@ namespace motoman_hardware {
       joint_feedback.accelerations.push_back(bin_to_float(temp));
     }
 
-    ReadIOBit check_gripper_open(10010);
-    std::vector<uint8_t> gripper_byte_stream = check_gripper_open.to_bytes();
-    socket_write::write_socket(io_socket_, gripper_byte_stream.data(), gripper_byte_stream.size());
-    int length = get_packet_length(io_socket_);
-    if (length == 20){
-      char *data = new char[length];
-      socket_read::read_socket(io_socket_, data, length);
-      ReadIOReply reply(data);
-      if(reply.result != 0){
-        RCLCPP_ERROR(get_logger(), "Unable to read open_gripper address");
-      } else {
-        joint_feedback.positions[7] = reply.value;
-      }
-    } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
-    }
-
     return joint_feedback;
   }
 
   bool MotomanHardwareInterface::write_joints(){
-    if(prev_hw_commands_[7] != hw_commands_[7]){
-      if(hw_commands_[7] == 1){
-        open_gripper();
-      } else {
-        close_gripper();
-      }
+    JointTrajPtFull initial_trajectory_point(0, current_joint_feedback_.positions, current_joint_feedback_);
+
+    for(auto position : initial_trajectory_point.positions){
+      RCLCPP_INFO_STREAM(get_logger(), position);
     }
-    
-    JointTrajPtFull initial_trajectory_point(1, current_joint_feedback_.positions, current_joint_feedback_);
+
+    initial_trajectory_point.time = 0.0;
     MotoMotionReply reply = send_motion_msg(initial_trajectory_point.to_bytes());
 
-    std::vector<float> new_positions;
-    for(int i = 0; i < 7; i++){
-      new_positions.push_back(hw_commands_[i]);
-    }
-    for(int i = 0; i < 3; i++){
-      new_positions.push_back(0.0);
+    std::vector<float> new_positions(10, 0);
+    for(int i = 0; i < num_robot_joints_; i++){
+      new_positions[i] = (hw_commands_[i]);
     }
 
-    JointTrajPtFull target_trajectory_point(2, current_joint_feedback_.positions, current_joint_feedback_);
+    for(auto position: new_positions){
+      RCLCPP_INFO_STREAM(get_logger(), position);
+    }
+
+    JointTrajPtFull target_trajectory_point(1, new_positions, current_joint_feedback_);
     reply = send_motion_msg(target_trajectory_point.to_bytes());
-    
-    prev_hw_commands_ = hw_commands_;
+
+    sequence++;
+
     return true;
   }
 
   MotoMotionReply MotomanHardwareInterface::send_motion_msg(std::vector<uint8_t> byte_stream){
     socket_write::write_socket(motion_socket_, byte_stream.data(), byte_stream.size());
-
+    
     int length = get_packet_length(motion_socket_);
+
+    RCLCPP_INFO_STREAM(get_logger(), "Length: " << length);
 
     if(length == 72){
       char *data = new char[length];
       socket_read::read_socket(motion_socket_, data, length);
       MotoMotionReply reply(data);
+      RCLCPP_INFO_STREAM(get_logger(), "Reply result: " << reply.result);
       if(reply.result != 0){
-        RCLCPP_FATAL_STREAM(get_logger(), "Unable to send motion control message with command type: " << reply.comm_type << ". Result code: "<<reply.result << " Subcode: " << reply.subcode);
+        RCLCPP_ERROR_STREAM(get_logger(), "Unable to send motion control message with command type: " << reply.command << ". Result code: "<<reply.result << " Subcode: " << reply.subcode);
       }
       return reply;
     }
@@ -436,30 +469,10 @@ namespace motoman_hardware {
   }
 
   bool MotomanHardwareInterface::open_gripper(){
-    ReadIOBit check_gripper_open(10010);
-    std::vector<uint8_t> byte_stream = check_gripper_open.to_bytes();
+    WriteIOBit open_gripper_io(10010, "on");
+    std::vector<uint8_t> byte_stream = open_gripper_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
     int length = get_packet_length(io_socket_);
-    if (length == 20){
-      char *data = new char[length];
-      socket_read::read_socket(io_socket_, data, length);
-      ReadIOReply reply(data);
-      if(reply.result != 0){
-        RCLCPP_ERROR(get_logger(), "Unable to read open_gripper address");
-        return false;
-      }
-      if(reply.value == 1){
-        RCLCPP_INFO(get_logger(), "Gripper should already be opened");
-        return true;
-      }
-    } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
-      return false;
-    }
-    WriteIOBit open_gripper_io(10010, "on");
-    byte_stream = open_gripper_io.to_bytes();
-    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
-    length = get_packet_length(io_socket_);
     
     if (length == 16){
       char *data = new char[length];
@@ -515,34 +528,11 @@ namespace motoman_hardware {
   }
 
   bool MotomanHardwareInterface::close_gripper(){
-    ReadIOBit check_gripper_open(10011);
-    std::vector<uint8_t> byte_stream = check_gripper_open.to_bytes();
-    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
-    int length = get_packet_length(io_socket_);
-    if (length == 20){
-      char *data = new char[length];
-      socket_read::read_socket(io_socket_, data, length);
-      ReadIOReply reply(data);
-
-      // RCLCPP_INFO_STREAM(get_logger(), "Reply result: "<< reply.result << ". Value: " << reply.value);
-      if(reply.result != 0){
-        RCLCPP_ERROR(get_logger(), "Unable to read close_gripper address");
-        return false;
-      }
-      if(reply.value == 1){
-        RCLCPP_INFO(get_logger(), "Gripper should already be closed");
-        return true;
-      }
-    } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
-      return false;
-    }
-
     WriteIOBit open_gripper_io(10010, "off");
-    byte_stream = open_gripper_io.to_bytes();
+    std::vector<uint8_t> byte_stream = open_gripper_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
 
-    length = get_packet_length(io_socket_);
+    int length = get_packet_length(io_socket_);
     
     if (length == 16){
       char *data = new char[length];
@@ -576,7 +566,7 @@ namespace motoman_hardware {
       return false;
     }
     
-    WriteIOBit air_io(10012, "off");
+    WriteIOBit air_io(10012, "on");
     byte_stream = air_io.to_bytes();
     socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
 
@@ -596,6 +586,27 @@ namespace motoman_hardware {
     }
     
     return true;
+  }
+
+  bool MotomanHardwareInterface::is_gripper_opened(){
+    ReadIOBit check_gripper_open(10010);
+    std::vector<uint8_t> gripper_byte_stream = check_gripper_open.to_bytes();
+    socket_write::write_socket(io_socket_, gripper_byte_stream.data(), gripper_byte_stream.size());
+    int length = get_packet_length(io_socket_);
+    bool gripper_opened;
+    if (length == 20){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      ReadIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to read open_gripper address");
+      } else {
+        gripper_opened = (reply.value == 1);
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from read_io msg. Recieved message with length: " << length);
+    }
+    return gripper_opened;
   }
 
   MotomanHardwareInterface::~MotomanHardwareInterface(){
