@@ -64,6 +64,9 @@ class VisionTable(Node):
     calibrate_rows: int
     calibrate_columns: int
     generate_map_area: float
+    angle_offset: float
+    suffix: str
+
 
     gear_detection_values: dict[int, GearDetection]
 
@@ -129,13 +132,10 @@ class VisionTable(Node):
 
         # Remove table backgroud
         try:
-            response.message = "Nothing"
             frame = self.remove_background(frame)
-            response.message = "Background Removed"
 
         # Remove and replace and large gears present
             frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
-            response.message = "Large Gear Removed"
         
         # Remove and replace any medium gears present
             frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
@@ -152,17 +152,13 @@ class VisionTable(Node):
         # Check if slots are occupied 
             self.update_slots(original_img)
 
-            cv2.imshow('window', frame)
-            cv2.waitKey(0)
-
             response.success = True
             response.message = "Located trays"
         except:
             response.success = False
-            # response.message = "Unable to detect trays properly. Is the robot arm in the way?"
+            response.message = "Unable to detect trays properly. Is the robot arm in the way?"
             cv2.imshow('Error Reason', frame)
             cv2.waitKey(0)
-
 
         return response
     
@@ -173,10 +169,13 @@ class VisionTable(Node):
             response.success = False
             return response
 
-        self.update_slots(self.current_frame)
+        if self.update_slots(self.rectify_frame(self.current_frame)):
         
-        response.success = True
-        response.message = "Updated slots"
+            response.success = True
+            response.message = "Updated slots"
+        else:
+            response.message = False
+            response.message = "Unable to update slots"
 
         return response
     
@@ -237,29 +236,20 @@ class VisionTable(Node):
     def remove_background(self, frame: MatLike) -> MatLike:
         delta = cv2.subtract(self.base_background, frame)
 
-        # cv2.imshow('window', delta)
-        # cv2.waitKey(0)
-
         gray = cv2.cvtColor(delta, cv2.COLOR_BGR2GRAY)
-
-        # cv2.imshow('window', gray)
-        # cv2.waitKey(0)
 
         _, mask = cv2.threshold(gray, self.background_threshold, 255, cv2.THRESH_BINARY)
 
         canvas = np.zeros(gray.shape, dtype=np.uint8)
 
         contours,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+        
         filtered_contours = []
         for c in contours:
             if cv2.contourArea(c) > 100:
                 filtered_contours.append(c)
 
         cv2.drawContours(canvas, filtered_contours, -1, color=255, thickness=cv2.FILLED) # type: ignore
-        
-        # cv2.imshow('window', canvas)
-        # cv2.waitKey(0)
 
         return cv2.bitwise_and(frame, frame, mask=canvas)
     
@@ -371,12 +361,19 @@ class VisionTable(Node):
         return trays_on_table
     
     def determine_tray_info(self, trays_on_table: dict[int, list[tuple[tuple[int, int], float]]]) -> Trays:       
+        # Clear list of transforms
+        self.transforms.clear()
+        
         # Fill the trays info msg
         tray_info = Trays()
         pixel_tray_info = SlotPixel()
-
-        # Clear list of transforms
-        self.transforms.clear()
+        image_base = f'image_base_{self.suffix}'
+        image_center = Point(
+            x=self.table_origin.x/1000,
+            y=self.table_origin.y/1000,
+            z=self.table_origin.z/1000,
+        )
+        self.transforms.append(self.generate_transform(self.base_frame, image_base, image_center, 0.0, math.pi, self.angle_offset))
 
         for identifier, trays in trays_on_table.items():
             for i, ((x,y), angle) in enumerate(trays):
@@ -394,15 +391,16 @@ class VisionTable(Node):
 
                 if self.publish_frames:
                     tray_center = Point(
-                        x=(self.table_origin.x - (x * self.conversion_factor)) / 1000,
-                        y=(self.table_origin.y + (y * self.conversion_factor)) / 1000, 
-                        z=(self.table_origin.z + self.tray_height)
+                        x=(x * self.conversion_factor) / 1000,
+                        y=(y * self.conversion_factor) / 1000, 
+                        z=self.tray_height
                     )
 
-                    theta = math.radians(angle) + math.pi
+                    theta = math.radians(-angle) + math.pi
 
                     # Publish TF frame
-                    self.transforms.append(self.generate_transform(self.base_frame, tray_msg.name, tray_center, theta))
+                    tray_frame_name = f'{tray_msg.name}_{self.suffix}'
+                    self.transforms.append(self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta))
  
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                     # Create slot info for each slot
@@ -428,8 +426,8 @@ class VisionTable(Node):
                             y= y_off, 
                             z= self.gear_height
                         )
-
-                        self.transforms.append(self.generate_transform(tray_msg.name, slot_info.name, slot_center_tray, 0.0))
+                        slot_frame_name = f'{slot_info.name}_{self.suffix}'
+                        self.transforms.append(self.generate_transform(tray_frame_name, slot_frame_name, slot_center_tray, 0.0, 0.0, 0.0))
 
                     # Store pixel coordinates for center of slot
                 
@@ -486,16 +484,15 @@ class VisionTable(Node):
 
         return True
 
-    def check_occupied(self, orignal_img: MatLike, slot: SlotInfo) -> bool:
+    def check_occupied(self, original_img: MatLike, slot: SlotInfo) -> bool:
         detection_params = self.gear_detection_values[slot.size]
             
         start_x = int(self.slot_pixel_centers[slot.name][0] - detection_params.px_radius)
         start_y = int(self.slot_pixel_centers[slot.name][1] - detection_params.px_radius)
 
-        square = orignal_img[start_y:start_y + 2*detection_params.px_radius, start_x:start_x + 2*detection_params.px_radius]
+        square = original_img[start_y:start_y + 2*detection_params.px_radius, start_x:start_x + 2*detection_params.px_radius]
 
         gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), detection_params.hsv_lower, detection_params.hsv_upper) # type: ignore
-
         if cv2.countNonZero(gear) > detection_params.px_area:
             return True
 
@@ -555,9 +552,9 @@ class VisionTable(Node):
         rows = self.calibrate_rows
         columns = self.calibrate_columns
 
-        cv2.drawContours(just_holes,filtered_contours,-1,120,2)
-        cv2.imshow('window', just_holes)
-        cv2.waitKey(0)
+        # cv2.drawContours(just_holes,filtered_contours,-1,120,2)
+        # cv2.imshow('window', just_holes)
+        # cv2.waitKey(0)
 
         if not len(filtered_contours) == rows * columns:
             self.get_logger().error("Not able to detect all holes")
@@ -618,7 +615,7 @@ class VisionTable(Node):
         np.save(f"{filepath}{self.map_y_image}", map_y_32)
 
         return True
-    def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, rotation: float) -> TransformStamped:
+    def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, roll: float, pitch: float, yaw: float) -> TransformStamped:
         t = TransformStamped()
 
         t.header.stamp = self.get_clock().now().to_msg()
@@ -628,7 +625,7 @@ class VisionTable(Node):
         t.transform.translation.x = pt.x
         t.transform.translation.y = pt.y
         t.transform.translation.z = pt.z
-        t.transform.rotation = self.quaternion_from_euler(0.0, 0.0, rotation)
+        t.transform.rotation = self.quaternion_from_euler(roll, pitch, yaw)
 
         return t
             

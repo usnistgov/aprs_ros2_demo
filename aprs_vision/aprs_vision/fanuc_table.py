@@ -2,6 +2,7 @@ from aprs_vision.vision_table import VisionTable
 from aprs_vision.gear_detection import GearDetection
 from aprs_interfaces.msg import SlotInfo
 from geometry_msgs.msg import Point
+import math
 
 class FanucTable(VisionTable):
     table_origin = Point(x=228.591, y=228.287, z=-0.01)
@@ -28,9 +29,12 @@ class FanucTable(VisionTable):
     calibrate_columns = 19
     generate_map_area = 10
 
+    angle_offset = 0
+    suffix = 'fanuc'
+
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
-    background_threshold = 12
+    background_threshold = 20
     gear_detection_values = {
         SlotInfo.LARGE: GearDetection((40, 30, 123), (85, 165, 215), 60),
         SlotInfo.MEDIUM: GearDetection((6, 100, 140), (24, 162, 255), 44),

@@ -1,5 +1,6 @@
 import os
 import cv2
+import math
 import numpy as np
 
 
@@ -15,9 +16,9 @@ from typing import Optional
 
 class MotomanTable(VisionTable):
     #TODO Fill in real values
-    # table_origin = 
-    # tray_height = 
-    # gear_height = 
+    table_origin = Point(x=407.026, y=39.365, z=-0.01)
+    tray_height = 0.017
+    gear_height = 0.02
 
     video_stream = "http://192.168.1.107/mjpg/video.mjpg"
     map_x_image = 'motoman_table_map_x.npy'
@@ -25,29 +26,32 @@ class MotomanTable(VisionTable):
     background_image = 'motoman_table_background.jpg'
     publish_frames = True
 
-    top_left_x = 508
-    top_left_y = 367
-    bottom_left_x = 510
-    bottom_left_y = 687
-    top_right_x = 741
-    top_right_y = 366
+    top_left_x = 494
+    top_left_y = 436
+    bottom_left_x = 497
+    bottom_left_y = 700
+    top_right_x = 743
+    top_right_y = 435
     bottom_right_x = 744
-    bottom_right_y = 681
+    bottom_right_y = 694
     grid_hsv_lower = (0, 0, 10)
-    grid_hsv_upper = (255, 144, 143)
-    calibrate_rows = 20
-    calibrate_columns = 14
-    generate_map_area = 0.5
+    grid_hsv_upper = (255, 144, 130)
+    calibrate_rows = 16
+    calibrate_columns = 15
+    generate_map_area = 1
+
+    angle_offset = math.pi
+    suffix = 'motoman'
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
     #TODO Fill in real values
-    # background_threshold = 12
-    # gear_detection_values = {
-    #     SlotInfo.LARGE: GearDetection((40, 30, 123), (85, 165, 215), 60),
-    #     SlotInfo.MEDIUM: GearDetection((6, 100, 140), (24, 162, 255), 44),
-    #     SlotInfo.SMALL: GearDetection((18, 80, 170), (45, 135, 255), 30)
-    # }
+    background_threshold = 12
+    gear_detection_values = {
+        SlotInfo.LARGE: GearDetection((40, 30, 123), (85, 165, 215), 60),
+        SlotInfo.MEDIUM: GearDetection((6, 100, 140), (24, 162, 255), 44),
+        SlotInfo.SMALL: GearDetection((18, 80, 170), (45, 135, 255), 30)
+    }
 
     base_frame = 'motoman_base_link'
 
@@ -94,6 +98,15 @@ class MotomanTable(VisionTable):
         cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
     
         just_holes = cv2.bitwise_and(threshold, mask2)
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
+        # Adjustment to two of the holes so that they are visibile and splotch is not
+        just_holes[585:587, 688:690] = 255
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
+        just_holes[586:588, 674:676] = 255
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
 
         contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -127,7 +140,7 @@ class MotomanTable(VisionTable):
 
                 center_points.append((cX, cY))
 
-        center_y = 392
+        center_y = 460
         sorted_points = []
         working_points = []
 
@@ -135,6 +148,14 @@ class MotomanTable(VisionTable):
             for point in center_points:
                 if center_y - 7 <= point[1] <= center_y + 7:
                     working_points.append(point)
+
+            start_point = (510, center_y - 7)
+            end_point = (730, center_y - 7)
+            start_point_2 = (510, center_y + 7)
+            end_point_2 = (730, center_y + 7)
+
+            # cv2.line(just_holes,start_point,end_point,255,2)
+            # cv2.line(just_holes,start_point_2,end_point_2,120,2)
                 
             sorted_points += sorted(working_points, key=lambda k: [k[0]])
 
@@ -143,6 +164,8 @@ class MotomanTable(VisionTable):
             center_y += 14
         # Current Error Even on Good Picture Read
         # Issue is like above in the threshold for a row
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
         if not len(sorted_points) == len(center_points):
             self.get_logger().error(f"Not able to properly sort holes. Center Points: {len(center_points)}  Sorted Points: {len(sorted_points)}")
             return False      
