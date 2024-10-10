@@ -82,13 +82,13 @@ void PneumaticGripperController::update_gripper_command(
   std::shared_ptr<aprs_interfaces::srv::PneumaticGripperControl::Response> response)
 {
 
-  if (request->enable == true && state_interfaces_.at(0).get_value() != 0){
-    gripper_command = 0;
+  if (request->enable == false && state_interfaces_.at(0).get_value() != 0){
+    gripper_command = gripper_stroke_;
     response->status = "Opening gripper";
     response->success = true;
   }
-  else if (request->enable == false && state_interfaces_.at(0).get_value() != gripper_stroke_){
-    gripper_command = gripper_stroke_;
+  else if (request->enable == true && state_interfaces_.at(0).get_value() != gripper_stroke_){
+    gripper_command = 0;
     response->status = "Closing gripper";
     response->success = true;
   }

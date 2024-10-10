@@ -53,7 +53,8 @@ namespace fanuc_hardware {
 
     uint32_t float_to_ieee754(float value);
 
-    int number_of_joints_ = 6;
+    int num_urdf_joints_ = 8;
+    int num_robot_joints_ = 6;
 
     union FloatUnion {
       float f;

@@ -12,8 +12,8 @@ namespace fanuc_hardware {
       return hardware_interface::CallbackReturn::ERROR;
     }
 
-    if (int(info_.joints.size()) != number_of_joints_) {
-      RCLCPP_FATAL(get_logger(), "Got %d joints. Expected %d.", int(info_.joints.size()), number_of_joints_);
+    if (int(info_.joints.size()) != num_urdf_joints_) {
+      RCLCPP_FATAL(get_logger(), "Got %d joints. Expected %d.", int(info_.joints.size()), num_robot_joints_);
       return hardware_interface::CallbackReturn::ERROR;
     }
 
@@ -68,8 +68,8 @@ namespace fanuc_hardware {
       return hardware_interface::CallbackReturn::FAILURE;
     }
 
-    hw_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-    hw_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+    hw_states_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
+    hw_commands_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -120,9 +120,19 @@ namespace fanuc_hardware {
 
     gripper_socket_created_ = true;
 
-    // Open Gripper
-    send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
-    gripper_state_ = 0;
+    if(send(gripper_sock_, &open_msg, sizeof(open_msg), 0)){
+      gripper_state_ = false;
+      // hw_states_[6] = gripper_stroke_;
+      // hw_states_[7] = gripper_stroke_;
+      // hw_commands_[6] = hw_states_[6];
+      // hw_commands_[7] = hw_states_[7];
+    } else {
+      gripper_state_ = true;
+      // hw_states_[6] = 0;
+      // hw_states_[7] = 0;
+      // hw_commands_[6] = hw_states_[6];
+      // hw_commands_[7] = hw_states_[7];
+    }
 
     auto ret = read_joints();
 
@@ -133,7 +143,7 @@ namespace fanuc_hardware {
     // if (!ret.first){
     //   return hardware_interface::CallbackReturn::FAILURE;
     // }
-    
+
     std::vector<float> current_positions = ret.second;
 
     for (uint i = 0; i < hw_states_.size(); i++)
@@ -261,7 +271,7 @@ namespace fanuc_hardware {
 
   std::pair<bool, std::vector<float>> FanucHardwareInterface::read_joints(){
 
-    std::vector<float> joint_positions = {0, 0, 0, 0, 0, 0};
+    std::vector<float> joint_positions = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     // RCLCPP_INFO(get_logger(), "Reading joint states");
     
@@ -325,7 +335,9 @@ namespace fanuc_hardware {
 
       if (gripper_state_) {
         joint_positions.push_back(0);
+        joint_positions.push_back(0);
       } else {
+        joint_positions.push_back(gripper_stroke_);
         joint_positions.push_back(gripper_stroke_);
       }
 
@@ -378,12 +390,12 @@ namespace fanuc_hardware {
 
   bool FanucHardwareInterface::write_gripper(){
 
-    if (hw_commands_[6] == 0){
+    if (hw_commands_[7] == 0){
       send(gripper_sock_, &close_msg, sizeof(close_msg), 0);
-      gripper_state_ = 0;
-    } else if (hw_commands_[6] == gripper_stroke_){
+      gripper_state_ = false;
+    } else if (hw_commands_[7] == gripper_stroke_){
       send(gripper_sock_, &open_msg, sizeof(open_msg), 0);
-      gripper_state_ = gripper_stroke_;
+      gripper_state_ = true;
     } else {
      // RCLCPP_ERROR(get_logger(), "Gripper Command Not Valid");
     }
