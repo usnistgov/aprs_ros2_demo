@@ -132,7 +132,11 @@ class VisionTable(Node):
 
         # Remove table backgroud
         try:
+            cv2.imshow('window', frame)
+            cv2.waitKey(0)
             frame = self.remove_background(frame)
+            cv2.imshow('window', frame)
+            cv2.waitKey(0)
 
         # Remove and replace and large gears present
             frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
@@ -318,7 +322,8 @@ class VisionTable(Node):
             (_, _), (width, height), angle = rect
 
             if width > height:
-                angle = (90 - angle)
+                if angle > 0:
+                    angle = (90 - angle)
             else:
                 angle *= -1
 
@@ -340,7 +345,11 @@ class VisionTable(Node):
                 trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY), angle))              
 
             elif aspect_ratio < 0.8:
-                trays_on_table[Tray.S2L2_KIT_TRAY].append(((cX,cY), angle + 90))
+                if abs(angle-90) >= 90:
+                    angle = angle + 90
+                else:
+                    angle = angle - 90
+                trays_on_table[Tray.S2L2_KIT_TRAY].append(((cX,cY), angle))
 
             elif aspect_ratio < 0.9:
                 trays_on_table[Tray.M2L1_KIT_TRAY].append(((cX,cY), angle))

@@ -30,6 +30,12 @@ def launch_setup(context, *args, **kwargs):
         output='screen'
     )
 
+    motoman_conveyer_vision = Node(
+        package='aprs_vision',
+        executable='motoman_conveyer_node.py',
+        output='screen'
+    )
+
     fanuc_base_static_transform = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -73,6 +79,7 @@ def launch_setup(context, *args, **kwargs):
         fanuc_vision,
         teach_table_vision,
         motoman_vision,
+        motoman_conveyer_vision,
         motoman_base_static_transform,
         fanuc_base_static_transform
     ]
