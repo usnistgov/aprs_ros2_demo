@@ -2,13 +2,13 @@
 
 JointTrajPtFull::JointTrajPtFull(int sequence, std::vector<float> goal_positions, jointFeedbackMsg current_position){
   seq = sequence;
-  for(int i = 0; i < goal_positions.size();i++){
+  for(std::size_t i = 0; i < goal_positions.size();i++){
     positions[i] = goal_positions[i];
   }
 
   float max_distance = -1;
   float dist;
-  for(int i = 0; i < goal_positions.size(); i++){
+  for(std::size_t i = 0; i < goal_positions.size(); i++){
     dist = abs(goal_positions[i] - current_position.positions[i]);
     if(dist>max_distance){
       max_distance = dist;
@@ -96,10 +96,8 @@ MotoMotionReply::MotoMotionReply(char* byte_stream){
 
 std::string MotoMotionReply::output_data(){
   std::string response = "Reply information:\n";
-  // response += "\tRobot ID: " + robot_id.to);
-  // RCLCPP_INFO_STREAM(get_logger(), "\tSequence: " << sequence);
-  // response += "\tCommand: " << command_codes_to_str_[command];
-  response += "\tResult: " + result_codes_to_str_[result];
+  response += "\tSequence: " + std::to_string(sequence) + "\n";
+  response += "\tResult: " + result_codes_to_str_[result] + "\n\tSubcode: " + std::to_string(subcode);
   return response;
 }
 

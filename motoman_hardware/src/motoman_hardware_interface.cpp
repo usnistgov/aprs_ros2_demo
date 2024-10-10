@@ -89,7 +89,8 @@ namespace motoman_hardware {
     }
 
     prev_hw_commands_ = hw_commands_;
-
+    
+    
     RCLCPP_INFO_STREAM(get_logger(), reply.output_data());
 
     sequence++;
@@ -132,7 +133,6 @@ namespace motoman_hardware {
 
     for (int i = 0; i < num_robot_joints_; i++)
     {
-      // RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << current_joint_feedback_.positions[i]);
       hw_positions_[i] = current_joint_feedback_.positions[i];
       hw_velocities_[i] = current_joint_feedback_.velocities[i];
       hw_accelerations_[i] = current_joint_feedback_.accelerations[i];
@@ -144,6 +144,11 @@ namespace motoman_hardware {
     } else {
       hw_positions_[7] = 0.0;
       hw_positions_[8] = 0.0;
+    }
+
+    if(target_point_queue.size() > 0 && !is_in_motion()){
+      move_to_position(target_point_queue.front());
+      target_point_queue.pop();
     }
 
     return hardware_interface::return_type::OK;
@@ -178,10 +183,6 @@ namespace motoman_hardware {
     }
 
     if(motion_requested){
-      RCLCPP_INFO(get_logger(), "Motion requested true");
-    }
-
-    if(motion_requested){
       write_joints();
     }
 
@@ -193,7 +194,7 @@ namespace motoman_hardware {
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     
-    for (uint i = 0; i < num_urdf_joints_; i++)
+    for (int i = 0; i < num_urdf_joints_; i++)
     {
       state_interfaces.emplace_back(hardware_interface::StateInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_positions_[i]));
@@ -214,7 +215,7 @@ namespace motoman_hardware {
   {
     std::vector<hardware_interface::CommandInterface> command_interfaces;
     
-    for (uint i = 0; i < num_urdf_joints_; i++)
+    for (int i = 0; i < num_urdf_joints_; i++)
     {
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
         info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_commands_[i]));
@@ -417,30 +418,40 @@ namespace motoman_hardware {
   }
 
   bool MotomanHardwareInterface::write_joints(){
-    JointTrajPtFull initial_trajectory_point(0, current_joint_feedback_.positions, current_joint_feedback_);
-
-    for(auto position : initial_trajectory_point.positions){
-      RCLCPP_INFO_STREAM(get_logger(), position);
-    }
-
-    initial_trajectory_point.time = 0.0;
-    MotoMotionReply reply = send_motion_msg(initial_trajectory_point.to_bytes());
-
     std::vector<float> new_positions(10, 0);
     for(int i = 0; i < num_robot_joints_; i++){
       new_positions[i] = (hw_commands_[i]);
     }
-
-    for(auto position: new_positions){
-      RCLCPP_INFO_STREAM(get_logger(), position);
+    if(is_in_motion()){
+      target_point_queue.push(new_positions);
+      return false;
     }
 
-    JointTrajPtFull target_trajectory_point(1, new_positions, current_joint_feedback_);
+    return move_to_position(new_positions);
+  }
+
+  bool MotomanHardwareInterface::move_to_position(std::vector<float> target_positions){
+    JointTrajPtFull initial_trajectory_point(0, current_joint_feedback_.positions, current_joint_feedback_);
+
+    initial_trajectory_point.time = 0.0;
+    MotoMotionReply reply = send_motion_msg(initial_trajectory_point.to_bytes());
+
+
+    JointTrajPtFull target_trajectory_point(1, target_positions, current_joint_feedback_);
     reply = send_motion_msg(target_trajectory_point.to_bytes());
 
-    sequence++;
 
     return true;
+  }
+
+  bool MotomanHardwareInterface::is_in_motion(){
+    MotoMotionCtrl check_queue_cnt("CHECK_QUEUE_CNT");
+
+    std::vector<uint8_t> check_queue_cnt_bytes = check_queue_cnt.to_bytes();
+    
+    MotoMotionReply reply = send_motion_msg(check_queue_cnt_bytes);
+
+    return (reply.subcode != 0);
   }
 
   MotoMotionReply MotomanHardwareInterface::send_motion_msg(std::vector<uint8_t> byte_stream){
@@ -448,13 +459,13 @@ namespace motoman_hardware {
     
     int length = get_packet_length(motion_socket_);
 
-    RCLCPP_INFO_STREAM(get_logger(), "Length: " << length);
+    // RCLCPP_INFO_STREAM(get_logger(), "Length: " << length);
 
     if(length == 72){
       char *data = new char[length];
       socket_read::read_socket(motion_socket_, data, length);
       MotoMotionReply reply(data);
-      RCLCPP_INFO_STREAM(get_logger(), "Reply result: " << reply.result);
+      // RCLCPP_INFO_STREAM(get_logger(), "Reply result: " << reply.result);
       if(reply.result != 0){
         RCLCPP_ERROR_STREAM(get_logger(), "Unable to send motion control message with command type: " << reply.command << ". Result code: "<<reply.result << " Subcode: " << reply.subcode);
       }

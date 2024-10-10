@@ -300,23 +300,25 @@ def main():
         # joint_positions[4] = 0.0
         # joint_positions[5] = 1.5707
         # joint_positions[6] = 3.1415
-        # joint_positions[6] -= 0.5
+        joint_positions[6] -= 0.5
         # # velocities = [0.01] * 7
         # # accelerations = [0.01] * 7
-        # motion_time = 7.0
+        accelerations[6] = 0.2
+        velocities[6] = 0.2
+        motion_time = 10.0
                 
-        # pt_1 = JointTrajPtFull(1, motion_time, joint_positions, velocities, accelerations)
-        # reply = pt_1.send_msg_and_get_feedback(s, 1)
-        # print(f"Message type: {reply.command}")
-        # print(f"Point 1 sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
+        pt_1 = JointTrajPtFull(1, motion_time, joint_positions, velocities, accelerations)
+        reply = pt_1.send_msg_and_get_feedback(s, 1)
+        print(f"Message type: {reply.command}")
+        print(f"Point 1 sent\nResult: {reply.result}\nSubcode: {reply.subcode}\n")
         
-        # sleep(motion_time+1)
+        sleep(motion_time+1)
 
-        while True:
-            try:
-                sleep(0.1)
-            except KeyboardInterrupt:
-                break
+        # while True:
+        #     try:
+        #         sleep(0.1)
+        #     except KeyboardInterrupt:
+        #         break
         
         # stop_motion = MotoMotionCtrl("STOP_MOTION")
         # reply = stop_motion.send_msg_and_get_feedback(s)

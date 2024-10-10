@@ -50,6 +50,10 @@ namespace motoman_hardware {
     void read_joints();
     bool write_joints();
 
+    bool move_to_position(std::vector<float>);
+
+    bool is_in_motion();
+
     bool open_gripper();
     bool close_gripper();
 
@@ -91,6 +95,8 @@ namespace motoman_hardware {
     int sequence = 0;
 
     bool activated = false;
+
+    std::queue<std::vector<float>> target_point_queue;
   };
 
 }
