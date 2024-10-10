@@ -219,10 +219,10 @@ namespace fanuc_hardware {
     }
 
     // Check if gripper state was changed if so write gripper
-    // if (flag && prev_hw_commands_[6] != hw_commands_[6])
-    // {
-    //   auto ret = write_gripper();
-    // }
+    if (flag && prev_hw_commands_[6] != hw_commands_[6])
+    {
+      auto ret = write_gripper();
+    }
 
     prev_hw_commands_ = hw_commands_;
 
@@ -323,11 +323,11 @@ namespace fanuc_hardware {
 
       delete[] state_packet;
 
-      // if (gripper_state_) {
-      //   joint_positions.push_back(0);
-      // } else {
-      //   joint_positions.push_back(gripper_stroke_);
-      // }
+      if (gripper_state_) {
+        joint_positions.push_back(0);
+      } else {
+        joint_positions.push_back(gripper_stroke_);
+      }
 
       return std::make_pair(true, joint_positions);
     }

@@ -55,6 +55,24 @@
         </command_interface>
         <state_interface name="position"/>
       </joint>
+
+       <joint name="fanuc_prism1">
+          <command_interface name="position">
+          <param name="min">0</param>
+          <param name="max">0.02</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
+
+      <joint name="fanuc_prism2">
+          <command_interface name="position">
+          <param name="min">0</param>
+          <param name="max">0.02</param>
+          </command_interface>
+          <state_interface name="position">
+          </state_interface>
+      </joint>
       
     </ros2_control>
 
