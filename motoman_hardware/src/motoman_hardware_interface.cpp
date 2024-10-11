@@ -81,6 +81,10 @@ namespace motoman_hardware {
     hw_commands_[7] = hw_positions_[7];
     hw_commands_[8] = hw_positions_[8];
 
+    if(!turn_air_on()){
+      RCLCPP_ERROR(get_logger(), "Unable to turn gripper air on");
+    }
+
     // Set commands equal to current state
     for (int i = 0; i < num_robot_joints_; i++)
     {
@@ -107,6 +111,10 @@ namespace motoman_hardware {
     (void)previous_state;
 
     RCLCPP_INFO(get_logger(), "Inside on_deactivate");
+
+    if(!turn_air_off()){
+      RCLCPP_ERROR(get_logger(), "Unable to turn gripper air on");
+    }
 
     MotoMotionCtrl stop_traj_mode("STOP_TRAJ_MODE");
 
@@ -465,7 +473,6 @@ namespace motoman_hardware {
       char *data = new char[length];
       socket_read::read_socket(motion_socket_, data, length);
       MotoMotionReply reply(data);
-      // RCLCPP_INFO_STREAM(get_logger(), "Reply result: " << reply.result);
       if(reply.result != 0){
         RCLCPP_ERROR_STREAM(get_logger(), "Unable to send motion control message with command type: " << reply.command << ". Result code: "<<reply.result << " Subcode: " << reply.subcode);
       }
@@ -510,24 +517,6 @@ namespace motoman_hardware {
       WriteIOReply reply(data);
       if(reply.result != 0){
         RCLCPP_ERROR(get_logger(), "Unable to write close_gripper to false to socket");
-        return false;
-      }
-    } else {
-      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
-      return false;
-    }
-    
-    WriteIOBit air_io(10012, "on");
-    byte_stream = air_io.to_bytes();
-    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
-    length = get_packet_length(io_socket_);
-    
-    if (length == 16){
-      char *data = new char[length];
-      socket_read::read_socket(io_socket_, data, length);
-      WriteIOReply reply(data);
-      if(reply.result != 0){
-        RCLCPP_ERROR(get_logger(), "Unable to write air to true to socket");
         return false;
       }
     } else {
@@ -596,6 +585,48 @@ namespace motoman_hardware {
       return false;
     }
     
+    return true;
+  }
+
+  bool MotomanHardwareInterface::turn_air_on(){
+    WriteIOBit air_io(10012, "on");
+    std::vector<uint8_t> byte_stream = air_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    int length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write air to true to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
+    return true;
+  }
+
+  bool MotomanHardwareInterface::turn_air_off(){
+    WriteIOBit air_io(10012, "off");
+    std::vector<uint8_t> byte_stream = air_io.to_bytes();
+    socket_write::write_socket(io_socket_, byte_stream.data(), byte_stream.size());
+    int length = get_packet_length(io_socket_);
+    
+    if (length == 16){
+      char *data = new char[length];
+      socket_read::read_socket(io_socket_, data, length);
+      WriteIOReply reply(data);
+      if(reply.result != 0){
+        RCLCPP_ERROR(get_logger(), "Unable to write air to false to socket");
+        return false;
+      }
+    } else {
+      RCLCPP_ERROR_STREAM(get_logger(), "Invalid response recieved from write_io msg. Recieved message with length: " << length);
+      return false;
+    }
     return true;
   }
 

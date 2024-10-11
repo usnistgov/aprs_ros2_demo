@@ -57,6 +57,9 @@ namespace motoman_hardware {
     bool open_gripper();
     bool close_gripper();
 
+    bool turn_air_on();
+    bool turn_air_off();
+
     bool is_gripper_opened();
 
     int get_packet_length(int);
