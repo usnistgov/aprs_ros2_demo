@@ -1,5 +1,4 @@
-planning_plugin:
-  - ompl_interface/OMPLPlanner
+planning_plugin: ompl_interface/OMPLPlanner
 response_adapters:
   - default_planning_response_adapters/AddTimeOptimalParameterization
 start_state_max_bounds_error: 0.1
