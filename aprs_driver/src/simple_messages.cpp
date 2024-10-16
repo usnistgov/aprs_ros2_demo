@@ -164,7 +164,7 @@ std::string JointFeedback::output()
 
 /*
 ==============================================================================
-JOINT POSITION
+JOINT POSITION MESSAGE
 ==============================================================================
 */
 bool JointPosition::init(char* input)
@@ -223,8 +223,10 @@ std::string JointPosition::output()
   return s.str();
 }
 
-/* 
+/*
+==============================================================================
 WRITE IO REPLY
+==============================================================================
 */
 bool WriteIOReply::init(char* input){
   std::vector<int> input_data;
@@ -268,7 +270,6 @@ std::string WriteIOReply::output()
 READ IO REPLY
 ==============================================================================
 */
-
 bool ReadIOReply::init(char* input){
   std::vector<int> input_data;
   char temp[4];
@@ -385,6 +386,194 @@ std::string MotoMotionReply::output()
 
 /*
 ==============================================================================
+JOINT TRAJ PT REQUEST
+==============================================================================
+*/
+JointTrajPt::JointTrajPt(int _seq, std::vector<float> _pos, float _vel, float _dur)
+  : sequence(_seq), joint_data(_pos), velocity(_vel), duration(_dur)
+{
+  if (joint_data.size() != 10){
+    joint_data.resize(10);
+  }
+}
+
+std::vector<uint8_t> JointTrajPt::to_bytes()
+{
+  std::vector<uint8_t> byte_array;
+
+  // Add length 
+  insert_byte(byte_array, length);
+
+  // Build Header
+  insert_byte(byte_array, msg_type);
+  insert_byte(byte_array, comm_type);
+  insert_byte(byte_array, reply_code);
+
+  // Add request data
+  insert_byte(byte_array, sequence);
+
+  for (float joint_pos: joint_data) {
+    insert_byte(byte_array, joint_pos);
+  }
+
+  insert_byte(byte_array, velocity);
+  insert_byte(byte_array, duration);
+}
+
+
+/*
+==============================================================================
+JOINT TRAJ PT FULL REQUEST
+==============================================================================
+*/
+JointTrajPtFull::JointTrajPtFull(
+    int _seq,
+    float _time,
+    std::vector<float> _pos,
+    std::vector<float> _vel = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    std::vector<float> _acc = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  ) : sequence(_seq), time(_time), positions(_pos), velocities(_vel), accelerations(_acc)
+{
+  if (positions.size() != 10){
+    positions.resize(10);
+  }
+
+  if (velocities.size() != 10){
+    velocities.resize(10);
+  }
+
+  if (accelerations.size() != 10){
+    accelerations.resize(10);
+  }
+}
+
+std::vector<uint8_t> JointTrajPtFull::to_bytes()
+{
+  std::vector<uint8_t> byte_array;
+
+  // Add length 
+  insert_byte(byte_array, length);
+
+  // Build Header
+  insert_byte(byte_array, msg_type);
+  insert_byte(byte_array, comm_type);
+  insert_byte(byte_array, reply_code);
+
+  // Add message data
+  insert_byte(byte_array, robot_id);
+  insert_byte(byte_array, sequence);
+  insert_byte(byte_array, valid_fields);
+  insert_byte(byte_array, time);
+
+  // Add positions
+  for (float position: positions) {
+    insert_byte(byte_array, position);
+  }
+
+  // Add velocities
+  for (float velocity: velocities) {
+    insert_byte(byte_array, velocity);
+  }
+
+  // Add accelerations
+  for (float acceleration: accelerations) {
+    insert_byte(byte_array, acceleration);
+  }
+
+  return byte_array;
+}
+
+/*
+==============================================================================
+MOTO MOTION CONTROL REQUEST
+==============================================================================
+*/
+MotoMotionCtrl::MotoMotionCtrl(std::string command_type)
+{
+  command = commands[command_type];
+}
+
+std::vector<uint8_t> MotoMotionCtrl::to_bytes()
+{
+  std::vector<uint8_t> byte_array;
+
+  // Add length 
+  insert_byte(byte_array, length);
+
+  // Build Header
+  insert_byte(byte_array, msg_type);
+  insert_byte(byte_array, comm_type);
+  insert_byte(byte_array, reply_code);
+
+  // Add message data
+  insert_byte(byte_array, robot_id);
+  insert_byte(byte_array, seq);
+  insert_byte(byte_array, command);
+
+  // Add dummy data
+  float d = 0.0;
+  for (int i = 0; i < 10; i++) {
+    insert_byte(byte_array, d);
+  }
+
+  return byte_array;
+}
+
+/*
+==============================================================================
+READ IO REQUEST
+==============================================================================
+*/
+ReadIORequest::ReadIORequest(int _address): address(_address) {}
+
+std::vector<uint8_t> ReadIORequest::to_bytes()
+{
+  std::vector<uint8_t> byte_array;
+
+  // Add length 
+  insert_byte(byte_array, length);
+
+  // Build Header
+  insert_byte(byte_array, msg_type);
+  insert_byte(byte_array, comm_type);
+  insert_byte(byte_array, reply_code);
+
+  // Add message data
+  insert_byte(byte_array, address);
+
+  return byte_array;
+}
+
+
+/*
+==============================================================================
+WRITE IO REQUEST
+==============================================================================
+*/
+WriteIORequest::WriteIORequest(int _address, int _data)
+  : address(_address), data(_data) {}
+
+std::vector<uint8_t> WriteIORequest::to_bytes()
+{
+  std::vector<uint8_t> byte_array;
+
+  // Add length 
+  insert_byte(byte_array, length);
+
+  // Build Header
+  insert_byte(byte_array, msg_type);
+  insert_byte(byte_array, comm_type);
+  insert_byte(byte_array, reply_code);
+
+  // Add message data
+  insert_byte(byte_array, address);
+  insert_byte(byte_array, data);
+
+  return byte_array;
+}
+
+/*
+==============================================================================
 UTILITIES
 ==============================================================================
 */
@@ -397,4 +586,22 @@ float bytes_to_float(char* bytes)
   std::memcpy(&result, &temp, sizeof(float));
 
   return result;
+}
+
+void insert_byte(std::vector<uint8_t> &v, int data)
+{
+  uint32_t d = htonl(data);
+
+  v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + sizeof(uint8_t));
+
+}
+
+void insert_byte(std::vector<uint8_t> &v, float data)
+{
+  u_int32_t d;
+  std::memcpy(&d, &data, sizeof(u_int32_t));
+
+  d = htonl(d);
+
+  v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + sizeof(uint8_t));
 }
