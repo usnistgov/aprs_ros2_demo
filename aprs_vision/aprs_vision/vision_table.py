@@ -17,7 +17,7 @@ from ament_index_python.packages import get_package_share_directory
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 
 from aprs_vision.gear_detection import GearDetection
-from aprs_interfaces.srv import GenerateGridMaps
+from aprs_interfaces.srv import GenerateGridMaps, LocateTrays
 
 from pathlib import Path
 
@@ -66,6 +66,7 @@ class VisionTable(Node):
     generate_map_area: float
     angle_offset: float
     suffix: str
+    vision_location: str
 
 
     gear_detection_values: dict[int, GearDetection]
@@ -92,15 +93,15 @@ class VisionTable(Node):
         self.current_image_msg: Optional[Image] = None
 
         # ROS Services
-        self.locate_trays_srv = self.create_service(Trigger, 'locate_trays', self.locate_trays_cb)
-        self.update_trays_info_srv = self.create_service(Trigger, 'update_slots', self.update_slots_cb)
-        self.calibrate_maps_srv = self.create_service(GenerateGridMaps, 'calibrate_maps', self.calibrate_maps_cb)
+        self.locate_trays_srv = self.create_service(LocateTrays, f'{self.vision_location}/locate_trays', self.locate_trays_cb)
+        self.update_trays_info_srv = self.create_service(Trigger, f'{self.vision_location}/update_slots', self.update_slots_cb)
+        self.calibrate_maps_srv = self.create_service(GenerateGridMaps, f'{self.vision_location}/calibrate_maps', self.calibrate_maps_cb)
 
         # ROS Topics
-        self.trays_info_pub = self.create_publisher(Trays, 'trays_info', qos_profile_default)
-        self.raw_image_pub = self.create_publisher(Image, 'raw_image', 10)
-        self.detected_trays_image_pub = self.create_publisher(Image, 'detected_trays_image', qos_profile_default)
-        self.slot_centers_pub = self.create_publisher(SlotPixel,'slot_pixel_centers', qos_profile_default)
+        self.trays_info_pub = self.create_publisher(Trays, f'{self.vision_location}/trays_info', qos_profile_default)
+        self.raw_image_pub = self.create_publisher(Image, f'{self.vision_location}/raw_image', 10)
+        self.detected_trays_image_pub = self.create_publisher(Image, f'{self.vision_location}/detected_trays_image', qos_profile_default)
+        self.slot_centers_pub = self.create_publisher(SlotPixel,f'{self.vision_location}/slot_pixel_centers', qos_profile_default)
     
         # TF Broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -110,10 +111,15 @@ class VisionTable(Node):
         self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
         self.read_frame_timer = self.create_timer(timer_period_sec=0.1, callback=self.read_frame)
 
-    def locate_trays_cb(self, _, response: Trigger.Response) -> Trigger.Response:
+    def locate_trays_cb(self, request: LocateTrays.Request, response: LocateTrays.Response) -> LocateTrays.Response:
         if self.trays_info is not None:
-            self.trays_info = None
-            self.slot_pixel_center_pub = None
+            if request.overwrite:
+                self.trays_info = None
+                self.slot_pixel_center_pub = None
+            else: 
+                response.message = "Trays Already Found. Unable to perform without overwriting current data!"
+                response.success = False
+                return response
         
         if self.current_frame is None:
             response.message = "Unable to connect to camera"
@@ -121,22 +127,13 @@ class VisionTable(Node):
             return response
         
         frame = self.current_frame.copy()
-        
-        # Save current frame as ROS message for publishing
-        self.current_image_msg = self.build_img_msg_from_mat(frame)
 
         # Function to determine the location of the trays provided an initial image
-        frame = self.rectify_frame(frame)
-
         original_img = frame.copy()
 
         # Remove table backgroud
         try:
-            cv2.imshow('window', frame)
-            cv2.waitKey(0)
             frame = self.remove_background(frame)
-            cv2.imshow('window', frame)
-            cv2.waitKey(0)
 
         # Remove and replace and large gears present
             frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
@@ -202,7 +199,7 @@ class VisionTable(Node):
             response.success = True
             response.message = "Map Calibrated"
             if request.save_background_image:
-                cv2.imwrite(f'{request.filepath}{self.background_image}',cv2.remap(self.current_frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30])
+                cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.current_frame))
 
         return response
 
@@ -230,7 +227,9 @@ class VisionTable(Node):
         ret, current_frame = self.capture.read()
 
         if ret:
-            self.current_frame = current_frame
+            self.current_frame = self.rectify_frame(current_frame)
+        # Save current frame as ROS message for publishing
+            self.current_image_msg = self.build_img_msg_from_mat(self.current_frame)
         else:
             self.current_frame = None
 
@@ -241,8 +240,13 @@ class VisionTable(Node):
         delta = cv2.subtract(self.base_background, frame)
 
         gray = cv2.cvtColor(delta, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('window' , gray)
+        cv2.waitKey(0)
 
         _, mask = cv2.threshold(gray, self.background_threshold, 255, cv2.THRESH_BINARY)
+
+        cv2.imshow('window' , mask)
+        cv2.waitKey(0)
 
         canvas = np.zeros(gray.shape, dtype=np.uint8)
 
@@ -254,6 +258,9 @@ class VisionTable(Node):
                 filtered_contours.append(c)
 
         cv2.drawContours(canvas, filtered_contours, -1, color=255, thickness=cv2.FILLED) # type: ignore
+
+        cv2.imshow('window', cv2.bitwise_and(frame,frame,mask=canvas))
+        cv2.waitKey(0)
 
         return cv2.bitwise_and(frame, frame, mask=canvas)
     
@@ -312,6 +319,9 @@ class VisionTable(Node):
             # Ignore contours under a size threshold
             if cv2.contourArea(contour) < 200:
                 continue
+            cv2.drawContours(table_image,contour,-1,(255,255,255),2)
+            cv2.imshow('window', table_image)
+            cv2.waitKey(0)
 
             # Approximate the contour as a polygon
             peri = cv2.arcLength(contour, True)
@@ -325,11 +335,11 @@ class VisionTable(Node):
                 if angle > 0:
                     angle = (90 - angle)
             else:
-                angle *= -1
-
-            # print(f'height:  {height}  width: {width} angle:  {angle}')      
+                angle *= -1     
 
             aspect_ratio = min(width, height) / max(width, height)
+
+            print(f'height:  {height}  width: {width} angle:  {angle} asepct ratio:  {aspect_ratio}') 
 
             # Calculate center of contour
             box = cv2.boxPoints(rect)
@@ -376,13 +386,14 @@ class VisionTable(Node):
         # Fill the trays info msg
         tray_info = Trays()
         pixel_tray_info = SlotPixel()
-        image_base = f'image_base_{self.suffix}'
-        image_center = Point(
-            x=self.table_origin.x/1000,
-            y=self.table_origin.y/1000,
-            z=self.table_origin.z/1000,
-        )
-        self.transforms.append(self.generate_transform(self.base_frame, image_base, image_center, 0.0, math.pi, self.angle_offset))
+        if self.publish_frames:
+            image_base = f'image_base_{self.suffix}'
+            image_center = Point(
+                x=self.table_origin.x/1000,
+                y=self.table_origin.y/1000,
+                z=self.table_origin.z/1000,
+            )
+            self.transforms.append(self.generate_transform(self.base_frame, image_base, image_center, 0.0, math.pi, self.angle_offset))
 
         for identifier, trays in trays_on_table.items():
             for i, ((x,y), angle) in enumerate(trays):
@@ -409,7 +420,10 @@ class VisionTable(Node):
 
                     # Publish TF frame
                     tray_frame_name = f'{tray_msg.name}_{self.suffix}'
-                    self.transforms.append(self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta))
+                    transform_placehold = self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta)
+                    tray_msg.transform_stamped = transform_placehold
+                    if self.publish_frames:
+                        self.transforms.append(transform_placehold)
  
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                     # Create slot info for each slot
@@ -436,7 +450,8 @@ class VisionTable(Node):
                             z= self.gear_height
                         )
                         slot_frame_name = f'{slot_info.name}_{self.suffix}'
-                        self.transforms.append(self.generate_transform(tray_frame_name, slot_frame_name, slot_center_tray, 0.0, 0.0, 0.0))
+                        if self.publish_frames:
+                            self.transforms.append(self.generate_transform(tray_frame_name, slot_frame_name, slot_center_tray, 0.0, 0.0, 0.0))
 
                     # Store pixel coordinates for center of slot
                 

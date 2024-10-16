@@ -26,6 +26,8 @@ class TeachTable(VisionTable):
     calibrate_rows = 20
     calibrate_columns = 32
     generate_map_area = 6
+    suffix = 'teach'
+    vision_location = 'table_vision'
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
@@ -36,7 +38,7 @@ class TeachTable(VisionTable):
     }
 
     def __init__(self):
-        super().__init__("teach_table", "teach_table_vision")
+        super().__init__("table_vision", "teach")
 
     def remove_background(self, frame: MatLike) -> MatLike:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)

@@ -42,6 +42,7 @@ class MotomanTable(VisionTable):
 
     angle_offset = math.pi
     suffix = 'motoman'
+    vision_location ='table_vision'
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
@@ -56,7 +57,7 @@ class MotomanTable(VisionTable):
     base_frame = 'motoman_base_link'
 
     def __init__(self):
-        super().__init__("motoman_table", "motoman_vision")
+        super().__init__("table_vision", "motoman")
     
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
         offset = 0
