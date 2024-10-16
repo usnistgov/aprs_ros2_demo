@@ -21,7 +21,7 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 import yaml
-
+from difflib import SequenceMatcher
 from aprs_interfaces.srv import MoveToNamedPose
 
 FRAMEWIDTH=1200
@@ -94,7 +94,10 @@ class DemoControlWindow(Node):
         self.static_transforms = []
 
         frames_dict = yaml.safe_load(self.tf_buffer.all_frames_as_yaml())
-        # self.frames_list = list(frames_dict.keys())
+        try:
+            self.frames_list = list(frames_dict.keys())
+        except:
+            self.frames_list = []
 
         # Service clients
         self.fanuc_clients = {"move_to_named_pose": self.create_client(MoveToNamedPose, "/fanuc/move_to_named_pose")}
@@ -387,8 +390,11 @@ class DemoControlWindow(Node):
             self.robot_status_label.configure(text="Not Connected", text_color="red")
         
         frames_dict = yaml.safe_load(self.tf_buffer.all_frames_as_yaml())
-        # self.frames_list = list(frames_dict.keys())
-        print(frames_dict)
+        try:
+            self.frames_list = list(frames_dict.keys())
+        except:
+            self.frames_list = []
+        print(self.frames_list)
     
     # Services tab
     def setup_services_tab(self):
@@ -413,6 +419,9 @@ class DemoControlWindow(Node):
         self.selected_named_pose = ctk.StringVar()
         if len(self.fanuc_named_positions) > 0:
             self.selected_named_pose.set(self.fanuc_named_positions[0])
+        self.selected_frame = ctk.StringVar(value="")
+
+        self.frame_menu = ctk.CTkComboBox(self.service_frame, variable=self.selected_frame, values=self.frames_list)
         
         self.update_fanuc_service_menu(1,1,1)
 
@@ -420,11 +429,14 @@ class DemoControlWindow(Node):
         call_service_button.grid(column=LEFT_COLUMN, row=30)
 
         self.fanuc_selected_service.trace_add("write", self.update_fanuc_service_menu)
+        self.selected_frame.trace_add("write", self.only_show_matching_frames)
 
     
     def update_fanuc_service_menu(self, _, __, ___):
         for widget in self.fanuc_service_menu_widgets:
             widget.grid_forget()
+        
+        self.selected_frame.set("")
 
         if self.fanuc_selected_service.get() == "move_to_named_pose":
             self.fanuc_service_menu_widgets.append(ctk.CTkLabel(self.service_frame, text="Select the pose to move to:"))
@@ -434,10 +446,18 @@ class DemoControlWindow(Node):
             self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 4)
 
         elif self.fanuc_selected_service.get() == "pick_from_slot":
-            pass
+            self.fanuc_service_menu_widgets.append(ctk.CTkLabel(self.service_frame, text="Select the frame for picking:"))
+            self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 3)
+
+            self.fanuc_service_menu_widgets.append(self.frame_menu)
+            self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 4)
         
         else:
-            pass
+            self.fanuc_service_menu_widgets.append(ctk.CTkLabel(self.service_frame, text="Select the frame for placing:"))
+            self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 3)
+
+            self.fanuc_service_menu_widgets.append(self.frame_menu)
+            self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 4)
 
     def call_fanuc_service(self):
         if self.fanuc_selected_service.get() == "move_to_named_pose":
@@ -480,3 +500,16 @@ class DemoControlWindow(Node):
                             found_name += c
                     found_named_positions.append(found_name)
         return found_named_positions
+
+    def only_show_matching_frames(self, _, __, ___):
+        selection = self.selected_frame.get()
+        if selection in self.frames_list:
+            self.frame_menu.configure(values = self.frames_list)
+        else:
+            options = []
+            for topic in self.frames_list:
+                if selection in topic:
+                    options.append(topic)
+                elif SequenceMatcher(None, selection, topic[:len(selection)]).ratio() > 0.5:
+                    options.append(topic)
+            self.frame_menu.configure(values = options)
