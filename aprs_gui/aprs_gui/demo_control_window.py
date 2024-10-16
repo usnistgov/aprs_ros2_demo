@@ -16,6 +16,13 @@ from example_interfaces.srv import Trigger
 from aprs_interfaces.msg import SlotPixel, PixelCenter, PixelSlotInfo
 from math import sin, cos, pi
 from copy import copy
+from ament_index_python.packages import get_package_share_directory
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
+import yaml
+
+from aprs_interfaces.srv import MoveToNamedPose
 
 FRAMEWIDTH=1200
 FRAMEHEIGHT=750
@@ -38,6 +45,8 @@ GEAR_TRAY_COLORS_AND_SIZES = {
 }
 
 class DemoControlWindow(Node):
+    _service_types = ["move_to_named_pose", "pick_from_slot", "place_in_slot"]
+
     def __init__(self):
         super().__init__("aprs_demo_gui")
         
@@ -71,6 +80,24 @@ class DemoControlWindow(Node):
         # ROBOT CONNECTIONS
         self.most_recent_joint_states_time = -100
         self.most_recent_joint_states = None
+
+        # GET_NAMED_POSITIONS
+        self.fanuc_named_positions = self.get_named_positions("fanuc")
+        if len(self.fanuc_named_positions) == 0:
+            self.get_logger().warn("No named positions were found for Fanuc")
+
+        # TF
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+
+        self.tf_broadcaster = StaticTransformBroadcaster(self)
+        self.static_transforms = []
+
+        frames_dict = yaml.safe_load(self.tf_buffer.all_frames_as_yaml())
+        # self.frames_list = list(frames_dict.keys())
+
+        # Service clients
+        self.fanuc_clients = {"move_to_named_pose": self.create_client(MoveToNamedPose, "/fanuc/move_to_named_pose")}
         
         self.notebook = ttk.Notebook(self.main_window)
         
@@ -78,6 +105,11 @@ class DemoControlWindow(Node):
         self.vision_frame.pack(fill='both', expand=True)
         self.notebook.add(self.vision_frame, text="Run Demo")
         self.setup_vision_tab()
+
+        self.service_frame = ctk.CTkFrame(self.notebook, width=FRAMEWIDTH, height=FRAMEHEIGHT)
+        self.service_frame.pack(fill='both', expand=True)
+        self.notebook.add(self.service_frame, text="Call Service")
+        self.setup_services_tab()
         
         self.notebook.grid(pady=10, column=LEFT_COLUMN, columnspan = 3, sticky=tk.E+tk.W+tk.N+tk.S)
         
@@ -353,3 +385,98 @@ class DemoControlWindow(Node):
             self.robot_status_label.configure(text="Connected", text_color="green")
         else:
             self.robot_status_label.configure(text="Not Connected", text_color="red")
+        
+        frames_dict = yaml.safe_load(self.tf_buffer.all_frames_as_yaml())
+        # self.frames_list = list(frames_dict.keys())
+        print(frames_dict)
+    
+    # Services tab
+    def setup_services_tab(self):
+        self.service_frame.grid_rowconfigure(0, weight=1)
+        self.service_frame.grid_rowconfigure(100, weight=1)
+        self.service_frame.grid_columnconfigure(0, weight=1)
+        self.service_frame.grid_columnconfigure(10, weight=1)
+        
+        # Fanuc widgets
+        fanuc_service_selection_label = ctk.CTkLabel(self.service_frame, text="Select the service to call for the Fanuc")
+        fanuc_service_selection_label.grid(column=LEFT_COLUMN, row=1)
+
+        service_types = copy(self._service_types)
+        if len(self.fanuc_named_positions) == 0:
+            service_types = self._service_types[1:]
+        
+        self.fanuc_selected_service = ctk.StringVar(value=service_types[0])
+        fanuc_service_selection_menu = ctk.CTkOptionMenu(self.service_frame, variable=self.fanuc_selected_service, values=service_types)
+        fanuc_service_selection_menu.grid(column=LEFT_COLUMN, row = 2)
+
+        self.fanuc_service_menu_widgets = []
+        self.selected_named_pose = ctk.StringVar()
+        if len(self.fanuc_named_positions) > 0:
+            self.selected_named_pose.set(self.fanuc_named_positions[0])
+        
+        self.update_fanuc_service_menu(1,1,1)
+
+        call_service_button = ctk.CTkButton(self.service_frame, text="Call Service", command=self.call_fanuc_service)
+        call_service_button.grid(column=LEFT_COLUMN, row=30)
+
+        self.fanuc_selected_service.trace_add("write", self.update_fanuc_service_menu)
+
+    
+    def update_fanuc_service_menu(self, _, __, ___):
+        for widget in self.fanuc_service_menu_widgets:
+            widget.grid_forget()
+
+        if self.fanuc_selected_service.get() == "move_to_named_pose":
+            self.fanuc_service_menu_widgets.append(ctk.CTkLabel(self.service_frame, text="Select the pose to move to:"))
+            self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 3)
+
+            self.fanuc_service_menu_widgets.append(ctk.CTkOptionMenu(self.service_frame, variable=self.selected_named_pose, values = self.fanuc_named_positions))
+            self.fanuc_service_menu_widgets[-1].grid(column = LEFT_COLUMN, row = 4)
+
+        elif self.fanuc_selected_service.get() == "pick_from_slot":
+            pass
+        
+        else:
+            pass
+
+    def call_fanuc_service(self):
+        if self.fanuc_selected_service.get() == "move_to_named_pose":
+            move_to_named_pose_request = MoveToNamedPose.Request()
+            move_to_named_pose_request.name = self.selected_named_pose
+
+            future = self.fanuc_clients[self.fanuc_selected_service.get()].call_async(move_to_named_pose_request)
+
+            start = time()
+            while not future.done():
+                pass
+                if time()-start >= 15.0:
+                    self.get_logger().warn("Unable to Move fanuc to desired pose")
+                    return
+        elif self.fanuc_selected_service.get() == "pick_from_slot":
+            pass
+        
+        else:
+            pass
+
+
+    # Get Named Positions
+    def get_named_positions(self, robot_name: str):
+        moveit_package = get_package_share_directory(f'{robot_name}_moveit_config')
+        srdf_file_path = moveit_package + f"/config/{robot_name}.srdf"
+        found_named_positions = []
+        with open(srdf_file_path, "+r") as f:
+            for line in f:
+                if "group_state" in line and " name" in line:
+                    found_name = ""
+                    inside_quotes = False
+                    for c in line[line.find(" name"):]:
+                        if c == '"':
+                            if inside_quotes == False:
+                                inside_quotes = True
+                                continue
+                            else:
+                                break
+                        if inside_quotes:
+                            found_name += c
+                    found_named_positions.append(found_name)
+        return found_named_positions
