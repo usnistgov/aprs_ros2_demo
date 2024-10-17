@@ -199,9 +199,11 @@ namespace simple_message {
   ==============================================================================
   */
   class JointTrajPt{
+  public:
     JointTrajPt(int _seq, std::vector<float> _pos, float _vel, float _dur);
     std::vector<uint8_t> to_bytes();
-    
+  
+  private:
     int length = 64;
     int msg_type = 11;
     int comm_type = 2;

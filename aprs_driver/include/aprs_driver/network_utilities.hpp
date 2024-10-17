@@ -24,7 +24,7 @@ void insert_byte(std::vector<uint8_t> &v, int data)
 {
   uint32_t d = htonl(data);
 
-  v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + sizeof(uint8_t));
+  v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + 4);
 
 }
 
@@ -35,7 +35,7 @@ void insert_byte(std::vector<uint8_t> &v, float data)
 
   d = htonl(d);
 
-  v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + sizeof(uint8_t));
+  v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + 4);
 }
 
 int get_packet_length(int socket)
@@ -57,5 +57,10 @@ char* read_from_socket(int socket, int num_bytes){
   read(socket, data, num_bytes);
 
   return data;
+} 
+
+void write_to_socket(int socket, std::vector<uint8_t> byte_stream)
+{
+  write(socket, byte_stream.data(), byte_stream.size());
 } 
 
