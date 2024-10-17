@@ -45,12 +45,17 @@ namespace fanuc_hardware {
     state_socket_address_.sin_port = htons(state_port_);
     inet_pton(AF_INET, robot_ip_, &state_socket_address_.sin_addr);
 
-    bool connection_success = connect(state_socket_, (struct sockaddr *)&state_socket_address_, sizeof(state_socket_address_));
+    int connection_success = connect(state_socket_, (struct sockaddr *)&state_socket_address_, sizeof(state_socket_address_));
 
-    if (!connection_success)
+    if (connection_success < 0){
+      RCLCPP_INFO(get_logger(), "Unable to connect to socket");
       return hardware_interface::CallbackReturn::FAILURE;
+    }
 
-    update_from_socket();
+    update_from_robot_controller();
+
+    RCLCPP_INFO_STREAM(get_logger(), current_status_.output());
+    RCLCPP_INFO_STREAM(get_logger(), current_joint_position_.output());
 
     auto joint_data = current_joint_position_.get_joint_data();
 
@@ -78,6 +83,19 @@ namespace fanuc_hardware {
   {
     (void)time;
     (void)period;
+
+    if (!activated_){
+      return hardware_interface::return_type::OK;
+    }
+
+    update_from_robot_controller();
+
+    auto joint_data = current_joint_position_.get_joint_data();
+
+    for (int i = 0; i < num_robot_joints_; i++)
+    {
+      hw_positions_[i] = joint_data[i];
+    }
 
     return hardware_interface::return_type::OK;
   }
@@ -120,7 +138,7 @@ namespace fanuc_hardware {
     return rclcpp::get_logger("FanucHardwareInterface");
   }
 
-  void FanucHardwareInterface::update_from_socket() {
+  void FanucHardwareInterface::update_from_robot_controller() {
     bool recieved_status = false;
     bool recieved_joint_position = false;
 

@@ -41,6 +41,7 @@ target_include_directories(fanuc_hardware PRIVATE
   include
 )
 
+target_link_libraries(fanuc_hardware simple_messages)
 ament_target_dependencies(fanuc_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 pluginlib_export_plugin_description_file(hardware_interface fanuc_hardware.xml)

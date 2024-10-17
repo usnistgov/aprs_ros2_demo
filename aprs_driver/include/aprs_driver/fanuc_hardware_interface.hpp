@@ -21,6 +21,7 @@ namespace fanuc_hardware {
   class FanucHardwareInterface : public hardware_interface::SystemInterface {
 
   public:
+    
     CallbackReturn on_init(const hardware_interface::HardwareInfo& info) override;
 
     CallbackReturn on_configure(const rclcpp_lifecycle::State & previous_state) override;
@@ -38,16 +39,18 @@ namespace fanuc_hardware {
     std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
+    ~FanucHardwareInterface() {on_deactivate(rclcpp_lifecycle::State());};
+
   private:
     rclcpp::Logger get_logger();
-    void update_from_socket();
+    void update_from_robot_controller();
 
     std::vector<double> hw_commands_;
     std::vector<double> hw_positions_;
 
     const char *robot_ip_ = "192.168.1.34";
     const int state_port_ = 11002;
-    const int num_urdf_joints_ = 8;
+    const int num_urdf_joints_ = 6;
     const int num_robot_joints_ = 6;
   
     struct sockaddr_in state_socket_address_;

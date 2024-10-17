@@ -87,8 +87,8 @@ def launch_setup(context, *args, **kwargs):
         control_node,
         robot_state_publisher,
         joint_state_broadcaster,
-        forward_position_controller,
-        fanuc_gripper_control,
+        # forward_position_controller,
+        # fanuc_gripper_control,
         rviz_node
     ]
 

@@ -47,7 +47,7 @@ namespace simple_message {
   {
     std::stringstream s;
 
-    s << "STATUS MESSAGE\n";
+    s << "\nSTATUS MESSAGE\n";
     s << "\tdrives_powered: " << drives_powered << "\n";
     s << "\te_stopped: " << e_stopped << "\n";
     s << "\terror_code: " << error_code << "\n";
@@ -197,6 +197,7 @@ namespace simple_message {
     sequence = input_data[3];
 
     // Get positions
+    joint_data.clear();
     for(int i = 0; i < 10; i++){
       for(int j = 0; j < 4; j++){
         temp[j] = *(input+j);
@@ -212,13 +213,13 @@ namespace simple_message {
   {
     std::stringstream s;
 
-    s << "JOINT POSITION MESSAGE\n";
+    s << "\nJOINT POSITION MESSAGE\n";
     s << "\tsequence: " << sequence << "\n";
 
-    int i=0;
+    int i=1;
     s << "\tpositions:\n";
     for (float p : joint_data){
-      s << "\t\tjoint" << i << ": " << p << "\n";
+      s << "\t\tjoint_" << i << ": " << p << "\n";
       i++;
     }
 
