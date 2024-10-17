@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include <arpa/inet.h>
+#include <unistd.h>
 
 /*
 ==============================================================================
@@ -36,3 +37,25 @@ void insert_byte(std::vector<uint8_t> &v, float data)
 
   v.insert(v.end(), reinterpret_cast<uint8_t*>(&d), reinterpret_cast<uint8_t*>(&d) + sizeof(uint8_t));
 }
+
+int get_packet_length(int socket)
+{
+  char *length_packet = new char[sizeof(uint32_t)];
+
+  ssize_t ret = read(socket, length_packet, sizeof(uint32_t));
+
+  if (ret < 0){
+    return -1;
+  }
+
+  return ntohl(*(uint32_t*)length_packet);
+}
+
+char* read_from_socket(int socket, int num_bytes){
+  char *data = new char[num_bytes];
+  
+  read(socket, data, num_bytes);
+
+  return data;
+} 
+
