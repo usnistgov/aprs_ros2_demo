@@ -13,8 +13,11 @@ endif()
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
   hardware_interface
+  controller_interface
   pluginlib
   rclcpp_components
+  control_msgs
+  rclcpp_action
 )
 
 find_package(ament_cmake REQUIRED)
@@ -46,8 +49,22 @@ ament_target_dependencies(fanuc_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 pluginlib_export_plugin_description_file(hardware_interface fanuc_hardware.xml)
 
+# Build fanuc joint trajectory controller
+add_library(fanuc_controller SHARED
+  src/fanuc_joint_trajectory_controller.cpp
+)
+
+target_include_directories(fanuc_controller PRIVATE
+  include
+)
+
+target_link_libraries(fanuc_controller simple_messages)
+ament_target_dependencies(fanuc_controller ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+pluginlib_export_plugin_description_file(controller_interface fanuc_controller.xml)
+
 install(
-  TARGETS simple_messages fanuc_hardware
+  TARGETS simple_messages fanuc_hardware fanuc_controller
   DESTINATION lib
 )
 

@@ -12,7 +12,9 @@
 
   <depend>rclcpp</depend>
   <depend>hardware_interface</depend>
+  <depend>controller_interface</depend>
   <depend>pluginlib</depend>
+  <depend>rclcpp_lifecycle</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

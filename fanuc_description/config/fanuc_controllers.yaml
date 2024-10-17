@@ -8,8 +8,10 @@ controller_manager:
     forward_position_controller:
       type: forward_command_controller/ForwardCommandController
 
+    joint_trajectory_controller:
+      type: fanuc_controller/FanucJointTrajectoryController
 
-forward_position_controller:
+joint_trajectory_controller:
   ros__parameters:
     joints:
       - joint_1

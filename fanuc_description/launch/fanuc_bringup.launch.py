@@ -46,6 +46,12 @@ def launch_setup(context, *args, **kwargs):
         executable="spawner",
         arguments=['joint_state_broadcaster'],
     )
+
+    joint_trajectory_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=['joint_trajectory_controller',],
+    )
     
     forward_position_controller = Node(
         package="controller_manager",
@@ -87,6 +93,7 @@ def launch_setup(context, *args, **kwargs):
         control_node,
         robot_state_publisher,
         joint_state_broadcaster,
+        joint_trajectory_controller,
         # forward_position_controller,
         # fanuc_gripper_control,
         rviz_node

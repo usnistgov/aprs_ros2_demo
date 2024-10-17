@@ -165,10 +165,6 @@ namespace fanuc_hardware {
 
 }
 
-
-
-
-
 #include "pluginlib/class_list_macros.hpp"
 
 PLUGINLIB_EXPORT_CLASS(fanuc_hardware::FanucHardwareInterface, hardware_interface::SystemInterface)
