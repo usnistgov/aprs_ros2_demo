@@ -48,8 +48,11 @@ namespace simple_message {
     std::vector<float> accelerations;
 
   public:
-    bool init(char* input);
+    bool update(char* input);
     std::string output();
+    std::vector<float> get_joint_positions() {return positions;};
+    std::vector<float> get_joint_velocities() {return velocities;};
+    std::vector<float> get_joint_accelerations() {return accelerations;};
 
     static const int PACKET_LENGTH = 144;
     int msg_type = 15;
@@ -221,21 +224,23 @@ namespace simple_message {
   ==============================================================================
   */
   class JointTrajPtFull{
-    JointTrajPtFull(int _seq, float _time, std::vector<float> _pos, std::vector<float> _vel, std::vector<float> _acc);
-    std::vector<uint8_t> to_bytes();
+    public:
+      JointTrajPtFull(int _seq, float _time, std::vector<float> _pos, std::vector<float> _vel, std::vector<float> _acc);
+      std::vector<uint8_t> to_bytes();
     
-    int length = 136;
-    int msg_type = 14;
-    int comm_type = 2;
-    int reply_code = 0;
-    int robot_id = 0;
-    int valid_fields = 7;
-    
-    int sequence;
-    float time;
-    std::vector<float> positions;
-    std::vector<float> velocities;
-    std::vector<float> accelerations;
+    private:
+      int length = 136;
+      int msg_type = 14;
+      int comm_type = 2;
+      int reply_code = 0;
+      int robot_id = 0;
+      int valid_fields = 7;
+      
+      int sequence;
+      float time;
+      std::vector<float> positions;
+      std::vector<float> velocities;
+      std::vector<float> accelerations;
   };
 
   /*
@@ -244,25 +249,26 @@ namespace simple_message {
   ==============================================================================
   */
   class MotoMotionCtrl{
-    MotoMotionCtrl(std::string);
-    std::vector<uint8_t> to_bytes();
-    
-    int length = 64;
-    int msg_type = 2001;
-    int comm_type = 2;
-    int reply_code = 0;
-    int robot_id = 0;
-    int seq = 0;
+    public:
+      MotoMotionCtrl(std::string);
+      std::vector<uint8_t> to_bytes();
+    private:
+      int length = 64;
+      int msg_type = 2001;
+      int comm_type = 2;
+      int reply_code = 0;
+      int robot_id = 0;
+      int seq = 0;
 
-    int command;
+      int command;
 
-    std::map<std::string, int> commands = { 
-      {"CHECK_MOTION_READY", 200101}, 
-      {"CHECK_QUEUE_CNT", 200102}, 
-      {"STOP_MOTION", 200111}, 
-      {"START_TRAJ_MODE", 200121},
-      {"STOP_TRAJ_MODE", 200122}
-    };
+      std::map<std::string, int> commands = { 
+        {"CHECK_MOTION_READY", 200101}, 
+        {"CHECK_QUEUE_CNT", 200102}, 
+        {"STOP_MOTION", 200111}, 
+        {"START_TRAJ_MODE", 200121},
+        {"STOP_TRAJ_MODE", 200122}
+      };
   };
 
   /*

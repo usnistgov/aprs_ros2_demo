@@ -64,6 +64,34 @@ ament_target_dependencies(fanuc_controller ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 pluginlib_export_plugin_description_file(controller_interface fanuc_controller.xml)
 
+# Build fanuc hardware interface library
+add_library(motoman_hardware SHARED
+  src/motoman_hardware_interface.cpp
+)
+
+target_include_directories(motoman_hardware PRIVATE
+  include
+)
+
+target_link_libraries(motoman_hardware simple_messages)
+ament_target_dependencies(motoman_hardware ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+pluginlib_export_plugin_description_file(hardware_interface motoman_hardware.xml)
+
+# Build motoman joint trajectory controller
+add_library(motoman_controller SHARED
+  src/motoman_joint_trajectory_controller.cpp
+)
+
+target_include_directories(motoman_controller PRIVATE
+  include
+)
+
+target_link_libraries(motoman_controller simple_messages)
+ament_target_dependencies(motoman_controller ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+pluginlib_export_plugin_description_file(controller_interface motoman_controller.xml)
+
 # Build gripper controller
 add_library(pneumatic_controller SHARED
   src/pneumatic_gripper_controller.cpp
@@ -80,7 +108,7 @@ pluginlib_export_plugin_description_file(controller_interface pneumatic_controll
 
 
 install(
-  TARGETS simple_messages fanuc_hardware fanuc_controller pneumatic_controller
+  TARGETS simple_messages fanuc_hardware fanuc_controller motoman_hardware motoman_controller pneumatic_controller
   DESTINATION lib
 )
 

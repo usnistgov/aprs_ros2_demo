@@ -65,7 +65,7 @@ namespace simple_message {
   ==============================================================================
   */
 
-  bool JointFeedback::init(char* input)
+  bool JointFeedback::update(char* input)
   {
     std::vector<int> input_data;
     char temp[4];
