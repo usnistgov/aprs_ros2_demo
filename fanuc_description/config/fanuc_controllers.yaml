@@ -1,24 +1,29 @@
-controller_manager:
-  ros__parameters:
-    update_rate: 125  # Hz
+/**:
+  controller_manager:
+    ros__parameters:
+      update_rate: 125  # Hz
 
-    joint_state_broadcaster:
-      type: joint_state_broadcaster/JointStateBroadcaster
+      joint_state_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
 
-    forward_position_controller:
-      type: forward_command_controller/ForwardCommandController
+      joint_trajectory_controller:
+        type: fanuc_controller/FanucJointTrajectoryController
 
-    joint_trajectory_controller:
-      type: fanuc_controller/FanucJointTrajectoryController
+      pneumatic_gripper_controller:
+        type: pneumatic_controller/PneumaticGripperController
 
-joint_trajectory_controller:
-  ros__parameters:
-    joints:
-      - joint_1
-      - joint_2
-      - joint_3
-      - joint_4
-      - joint_5
-      - joint_6
-      
-    interface_name: position
+  joint_trajectory_controller:
+    ros__parameters:
+      joints:
+        - joint_1
+        - joint_2
+        - joint_3
+        - joint_4
+        - joint_5
+        - joint_6
+
+  pneumatic_gripper_controller:
+    ros__parameters:
+      joints:
+        - finger_1_joint
+        - finger_2_joint

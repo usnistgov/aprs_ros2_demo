@@ -1,0 +1,8 @@
+<library path="pneumatic_controller">
+    <class name="pneumatic_controller/PneumaticGripperController"
+           type="pneumatic_controller::PneumaticGripperController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            The Gripper Controller is a controller that can be used to control the gripper of a robot.
+        </description>
+    </class>
+</library>

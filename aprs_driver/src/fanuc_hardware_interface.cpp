@@ -105,6 +105,9 @@ namespace fanuc_hardware {
     (void)time;
     (void)period;
 
+    hw_positions_[6] = hw_commands_[6];
+    hw_positions_[7] = hw_commands_[7];
+
     return hardware_interface::return_type::OK;
   }
 

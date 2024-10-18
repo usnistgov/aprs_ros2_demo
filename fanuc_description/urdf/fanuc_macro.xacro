@@ -212,7 +212,7 @@
       </inertial>
     </link>
 
-    <link name="tool0">
+    <!-- <link name="tool0">
       <visual>
         <origin rpy="0 1.571 0" xyz="-.085 0 0" />
         <geometry>
@@ -222,7 +222,7 @@
           <color rgba="0.278431372549 0.278431372549 0.278431372549 1.0" />
         </material>
       </visual>
-    </link>
+    </link> -->
 
     <!-- joints --> 
     <joint name = "base_joint_" type = "fixed">
@@ -279,11 +279,11 @@
         <limit effort="${joint6effort}" lower="${joint6lower}" upper="${joint6upper}" velocity="${joint6velocity}" />
     </joint>
 
-    <joint name="tool" type="fixed">
+    <!-- <joint name="tool" type="fixed">
         <origin xyz=".17 0 0" rpy="0 0 0"/>
         <parent link="link_6"/>
         <child link="tool0"/>
-    </joint>
+    </joint> -->
 
   </xacro:macro>
 

@@ -18,6 +18,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp_components
   control_msgs
   rclcpp_action
+  aprs_interfaces
 )
 
 find_package(ament_cmake REQUIRED)
@@ -63,8 +64,23 @@ ament_target_dependencies(fanuc_controller ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 pluginlib_export_plugin_description_file(controller_interface fanuc_controller.xml)
 
+# Build gripper controller
+add_library(pneumatic_controller SHARED
+  src/pneumatic_gripper_controller.cpp
+)
+
+target_include_directories(pneumatic_controller PRIVATE
+  include
+)
+
+target_link_libraries(pneumatic_controller simple_messages)
+ament_target_dependencies(pneumatic_controller ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+pluginlib_export_plugin_description_file(controller_interface pneumatic_controller.xml)
+
+
 install(
-  TARGETS simple_messages fanuc_hardware fanuc_controller
+  TARGETS simple_messages fanuc_hardware fanuc_controller pneumatic_controller
   DESTINATION lib
 )
 

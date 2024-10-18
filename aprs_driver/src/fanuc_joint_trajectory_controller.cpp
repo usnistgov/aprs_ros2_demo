@@ -62,11 +62,6 @@ namespace fanuc_controller {
         
         simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
 
-        // for (auto byte : traj_point.to_bytes()) {
-          
-        //   RCLCPP_INFO_STREAM(get_node()->get_logger(),  static_cast<int>(byte));
-        // }
-
         write_to_socket(motion_socket_, traj_point.to_bytes());
 
         int length = get_packet_length(motion_socket_);
@@ -134,7 +129,7 @@ namespace fanuc_controller {
     action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
       get_node()->get_node_base_interface(), get_node()->get_node_clock_interface(),
       get_node()->get_node_logging_interface(), get_node()->get_node_waitables_interface(),
-      std::string(get_node()->get_name()) + "/follow_joint_trajectory",
+      "follow_joint_trajectory",
       std::bind(&FanucJointTrajectoryController::handle_goal, this, _1, _2),
       std::bind(&FanucJointTrajectoryController::handle_cancel, this, _1),
       std::bind(&FanucJointTrajectoryController::handle_accepted, this, _1));

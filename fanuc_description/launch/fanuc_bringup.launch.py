@@ -22,18 +22,9 @@ def launch_setup(context, *args, **kwargs):
 
     robot_controllers = PathJoinSubstitution([FindPackageShare("fanuc_description"), "config", "fanuc_controllers.yaml",])
 
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_controllers],
-        output="both",
-        remappings=[
-            ("~/robot_description", "/robot_description"),
-        ],
-    )
-    
     robot_state_publisher = Node(
         package='robot_state_publisher',
+        namespace='fanuc',
         executable='robot_state_publisher',
         output='both',
         parameters=[
@@ -41,51 +32,57 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        namespace='fanuc',
+        parameters=[robot_controllers],
+        output="both",
+        remappings=[
+            ("~/robot_description", "/fanuc/robot_description"),
+        ],
+    )
+
     joint_state_broadcaster = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=['joint_state_broadcaster'],
+        namespace='fanuc',
+        arguments=['joint_state_broadcaster', '-c', '/fanuc/controller_manager'],
     )
 
     joint_trajectory_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=['joint_trajectory_controller',],
-    )
-    
-    forward_position_controller = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=['forward_position_controller',],
+        arguments=['joint_trajectory_controller', '-c', '/fanuc/controller_manager'],
     )
 
-    fanuc_gripper_control = Node(
-        package="fanuc_hardware",
-        executable="fanuc_gripper_control.py",
-        output = 'screen'
+    pneumatic_gripper_controller = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=['pneumatic_gripper_controller', '-c', '/fanuc/controller_manager'],
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("fanuc_description"), "config", "fanuc.rviz"]
+        [FindPackageShare("fanuc_description"), "config", "fanuc_1.rviz"]
     )
 
-    moveit_config = (
-        MoveItConfigsBuilder("fanuc", package_name="fanuc_moveit_config")
-        .robot_description(urdf)
-        .robot_description_semantic(file_path="config/fanuc.srdf")
-        .trajectory_execution(file_path="config/controllers.yaml")
-        .planning_pipelines(pipelines=["ompl"])
-        .to_moveit_configs()
-    )
+    # moveit_config = (
+    #     MoveItConfigsBuilder("fanuc", package_name="fanuc_moveit_config")
+    #     .robot_description(urdf)
+    #     .robot_description_semantic(file_path="config/fanuc.srdf")
+    #     .trajectory_execution(file_path="config/controllers.yaml")
+    #     .planning_pipelines(pipelines=["ompl"])
+    #     .to_moveit_configs()
+    # )
 
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        parameters=[
-            moveit_config.to_dict(),
-        ],
+        # parameters=[
+        #     moveit_config.to_dict(),
+        # ],
     )
     
 
@@ -94,9 +91,10 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher,
         joint_state_broadcaster,
         joint_trajectory_controller,
+        pneumatic_gripper_controller,
         # forward_position_controller,
         # fanuc_gripper_control,
-        rviz_node
+        # rviz_node
     ]
 
     return nodes_to_start
