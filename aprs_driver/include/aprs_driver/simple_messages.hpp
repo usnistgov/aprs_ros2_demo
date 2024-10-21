@@ -277,15 +277,17 @@ namespace simple_message {
   ==============================================================================
   */
   class ReadIORequest{
-    ReadIORequest(int _address);
-    std::vector<uint8_t> to_bytes();
+    public:
+      ReadIORequest(int _address);
+      std::vector<uint8_t> to_bytes();
     
-    int length = 16;
-    int msg_type = 2003;
-    int comm_type = 2;
-    int reply_code = 0;
+    private:
+      int length = 16;
+      int msg_type = 2003;
+      int comm_type = 2;
+      int reply_code = 0;
 
-    int address;
+      int address;
   };
 
   /*
@@ -294,15 +296,17 @@ namespace simple_message {
   ==============================================================================
   */
   class WriteIORequest{
-    WriteIORequest(int _address, int data);
-    std::vector<uint8_t> to_bytes();
-    
-    int length = 25;
-    int msg_type = 2005;
-    int comm_type = 2;
-    int reply_code = 0;
+    public:
+      WriteIORequest(int _address, int data);
+      std::vector<uint8_t> to_bytes();
+      
+    private:
+      int length = 25;
+      int msg_type = 2005;
+      int comm_type = 2;
+      int reply_code = 0;
 
-    int address;
-    int data;
+      int address;
+      int data;
   };
 }
