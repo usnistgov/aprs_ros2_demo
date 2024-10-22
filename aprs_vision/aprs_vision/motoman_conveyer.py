@@ -16,7 +16,7 @@ from typing import Optional
 
 class MotomanConveyer(VisionTable):
     #TODO Fill in real values
-    table_origin = Point(x=407.026, y=800.365, z=-0.01)
+    table_origin = Point(x=-190.5, y=581.025, z=-0.01)
     tray_height = 0.017
     gear_height = 0.02
 
@@ -26,16 +26,16 @@ class MotomanConveyer(VisionTable):
     background_image = 'motoman_conveyer_background.jpg'
     publish_frames = True
 
-    top_left_x = 389
-    top_left_y = 10
-    bottom_left_x = 386
-    bottom_left_y = 308
-    top_right_x = 849
-    top_right_y = 19
-    bottom_right_x = 858
-    bottom_right_y = 305
+    top_left_x = 177
+    top_left_y = 38
+    bottom_left_x = 172
+    bottom_left_y = 310
+    top_right_x = 651
+    top_right_y = 40
+    bottom_right_x = 654
+    bottom_right_y = 308
     grid_hsv_lower = (0, 0, 10)
-    grid_hsv_upper = (255, 255, 146)
+    grid_hsv_upper = (255, 255, 140)
     calibrate_rows = 18
     calibrate_columns = 32
     generate_map_area = 0.1
@@ -46,11 +46,11 @@ class MotomanConveyer(VisionTable):
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
-    background_threshold = 35
+    background_threshold = 15
     gear_detection_values = {
-        SlotInfo.LARGE: GearDetection((40, 30, 123), (85, 165, 215), 60),
-        SlotInfo.MEDIUM: GearDetection((2, 101, 218), (15, 168, 255), 44),
-        SlotInfo.SMALL: GearDetection((18, 80, 170), (45, 135, 255), 30)
+        SlotInfo.LARGE: GearDetection((47, 112, 144), (77, 195, 212), 60),
+        SlotInfo.MEDIUM: GearDetection((10, 147, 215), (37, 188, 255), 44),
+        SlotInfo.SMALL: GearDetection((17, 69, 179), (33, 148, 255), 30)
     }
 
     base_frame = 'motoman_base_link'
@@ -59,7 +59,10 @@ class MotomanConveyer(VisionTable):
         super().__init__("conveyer_vision", "motoman")
     
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
-        vertical_offset = 28
+        vertical_offset = 1
+
+        cv2.imshow('window',frame)
+        cv2.waitKey(0)
 
         # Corners are manually deduced from location of screw heads in table
         top_left = (self.top_left_x, self.top_left_y + vertical_offset)
@@ -74,6 +77,9 @@ class MotomanConveyer(VisionTable):
         cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
 
         active_region = cv2.bitwise_and(frame, maskImage)
+
+        cv2.imshow('window',active_region)
+        cv2.waitKey(0)
 
         # Detect optical table holes 
         blur = cv2.GaussianBlur(active_region,(5,5),0)
@@ -100,21 +106,31 @@ class MotomanConveyer(VisionTable):
 
     
         just_holes = cv2.bitwise_and(threshold, mask2)
+
+        cv2.imshow('window',just_holes)
+        cv2.waitKey(0)
         
-        cv2.rectangle(just_holes,(519,168),(525,175),(0,0,0),-1)
-        cv2.rectangle(just_holes,(484,239),(488,242),(0,0,0),-1)
-        cv2.rectangle(just_holes,(428,256),(436,260),(0,0,0),-1)
+        cv2.rectangle(just_holes,(307,170),(314,177),(0,0,0),-1)
+        cv2.rectangle(just_holes,(187,50),(189,54),(0,0,0),-1)
+        cv2.rectangle(just_holes,(186,67),(187,68),(0,0,0),-1)
 
         contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
+        i=0
         filtered_contours = []
         for contour in contours:
             area = cv2.contourArea(contour)
             if area >= self.generate_map_area:
                 filtered_contours.append(contour)
+                i = i+1
+        cv2.drawContours(just_holes,filtered_contours,-1,120,2)        
+        cv2.imshow('window',just_holes)
+        cv2.waitKey(0)
 
         rows = self.calibrate_rows
         columns = self.calibrate_columns
+
+        print(f"Found: {i}  Calculated: {rows*columns}")
 
         if not len(filtered_contours) == rows * columns:
             self.get_logger().error("Not able to detect all holes")

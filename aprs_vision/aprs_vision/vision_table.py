@@ -131,8 +131,8 @@ class VisionTable(Node):
         # Function to determine the location of the trays provided an initial image
         original_img = frame.copy()
 
-        # Remove table backgroud
         try:
+        # Remove table backgroud
             frame = self.remove_background(frame)
 
         # Remove and replace and large gears present
@@ -224,10 +224,10 @@ class VisionTable(Node):
         # self.detected_trays_image_pub.publish(self.no_gears_msg)
 
     def read_frame(self):
-        ret, current_frame = self.capture.read()
+        ret, self.current_frame = self.capture.read()
 
         if ret:
-            self.current_frame = self.rectify_frame(current_frame)
+            self.current_frame = self.rectify_frame(self.current_frame)
         # Save current frame as ROS message for publishing
             self.current_image_msg = self.build_img_msg_from_mat(self.current_frame)
         else:
@@ -240,13 +240,8 @@ class VisionTable(Node):
         delta = cv2.subtract(self.base_background, frame)
 
         gray = cv2.cvtColor(delta, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('window' , gray)
-        cv2.waitKey(0)
 
         _, mask = cv2.threshold(gray, self.background_threshold, 255, cv2.THRESH_BINARY)
-
-        cv2.imshow('window' , mask)
-        cv2.waitKey(0)
 
         canvas = np.zeros(gray.shape, dtype=np.uint8)
 
@@ -259,9 +254,6 @@ class VisionTable(Node):
 
         cv2.drawContours(canvas, filtered_contours, -1, color=255, thickness=cv2.FILLED) # type: ignore
 
-        cv2.imshow('window', cv2.bitwise_and(frame,frame,mask=canvas))
-        cv2.waitKey(0)
-
         return cv2.bitwise_and(frame, frame, mask=canvas)
     
     def remove_and_replace_gears(self, frame: MatLike, gear_size: int) -> MatLike:
@@ -270,6 +262,8 @@ class VisionTable(Node):
         # cv2.imwrite(f"gear_image{gear_size}", frame)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        if (gear_size == SlotInfo.LARGE):
+            cv2.imwrite('hsv.jpg',hsv)
 
         gears = cv2.inRange(hsv, detection_params.hsv_lower, detection_params.hsv_upper) # type: ignore
     
@@ -320,8 +314,6 @@ class VisionTable(Node):
             if cv2.contourArea(contour) < 200:
                 continue
             cv2.drawContours(table_image,contour,-1,(255,255,255),2)
-            cv2.imshow('window', table_image)
-            cv2.waitKey(0)
 
             # Approximate the contour as a polygon
             peri = cv2.arcLength(contour, True)
