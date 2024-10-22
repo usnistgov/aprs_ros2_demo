@@ -80,10 +80,13 @@ def launch_setup(context, *args, **kwargs):
         package="rviz2",
         executable="rviz2",
         output="log",
-        namespace="motoman",
+        # namespace="motoman",
         arguments=["-d", rviz_config_file],
         parameters=[
             moveit_config.to_dict(),
+        ],
+        remappings=[
+            ("~/robot_description", "/motoman/robot_description"),
         ],
     )
     
