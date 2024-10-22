@@ -78,6 +78,21 @@ namespace pneumatic_controller {
 
   CallbackReturn PneumaticGripperController::on_activate(const rclcpp_lifecycle::State&)
   {
+    // Connect to gripper socket
+    struct sockaddr_in gripper_socket_address;
+
+    gripper_socket = socket(AF_INET, SOCK_STREAM, 0);
+    gripper_socket_address.sin_family = AF_INET;
+    gripper_socket_address.sin_port = htons(robot_ports_[robot_]);
+    inet_pton(AF_INET, robot_ips_[robot_], &gripper_socket_address.sin_addr);
+
+    int connection_success = connect(gripper_socket, (struct sockaddr *)&gripper_socket_address, sizeof(gripper_socket_address));
+
+    if (connection_success < 0){
+      RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
+      return CallbackReturn::FAILURE;
+    }
+
     if(robot_ == "motoman"){
       control_air(true);
     }
@@ -96,6 +111,8 @@ namespace pneumatic_controller {
       control_air(false);
     }
 
+    close(gripper_socket);
+
     RCLCPP_INFO(get_node()->get_logger(), "Successfully deactivated!");
 
     return CallbackReturn::SUCCESS;
@@ -110,22 +127,6 @@ namespace pneumatic_controller {
 
   bool PneumaticGripperController::actuate_gripper(bool enable)
   {
-    // Connect to gripper socket
-    struct sockaddr_in gripper_socket_address;
-
-    int gripper_socket = socket(AF_INET, SOCK_STREAM, 0);
-    gripper_socket_address.sin_family = AF_INET;
-    gripper_socket_address.sin_port = htons(robot_ports_[robot_]);
-    inet_pton(AF_INET, robot_ips_[robot_], &gripper_socket_address.sin_addr);
-
-    int connection_success = connect(gripper_socket, (struct sockaddr *)&gripper_socket_address, sizeof(gripper_socket_address));
-
-    if (connection_success < 0){
-      RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
-      return false;
-    }
-
-    sleep(1);
 
     std::vector<uint8_t> data;
 
@@ -142,19 +143,6 @@ namespace pneumatic_controller {
     }
     else {
       if(enable){
-        simple_message::WriteIORequest open_gripper_io(10010, 1);
-        write_to_socket(gripper_socket, open_gripper_io.to_bytes());
-        int length = get_packet_length(gripper_socket);
-        read_from_socket(gripper_socket, length);
-
-        simple_message::WriteIORequest close_gripper_io(10011, 0);
-        write_to_socket(gripper_socket, close_gripper_io.to_bytes());
-        length = get_packet_length(gripper_socket);
-        read_from_socket(gripper_socket, length);
-
-        gripper_state_ = gripper_strokes_[robot_];
-      }
-      else {
         simple_message::WriteIORequest open_gripper_io(10010, 0);
         write_to_socket(gripper_socket, open_gripper_io.to_bytes());
         int length = get_packet_length(gripper_socket);
@@ -167,30 +155,25 @@ namespace pneumatic_controller {
 
         gripper_state_ = 0.0;
       }
+      else {
+        simple_message::WriteIORequest open_gripper_io(10010, 1);
+        write_to_socket(gripper_socket, open_gripper_io.to_bytes());
+        int length = get_packet_length(gripper_socket);
+        read_from_socket(gripper_socket, length);
+
+        simple_message::WriteIORequest close_gripper_io(10011, 0);
+        write_to_socket(gripper_socket, close_gripper_io.to_bytes());
+        length = get_packet_length(gripper_socket);
+        read_from_socket(gripper_socket, length);
+
+        gripper_state_ = gripper_strokes_[robot_];
+      }
     }
     
-    close(gripper_socket);
-
     return true;
   }
 
   bool PneumaticGripperController::control_air(bool enable) {
-    struct sockaddr_in gripper_socket_address;
-
-    int gripper_socket = socket(AF_INET, SOCK_STREAM, 0);
-    gripper_socket_address.sin_family = AF_INET;
-    gripper_socket_address.sin_port = htons(robot_ports_[robot_]);
-    inet_pton(AF_INET, robot_ips_[robot_], &gripper_socket_address.sin_addr);
-
-    int connection_success = connect(gripper_socket, (struct sockaddr *)&gripper_socket_address, sizeof(gripper_socket_address));
-
-    if (connection_success < 0){
-      RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
-      return false;
-    }
-
-    sleep(1);
-
     std::vector<uint8_t> data;
 
     if(robot_ == "fanuc"){
@@ -210,8 +193,6 @@ namespace pneumatic_controller {
         read_from_socket(gripper_socket, length);
       }
     }
-    
-    close(gripper_socket);
 
     return true;
   }

@@ -60,10 +60,7 @@ def launch_setup(context, *args, **kwargs):
     pneumatic_gripper_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=['pneumatic_gripper_controller', '-c', '/motoman/controller_manager'],
-        parameters=[
-            {"robot": "motoman"}
-        ]
+        arguments=['pneumatic_gripper_controller', '-c', '/motoman/controller_manager']
     )
     
     rviz_config_file = PathJoinSubstitution(
@@ -83,6 +80,7 @@ def launch_setup(context, *args, **kwargs):
         package="rviz2",
         executable="rviz2",
         output="log",
+        namespace="motoman",
         arguments=["-d", rviz_config_file],
         parameters=[
             moveit_config.to_dict(),
