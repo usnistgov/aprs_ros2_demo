@@ -63,26 +63,26 @@ def launch_setup(context, *args, **kwargs):
     )
 
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("fanuc_description"), "config", "fanuc_1.rviz"]
+        [FindPackageShare("fanuc_description"), "config", "fanuc.rviz"]
     )
 
-    # moveit_config = (
-    #     MoveItConfigsBuilder("fanuc", package_name="fanuc_moveit_config")
-    #     .robot_description(urdf)
-    #     .robot_description_semantic(file_path="config/fanuc.srdf")
-    #     .trajectory_execution(file_path="config/controllers.yaml")
-    #     .planning_pipelines(pipelines=["ompl"])
-    #     .to_moveit_configs()
-    # )
+    moveit_config = (
+        MoveItConfigsBuilder("fanuc", package_name="fanuc_moveit_config")
+        .robot_description(urdf)
+        .robot_description_semantic(file_path="config/fanuc.srdf")
+        .trajectory_execution(file_path="config/controllers.yaml")
+        .planning_pipelines(pipelines=["ompl"])
+        .to_moveit_configs()
+    )
 
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
         output="log",
         arguments=["-d", rviz_config_file],
-        # parameters=[
-        #     moveit_config.to_dict(),
-        # ],
+        parameters=[
+            moveit_config.to_dict(),
+        ],
     )
     
 
@@ -94,7 +94,7 @@ def launch_setup(context, *args, **kwargs):
         pneumatic_gripper_controller,
         # forward_position_controller,
         # fanuc_gripper_control,
-        # rviz_node
+        rviz_node
     ]
 
     return nodes_to_start
