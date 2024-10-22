@@ -1,0 +1,29 @@
+planning_scene_monitor_options:
+  name: "planning_scene_monitor_1"
+  robot_description: "robot_description"
+  joint_state_topic: "/joint_states"
+  attached_collision_object_topic: "/planning_scene_monitor_1"
+  publish_planning_scene_topic: "/publish_planning_scene_1"
+  monitored_planning_scene_topic: "/monitored_planning_scene_1"
+  wait_for_initial_state_timeout: 10.0
+
+planning_scene_monitor_parameters:
+  publish_planning_scene: true
+  publish_geometry_updates: true
+  publish_state_updates: true
+  publish_transforms_updates: true
+  publish_robot_description: true
+  publish_robot_description_semantic: true
+  
+planning_pipelines:
+  pipeline_names: ["ompl"]
+
+# Default
+aprs_motoman:
+  plan_request_params:
+    planning_attempts: 1
+    planning_pipeline: ompl
+    planner_id: RRTConnectkConfigDefault
+    max_velocity_scaling_factor: 1.0
+    max_acceleration_scaling_factor: 1.0
+    planning_time: 1.0

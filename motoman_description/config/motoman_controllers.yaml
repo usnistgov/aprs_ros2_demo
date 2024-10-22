@@ -1,0 +1,30 @@
+/**:
+  controller_manager:
+    ros__parameters:
+      update_rate: 125 # Hz
+    
+      joint_state_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
+
+      joint_trajectory_controller:
+        type: motoman_controller/MotomanJointTrajectoryController
+
+      pneumatic_gripper_controller:
+        type: pneumatic_controller/PneumaticGripperController
+
+  joint_trajectory_controller:
+    ros__parameters:
+      joints:
+        - joint_s
+        - joint_l
+        - joint_e    
+        - joint_u
+        - joint_r
+        - joint_b
+        - joint_t
+      
+  pneumatic_gripper_controller:
+    ros__parameters:
+      joints:
+        - finger_1_joint
+        - finger_2_joint

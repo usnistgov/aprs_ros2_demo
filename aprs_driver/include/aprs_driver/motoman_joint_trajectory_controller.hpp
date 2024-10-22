@@ -1,5 +1,5 @@
-#ifndef APRS_DRIVER__FANUC_JOINT_TRAJECTORY_CONTROLLER_
-#define APRS_DRIVER__FANUC_JOINT_TRAJECTORY_CONTROLLER_
+#ifndef APRS_DRIVER__MOTOMAN_JOINT_TRAJECTORY_CONTROLLER_
+#define APRS_DRIVER__MOTOMAN_JOINT_TRAJECTORY_CONTROLLER_
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -16,9 +16,9 @@
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-namespace fanuc_controller {
+namespace motoman_controller {
 
-class FanucJointTrajectoryController : public controller_interface::ControllerInterface {
+class MotomanJointTrajectoryController : public controller_interface::ControllerInterface {
  public:
   using FollowJointTrajectory = control_msgs::action::FollowJointTrajectory;
   using GoalHandleFollowJointTrajectory = rclcpp_action::ServerGoalHandle<FollowJointTrajectory>;
@@ -67,6 +67,6 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
   int current_seq_ = 0;
   bool ready_for_next_point_ = false;
 };
-}  // namespace fanuc_controller
+}  // namespace motoman_controller
 
-#endif  // APRS_DRIVER__FANUC_JOINT_TRAJECTORY_CONTROLLER_
+#endif  // APRS_DRIVER__MOTOMAN_JOINT_TRAJECTORY_CONTROLLER_

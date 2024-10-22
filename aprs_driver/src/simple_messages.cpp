@@ -67,6 +67,9 @@ namespace simple_message {
 
   bool JointFeedback::update(char* input)
   {
+    positions.clear();
+    velocities.clear();
+    accelerations.clear();
     std::vector<int> input_data;
     char temp[4];
 

@@ -49,6 +49,8 @@ namespace pneumatic_controller {
       return CallbackReturn::ERROR;
     }
 
+    get_node()->declare_parameter("robot", "fanuc");
+
     return CallbackReturn::SUCCESS;
   }
 
@@ -62,10 +64,14 @@ namespace pneumatic_controller {
     }
 
     change_gripper_state_ = get_node()->create_service<aprs_interfaces::srv::PneumaticGripperControl>(
-      robot_ + "_actuate_gripper", 
+      "actuate_gripper", 
       std::bind(&PneumaticGripperController::actuate_gripper_srv_cb_, this, std::placeholders::_1, std::placeholders::_2),
       rclcpp::ServicesQoS()
     );
+
+    robot_ = get_node()->get_parameter("robot").as_string();
+
+    RCLCPP_INFO_STREAM(get_node()->get_logger(), "robot_ = " << robot_);
 
     return CallbackReturn::SUCCESS;
   }

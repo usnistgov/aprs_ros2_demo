@@ -32,7 +32,7 @@ namespace motoman_hardware {
     {
       hw_positions_[i] = 0;
       hw_velocities_[i] = 0;
-      hw_commands_[i] = 0;
+      hw_accelerations_[i] = 0;
       hw_commands_[i] = 0;
     }
 
@@ -136,7 +136,7 @@ namespace motoman_hardware {
       info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_velocities_[i]));
 
       state_interfaces.emplace_back(hardware_interface::StateInterface(
-      info_.joints[i].name, hardware_interface::HW_IF_ACCELERATION, &hw_accelerations_[i]));
+      info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_accelerations_[i]));
     }
 
     return state_interfaces;

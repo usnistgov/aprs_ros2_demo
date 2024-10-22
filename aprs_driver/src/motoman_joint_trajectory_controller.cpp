@@ -1,9 +1,9 @@
-#include <aprs_driver/fanuc_joint_trajectory_controller.hpp>
+#include <aprs_driver/motoman_joint_trajectory_controller.hpp>
 #include <controller_interface/controller_interface.hpp>
 
-namespace fanuc_controller {
+namespace motoman_controller {
 
-  controller_interface::InterfaceConfiguration FanucJointTrajectoryController::command_interface_configuration() const
+  controller_interface::InterfaceConfiguration MotomanJointTrajectoryController::command_interface_configuration() const
   {
     controller_interface::InterfaceConfiguration config;
     config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
@@ -15,7 +15,7 @@ namespace fanuc_controller {
     return config;
   }
 
-  controller_interface::InterfaceConfiguration FanucJointTrajectoryController::state_interface_configuration() const 
+  controller_interface::InterfaceConfiguration MotomanJointTrajectoryController::state_interface_configuration() const 
   {
     controller_interface::InterfaceConfiguration config;
     
@@ -28,7 +28,7 @@ namespace fanuc_controller {
     return config;
   }
 
-  controller_interface::return_type FanucJointTrajectoryController::update(
+  controller_interface::return_type MotomanJointTrajectoryController::update(
     const rclcpp::Time& time,
     const rclcpp::Duration& period) 
   {
@@ -65,11 +65,17 @@ namespace fanuc_controller {
         
         std::vector<float> velocities(10,0);
         std::vector<float> accelerations(10,0);
+        int length;
 
-        simple_message::JointTrajPtFull initial_point(0, 0.0, current_positions, velocities, accelerations);
-        write_to_socket(motion_socket_, initial_point.to_bytes());
-        int length = get_packet_length(motion_socket_);
-        read_from_socket(motion_socket_, length);
+        if(current_seq_ == 0){
+          simple_message::JointTrajPtFull initial_point(0, 0.0, current_positions, velocities, accelerations);
+          write_to_socket(motion_socket_, initial_point.to_bytes());
+          length = get_packet_length(motion_socket_);
+          read_from_socket(motion_socket_, length);
+          current_seq_++;
+        }
+
+        
 
         goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_];
 
@@ -79,10 +85,11 @@ namespace fanuc_controller {
           positions.push_back(float(p));
         }
         
-        simple_message::JointTrajPtFull goal_point(1, (float)goal_point_.time_from_start.sec, positions, velocities, accelerations);
+        simple_message::JointTrajPtFull goal_point(current_seq_, (float)goal_point_.time_from_start.sec, positions, velocities, accelerations);
         write_to_socket(motion_socket_, goal_point.to_bytes());
         length = get_packet_length(motion_socket_);
         read_from_socket(motion_socket_, length);
+        current_seq_++;
 
         ready_for_next_point_ = false;
       }
@@ -116,7 +123,7 @@ namespace fanuc_controller {
   
   }
 
-  CallbackReturn FanucJointTrajectoryController::on_init() {
+  CallbackReturn MotomanJointTrajectoryController::on_init() {
     try
     {
       auto_declare<std::vector<std::string>>("joints", {});
@@ -130,7 +137,7 @@ namespace fanuc_controller {
     return CallbackReturn::SUCCESS;
   }
 
-  CallbackReturn FanucJointTrajectoryController::on_configure(
+  CallbackReturn MotomanJointTrajectoryController::on_configure(
     const rclcpp_lifecycle::State&) 
   {
     joint_names_ = get_node()->get_parameter("joints").as_string_array();
@@ -146,14 +153,14 @@ namespace fanuc_controller {
       get_node()->get_node_base_interface(), get_node()->get_node_clock_interface(),
       get_node()->get_node_logging_interface(), get_node()->get_node_waitables_interface(),
       "follow_joint_trajectory",
-      std::bind(&FanucJointTrajectoryController::handle_goal, this, _1, _2),
-      std::bind(&FanucJointTrajectoryController::handle_cancel, this, _1),
-      std::bind(&FanucJointTrajectoryController::handle_accepted, this, _1));
+      std::bind(&MotomanJointTrajectoryController::handle_goal, this, _1, _2),
+      std::bind(&MotomanJointTrajectoryController::handle_cancel, this, _1),
+      std::bind(&MotomanJointTrajectoryController::handle_accepted, this, _1));
 
     return CallbackReturn::SUCCESS;
   }
 
-  CallbackReturn FanucJointTrajectoryController::on_activate(
+  CallbackReturn MotomanJointTrajectoryController::on_activate(
       const rclcpp_lifecycle::State&)
   {
     joint_states_.clear();
@@ -180,7 +187,7 @@ namespace fanuc_controller {
     return CallbackReturn::SUCCESS;
   }
 
-  rclcpp_action::GoalResponse FanucJointTrajectoryController::handle_goal(
+  rclcpp_action::GoalResponse MotomanJointTrajectoryController::handle_goal(
     const rclcpp_action::GoalUUID & uuid, 
     std::shared_ptr<const FollowJointTrajectory::Goal> goal)
   {
@@ -193,7 +200,7 @@ namespace fanuc_controller {
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
   }
 
-  rclcpp_action::CancelResponse FanucJointTrajectoryController::handle_cancel(
+  rclcpp_action::CancelResponse MotomanJointTrajectoryController::handle_cancel(
     const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle)
   {
     cancel_requsted_ = true;
@@ -201,7 +208,7 @@ namespace fanuc_controller {
     return rclcpp_action::CancelResponse::ACCEPT;
   }
 
-  void FanucJointTrajectoryController::handle_accepted(
+  void MotomanJointTrajectoryController::handle_accepted(
     const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle)
   {
     int num_points = goal_handle->get_goal()->trajectory.points.size();
@@ -213,8 +220,8 @@ namespace fanuc_controller {
     received_goal_ = true;
   }
 
-}  // namespace fanuc_controller
+}  // namespace motoman_controller
 
 #include "pluginlib/class_list_macros.hpp"
 
-PLUGINLIB_EXPORT_CLASS(fanuc_controller::FanucJointTrajectoryController, controller_interface::ControllerInterface)
+PLUGINLIB_EXPORT_CLASS(motoman_controller::MotomanJointTrajectoryController, controller_interface::ControllerInterface)

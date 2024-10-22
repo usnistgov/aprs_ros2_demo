@@ -64,7 +64,7 @@ ament_target_dependencies(fanuc_controller ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 pluginlib_export_plugin_description_file(controller_interface fanuc_controller.xml)
 
-# Build fanuc hardware interface library
+# Build motoman hardware interface library
 add_library(motoman_hardware SHARED
   src/motoman_hardware_interface.cpp
 )
