@@ -82,7 +82,7 @@ class VisionTable(Node):
 
         self.map_x = np.load(os.path.join(share_path, 'config', self.map_x_image))
         self.map_y = np.load(os.path.join(share_path, 'config', self.map_y_image))
-        self.base_background = cv2.imread(os.path.join(share_path, 'config', self.background_image))
+        # self.base_background = cv2.imread(os.path.join(share_path, 'config', self.background_image))
 
         self.slot_pixel_centers: dict[str, tuple[int, int]] = {}
         self.slot_pixel_center_pub: Optional[SlotPixel] = None
