@@ -1,0 +1,10 @@
+<library path="motoman_hardware">
+    <class name="motoman_hardware/MotomanHardwareInterface"
+           type="motoman_hardware::MotomanHardwareInterface"
+           base_class_type="hardware_interface::SystemInterface">
+
+        <description>
+            Hardware interface for Motoman robots
+        </description>
+    </class>
+</library>

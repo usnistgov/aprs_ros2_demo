@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<robot name="motoman_sia20d" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+	<!-- include macro file-->
+	<xacro:include filename="$(find motoman_description)/urdf/motoman_common.xacro"/>
+
+
+    <xacro:macro name="motoman_sia20d" params="parent">
+
+	<!-- motoman_base_link-->
+		<link name="motoman_base_link">
+			<inertial>
+				<mass value="1.0"/>
+				<!--xacro:inertia_origin_base_link/-->
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="motoman_base_link"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="motoman_base_link"/>
+			</collision>
+		</link>
+
+		<!-- link_s-->
+		<link name="link_s">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_s"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_s"/>
+			</collision>
+		</link>
+		<joint name = "motoman_base_joint" type = "fixed">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<parent link = "${parent}"/>
+			<child link = "motoman_base_link"/>
+      	</joint>
+
+		<joint name="joint_s" type="revolute">
+			<xacro:origin_joint_r/>
+			<parent link="motoman_base_link"/>
+			<child  link="link_s"/>
+			<axis xyz="0 1 0"/>
+			<limit lower="-3.1415" upper="3.1415" effort="1000" velocity="2.2698"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+
+		<!-- link_l-->
+		<link name="link_l">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_l"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_l"/>
+			</collision>
+		</link>
+
+		<!-- joint_e (link_s | joint_e) -->
+		<joint name="joint_l" type="revolute">
+			<xacro:origin_joint_e/>
+			<parent link="link_s"/>
+			<child  link="link_l"/>
+			<axis xyz="0 0 -1"/>
+			<limit lower="-1.9198" upper="1.9198" effort="1000" velocity="2.2698"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+		<!-- link_e-->
+		<link name="link_e">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_e"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_e"/>
+			</collision>
+		</link>
+
+		<!-- joint_l (link_l | joint_l) -->
+		<joint name="joint_e" type="revolute">
+			<xacro:origin_joint_l/>
+			<parent link="link_l"/>
+			<child  link="link_e"/>
+			<axis xyz="0 1 0"/>
+			<limit lower="-2.967" upper="2.967" effort="1000" velocity="2.2698"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+		<!-- link_u-->
+		<link name="link_u">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_u"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_u"/>
+			</collision>
+		</link>
+
+		<!-- joint_t (link_e | joint_t) -->
+		<joint name="joint_u" type="revolute">
+			<xacro:origin_joint_t/>
+			<parent link="link_e"/>
+			<child  link="link_u"/>
+			<axis xyz="0 0 1"/>
+			<limit lower="-2.967" upper="2.967" effort="1000" velocity="2.2698"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+		<!-- link_r-->
+		<link name="link_r">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_r"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_r"/>
+			</collision>
+		</link>
+
+		<!-- joint_u (link_u | joint_u) -->
+		<joint name="joint_r" type="revolute">
+			<xacro:origin_joint_u/>
+			<parent link="link_u"/>
+			<child  link="link_r"/>
+			<axis xyz="0 -1 0"/>
+			<limit lower="-3.1415" upper="3.1415" effort="1000" velocity="3.4906"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+		<!-- link_b-->
+		<link name="link_b">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_b"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_b"/>
+			</collision>
+		</link>
+
+		<!-- joint_s (link_r | joint_s) -->
+		<joint name="joint_b" type="revolute">
+			<xacro:origin_joint_s/>
+			<parent link="link_r"/>
+			<child  link="link_b"/>
+			<axis xyz="0 0 1"/>
+			<limit lower="-1.9198" upper="1.9198" effort="1000" velocity="3.4906"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+		<!-- link_t-->
+		<link name="link_t">
+			<inertial>
+				<mass value="1.0"/>
+				<inertia ixx="0.0226667" ixy="0.0" ixz="0.0" iyy="0.0226667" iyz="0.0" izz="0.0226667" />
+			</inertial>
+			<visual>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_t"/>
+				<material name="white"/>
+			</visual>
+			<collision>
+				<xacro:default_origin/>
+				<xacro:default_mesh name="link_t"/>
+			</collision>
+		</link>
+
+		<!-- joint_b (link_b | joint_b) -->
+		<joint name="joint_t" type="revolute">
+			<xacro:origin_joint_b/>
+			<parent link="link_b"/>
+			<child  link="link_t"/>
+			<axis xyz="0 -1 0"/>
+			<limit lower="-3.1415" upper="3.1415" effort="1000" velocity="7.0"/>
+			<xacro:default_joint_misc/>
+		</joint>
+
+  </xacro:macro>
+  
+</robot>
