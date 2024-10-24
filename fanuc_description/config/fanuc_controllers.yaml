@@ -27,3 +27,5 @@
       joints:
         - finger_1_joint
         - finger_2_joint
+      
+      robot_name: fanuc

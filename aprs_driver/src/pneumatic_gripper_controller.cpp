@@ -49,7 +49,7 @@ namespace pneumatic_controller {
       return CallbackReturn::ERROR;
     }
 
-    get_node()->declare_parameter("robot", "fanuc");
+    get_node()->declare_parameter("robot_name", "");
 
     return CallbackReturn::SUCCESS;
   }
@@ -69,10 +69,12 @@ namespace pneumatic_controller {
       rclcpp::ServicesQoS()
     );
 
-    robot_ = get_node()->get_parameter("robot").as_string();
+    robot_name_ = get_node()->get_parameter("robot_name").as_string();
 
-    RCLCPP_INFO_STREAM(get_node()->get_logger(), "robot_ = " << robot_);
-
+    if(robot_name_ == ""){
+      RCLCPP_ERROR(get_node()->get_logger(), "Robot name not specified");
+      return CallbackReturn::FAILURE;
+    }
     return CallbackReturn::SUCCESS;
   }
 
@@ -83,8 +85,8 @@ namespace pneumatic_controller {
 
     gripper_socket = socket(AF_INET, SOCK_STREAM, 0);
     gripper_socket_address.sin_family = AF_INET;
-    gripper_socket_address.sin_port = htons(robot_ports_[robot_]);
-    inet_pton(AF_INET, robot_ips_[robot_], &gripper_socket_address.sin_addr);
+    gripper_socket_address.sin_port = htons(robot_ports_[robot_name_]);
+    inet_pton(AF_INET, robot_ips_[robot_name_], &gripper_socket_address.sin_addr);
 
     int connection_success = connect(gripper_socket, (struct sockaddr *)&gripper_socket_address, sizeof(gripper_socket_address));
 
@@ -93,10 +95,44 @@ namespace pneumatic_controller {
       return CallbackReturn::FAILURE;
     }
 
-    if(robot_ == "motoman"){
+    if(robot_name_ == "fanuc"){
+      std::vector<std::uint8_t> byte_array;
+
+      insert_byte(byte_array, 3);
+      write_to_socket(gripper_socket, byte_array);
+
+      char* response = read_from_socket(gripper_socket, 4);
+
+      int status = byte_to_int(response);
+
+      if(status == 0){
+        gripper_state_ = gripper_strokes_[robot_name_];
+      } else if(status ==1) {
+        gripper_state_ = 0.0;
+      } else {
+        RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Unknown value recieved for fanuc gripper get state. Recieved: " << status);
+        return CallbackReturn::FAILURE;
+      }
+    
+    } else if (robot_name_ == "motoman"){
       control_air(true);
+      
+      simple_message::ReadIOReply reply;
+
+      simple_message::ReadIORequest check_gripper_open(10010);
+      write_to_socket(gripper_socket, check_gripper_open.to_bytes());
+      int length = get_packet_length(gripper_socket);
+      reply.init(read_from_socket(gripper_socket, length));
+
+      if(reply.get_value() == 1){
+        gripper_state_ = gripper_strokes_[robot_name_];
+      } else {
+        gripper_state_ = 0.0;
+      }
+    } else {
+      RCLCPP_ERROR(get_node()->get_logger(), "Robot name invalid");
+      return CallbackReturn::FAILURE;
     }
-    actuate_gripper(false);
 
     return CallbackReturn::SUCCESS;
   }
@@ -107,10 +143,10 @@ namespace pneumatic_controller {
 
     RCLCPP_INFO(get_node()->get_logger(), "Inside on_deactivate");
 
-    if(robot_ == "motoman"){
+    if(robot_name_ == "motoman"){
       control_air(false);
     }
-    if(robot_== "fanuc"){
+    if(robot_name_== "fanuc"){
       std::vector<uint8_t> data;
       insert_byte(data, 99);
       write_to_socket(gripper_socket, data);
@@ -135,18 +171,18 @@ namespace pneumatic_controller {
 
     std::vector<uint8_t> data;
 
-    if(robot_ == "fanuc"){
+    if(robot_name_ == "fanuc"){
       if (enable) {
         insert_byte(data, 1);
         gripper_state_ = 0.0;
       } else {
         insert_byte(data, 0);
-        gripper_state_ = gripper_strokes_[robot_];
+        gripper_state_ = gripper_strokes_[robot_name_];
       }
 
       write_to_socket(gripper_socket, data);
-    }
-    else {
+      read_from_socket(gripper_socket, 4);
+    } else {
       if(enable){
         simple_message::WriteIORequest open_gripper_io(10010, 0);
         write_to_socket(gripper_socket, open_gripper_io.to_bytes());
@@ -171,7 +207,7 @@ namespace pneumatic_controller {
         length = get_packet_length(gripper_socket);
         read_from_socket(gripper_socket, length);
 
-        gripper_state_ = gripper_strokes_[robot_];
+        gripper_state_ = gripper_strokes_[robot_name_];
       }
     }
     
@@ -181,7 +217,7 @@ namespace pneumatic_controller {
   bool PneumaticGripperController::control_air(bool enable) {
     std::vector<uint8_t> data;
 
-    if(robot_ == "fanuc"){
+    if(robot_name_ == "fanuc"){
       return false;
     }
     else {

@@ -29,4 +29,4 @@
         - finger_1_joint
         - finger_2_joint
       
-      robot: motoman
+      robot_name: motoman

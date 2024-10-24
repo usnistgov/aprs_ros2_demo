@@ -20,6 +20,15 @@ float bytes_to_float(char* bytes)
   return result;
 }
 
+int byte_to_int(char* byte){
+  char temp[4];
+  for(int i = 0; i < 4; i++){
+    temp[i] = *(byte + i);
+  }
+  
+  return ntohl(*(uint32_t*)temp);
+}
+
 void insert_byte(std::vector<uint8_t> &v, int data)
 {
   uint32_t d = htonl(data);

@@ -101,16 +101,19 @@ namespace simple_message {
   ==============================================================================
   */
   class ReadIOReply{
-    bool init(char* input);
-    std::string output();
+    public:
+      bool init(char* input);
+      std::string output();
+      int get_value(){return value;};
+    
+    private:
+      int packet_length = 20;
+      int msg_type = 2004;
 
-    int packet_length = 20;
-    int msg_type = 2004;
-
-    int comm_type;
-    int reply_code;
-    int value;
-    int result;
+      int comm_type;
+      int reply_code;
+      int value;
+      int result;
   };
 
   /*
@@ -122,6 +125,7 @@ namespace simple_message {
     public:
       bool init(char* input);
       std::string output();
+      bool is_successful(){return result == 0;};
       std::string get_result(){return result_codes[result];};
       std::string get_subcode(){return subcodes[subcode];};
     private:

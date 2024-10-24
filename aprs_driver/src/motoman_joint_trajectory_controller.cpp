@@ -172,15 +172,7 @@ namespace motoman_controller {
   CallbackReturn MotomanJointTrajectoryController::on_activate(
       const rclcpp_lifecycle::State&)
   {
-    joint_states_.clear();
-
-    for (int i = 0; i < int(state_interfaces_.size()); ++i) {
-      const auto& position_interface = state_interfaces_.at(i);
-
-      joint_states_.push_back(position_interface.get_value());
-    }
-
-    // Connect to motion socket
+     // Connect to motion socket
     motion_socket_ = socket(AF_INET, SOCK_STREAM, 0);
     motion_socket_address_.sin_family = AF_INET;
     motion_socket_address_.sin_port = htons(motion_port_);
@@ -193,11 +185,25 @@ namespace motoman_controller {
       return CallbackReturn::FAILURE;
     }
 
+    simple_message::MotoMotionReply reply;
+
     simple_message::MotoMotionCtrl start_traj_mode_msg("START_TRAJ_MODE");
     write_to_socket(motion_socket_, start_traj_mode_msg.to_bytes());
     int length = get_packet_length(motion_socket_);
-    read_from_socket(motion_socket_, length);  
-    
+    reply.init(read_from_socket(motion_socket_, length));
+
+    if(!reply.is_successful()){
+      RCLCPP_ERROR(get_node()->get_logger(), "\n\nUnable to start trajectory controller");
+      return CallbackReturn::FAILURE;
+    }
+
+    joint_states_.clear();
+
+    for (int i = 0; i < int(state_interfaces_.size()); ++i) {
+      const auto& position_interface = state_interfaces_.at(i);
+
+      joint_states_.push_back(position_interface.get_value());
+    }
     return CallbackReturn::SUCCESS;
   }
 

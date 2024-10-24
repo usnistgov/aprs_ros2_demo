@@ -46,7 +46,7 @@ namespace pneumatic_controller {
     std::map<std::string, int> robot_ports_ = {{"motoman", 50242}, {"fanuc", 12123}};
     std::map<std::string, double> gripper_strokes_ = {{"motoman", 0.02}, {"fanuc", 0.0075}};
 
-    std::string robot_ = "fanuc";
+    std::string robot_name_ = "";
 
     int gripper_socket;
   };
