@@ -59,6 +59,9 @@ namespace fanuc_controller {
         for (auto p: goal_point_.positions) {
           positions.push_back(float(p));
         }
+
+        // Handle J23 Transform
+        positions[2] -= positions[1];
         
         simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
 
@@ -129,7 +132,7 @@ namespace fanuc_controller {
     action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
       get_node()->get_node_base_interface(), get_node()->get_node_clock_interface(),
       get_node()->get_node_logging_interface(), get_node()->get_node_waitables_interface(),
-      "follow_joint_trajectory",
+      std::string(get_node()->get_name()) + "/follow_joint_trajectory",
       std::bind(&FanucJointTrajectoryController::handle_goal, this, _1, _2),
       std::bind(&FanucJointTrajectoryController::handle_cancel, this, _1),
       std::bind(&FanucJointTrajectoryController::handle_accepted, this, _1));
