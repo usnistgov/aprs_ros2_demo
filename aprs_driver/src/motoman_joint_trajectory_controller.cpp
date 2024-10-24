@@ -32,6 +32,7 @@ namespace motoman_controller {
     const rclcpp::Time& time,
     const rclcpp::Duration& period) 
   {
+    (void) period;
     if (received_goal_) {
       
       RCLCPP_INFO(get_node()->get_logger(), "Starting execution");
@@ -66,18 +67,25 @@ namespace motoman_controller {
         std::vector<float> velocities(10,0);
         std::vector<float> accelerations(10,0);
         int length;
+        simple_message::MotoMotionReply reply;
 
         if(current_seq_ == 0){
           simple_message::JointTrajPtFull initial_point(0, 0.0, current_positions, velocities, accelerations);
           write_to_socket(motion_socket_, initial_point.to_bytes());
           length = get_packet_length(motion_socket_);
-          read_from_socket(motion_socket_, length);
+          reply.init(read_from_socket(motion_socket_, length));
+
+          RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
           current_seq_++;
         }
 
         
+        goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_ - 1];
+        
+        float time_from_start = 0;
+        rclcpp::Time current_point_time(goal_point_.time_from_start.sec, goal_point_.time_from_start.nanosec);
 
-        goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_];
+        time_from_start = current_point_time.seconds();
 
         std::vector<float> positions;
 
@@ -85,11 +93,12 @@ namespace motoman_controller {
           positions.push_back(float(p));
         }
         
-        simple_message::JointTrajPtFull goal_point(current_seq_, (float)goal_point_.time_from_start.sec, positions, velocities, accelerations);
+        simple_message::JointTrajPtFull goal_point(current_seq_, time_from_start, positions, velocities, accelerations);
         write_to_socket(motion_socket_, goal_point.to_bytes());
         length = get_packet_length(motion_socket_);
-        read_from_socket(motion_socket_, length);
-        current_seq_++;
+        reply.init(read_from_socket(motion_socket_, length));
+
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
 
         ready_for_next_point_ = false;
       }
@@ -107,7 +116,7 @@ namespace motoman_controller {
         RCLCPP_INFO_STREAM(get_node()->get_logger(), "Finished execution for point " << current_seq_);
         
         // Check if all points reached
-        if (current_goal_->get_goal()->trajectory.points.size() - 1 == current_seq_ ) {
+        if (current_goal_->get_goal()->trajectory.points.size() == current_seq_ ) {
           executing_ = false;
           RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
           auto result = std::make_shared<FollowJointTrajectory::Result>();
@@ -183,6 +192,11 @@ namespace motoman_controller {
       RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
       return CallbackReturn::FAILURE;
     }
+
+    simple_message::MotoMotionCtrl start_traj_mode_msg("START_TRAJ_MODE");
+    write_to_socket(motion_socket_, start_traj_mode_msg.to_bytes());
+    int length = get_packet_length(motion_socket_);
+    read_from_socket(motion_socket_, length);  
     
     return CallbackReturn::SUCCESS;
   }
@@ -191,6 +205,8 @@ namespace motoman_controller {
     const rclcpp_action::GoalUUID & uuid, 
     std::shared_ptr<const FollowJointTrajectory::Goal> goal)
   {
+    (void) uuid;
+    (void) goal;
     // Check if a goal is being executed
     if (executing_) {
       RCLCPP_WARN(get_node()->get_logger(), "Goal already being executed");
@@ -203,6 +219,7 @@ namespace motoman_controller {
   rclcpp_action::CancelResponse MotomanJointTrajectoryController::handle_cancel(
     const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle)
   {
+    (void) goal_handle;
     cancel_requsted_ = true;
 
     return rclcpp_action::CancelResponse::ACCEPT;
@@ -218,6 +235,24 @@ namespace motoman_controller {
     current_goal_ = goal_handle;
 
     received_goal_ = true;
+  }
+
+  CallbackReturn MotomanJointTrajectoryController::on_deactivate(const rclcpp_lifecycle::State& previous_state)
+  {
+    (void)previous_state;
+
+    simple_message::MotoMotionCtrl stop_traj_mode_msg("STOP_TRAJ_MODE");
+    write_to_socket(motion_socket_, stop_traj_mode_msg.to_bytes());
+    int length = get_packet_length(motion_socket_);
+    read_from_socket(motion_socket_, length); 
+
+    close(motion_socket_);
+
+    return CallbackReturn::SUCCESS;
+  }
+
+  MotomanJointTrajectoryController::~MotomanJointTrajectoryController(){
+    on_deactivate(rclcpp_lifecycle::State());
   }
 
 }  // namespace motoman_controller

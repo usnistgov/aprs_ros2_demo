@@ -110,6 +110,11 @@ namespace pneumatic_controller {
     if(robot_ == "motoman"){
       control_air(false);
     }
+    if(robot_== "fanuc"){
+      std::vector<uint8_t> data;
+      insert_byte(data, 99);
+      write_to_socket(gripper_socket, data);
+    }
 
     close(gripper_socket);
 

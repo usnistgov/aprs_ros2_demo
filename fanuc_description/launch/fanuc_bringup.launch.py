@@ -79,6 +79,7 @@ def launch_setup(context, *args, **kwargs):
         package="rviz2",
         executable="rviz2",
         output="log",
+        namespace="fanuc",
         arguments=["-d", rviz_config_file],
         parameters=[
             moveit_config.to_dict(),
