@@ -1,0 +1,8 @@
+<library path="motoman_controller">
+    <class name="motoman_controller/MotomanJointTrajectoryController"
+           type="motoman_controller::MotomanJointTrajectoryController" base_class_type="controller_interface::ControllerInterface">
+        <description>
+            This controller allows sending joint trajectory points to the Motoman robot
+        </description>
+    </class>
+</library>

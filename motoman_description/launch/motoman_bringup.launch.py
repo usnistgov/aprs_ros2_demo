@@ -14,62 +14,63 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 def launch_setup(context, *args, **kwargs):
 
-    urdf = os.path.join(get_package_share_directory('fanuc_description'), 'urdf', 'fanuc.urdf.xacro')
+    urdf = os.path.join(get_package_share_directory('motoman_description'), 'urdf', 'motoman.urdf.xacro')
         
     doc = xacro.process_file(urdf)
 
     robot_description = {"robot_description": doc.toxml()}
 
-    robot_controllers = PathJoinSubstitution([FindPackageShare("fanuc_description"), "config", "fanuc_controllers.yaml",])
+    robot_controllers = PathJoinSubstitution([FindPackageShare("motoman_description"), "config", "motoman_controllers.yaml",])
 
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        namespace='motoman',
+        parameters=[
+            robot_controllers],
+        output="both",
+        remappings=[
+            ("~/robot_description", "/motoman/robot_description"),
+        ],
+    )
+    
     robot_state_publisher = Node(
         package='robot_state_publisher',
-        namespace='fanuc',
         executable='robot_state_publisher',
+        namespace='motoman',
         output='both',
         parameters=[
             robot_description
         ],
     )
 
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        namespace='fanuc',
-        parameters=[robot_controllers],
-        output="both",
-        remappings=[
-            ("~/robot_description", "/fanuc/robot_description"),
-        ],
-    )
-
     joint_state_broadcaster = Node(
         package="controller_manager",
         executable="spawner",
-        namespace='fanuc',
-        arguments=['joint_state_broadcaster', '-c', '/fanuc/controller_manager'],
+        namespace='motoman',
+        arguments=['joint_state_broadcaster', '-c', '/motoman/controller_manager']
     )
-
+    
     joint_trajectory_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=['joint_trajectory_controller', '-c', '/fanuc/controller_manager'],
+        arguments=['joint_trajectory_controller', '-c', '/motoman/controller_manager'],
     )
 
     pneumatic_gripper_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=['pneumatic_gripper_controller', '-c', '/fanuc/controller_manager'],
+        arguments=['pneumatic_gripper_controller', '-c', '/motoman/controller_manager']
     )
-
+    
     rviz_config_file = PathJoinSubstitution(
-        [FindPackageShare("fanuc_description"), "config", "fanuc.rviz"]
+        [FindPackageShare("motoman_description"), "config", "motoman.rviz"]
     )
 
     moveit_config = (
-        MoveItConfigsBuilder("fanuc", package_name="fanuc_moveit_config")
+        MoveItConfigsBuilder("motoman", package_name="motoman_moveit_config")
         .robot_description(urdf)
-        .robot_description_semantic(file_path="config/fanuc.srdf")
+        .robot_description_semantic(file_path="config/motoman.srdf")
         .trajectory_execution(file_path="config/controllers.yaml")
         .planning_pipelines(pipelines=["ompl"])
         .to_moveit_configs()
@@ -79,22 +80,22 @@ def launch_setup(context, *args, **kwargs):
         package="rviz2",
         executable="rviz2",
         output="log",
-        namespace="fanuc",
+        # namespace="motoman",
         arguments=["-d", rviz_config_file],
         parameters=[
             moveit_config.to_dict(),
         ],
+        remappings=[
+            ("~/robot_description", "/motoman/robot_description"),
+        ],
     )
     
-
     nodes_to_start = [
         control_node,
         robot_state_publisher,
         joint_state_broadcaster,
         joint_trajectory_controller,
         pneumatic_gripper_controller,
-        # forward_position_controller,
-        # fanuc_gripper_control,
         rviz_node
     ]
 

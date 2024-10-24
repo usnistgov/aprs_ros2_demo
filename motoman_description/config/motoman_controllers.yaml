@@ -1,13 +1,13 @@
 /**:
   controller_manager:
     ros__parameters:
-      update_rate: 125  # Hz
-
+      update_rate: 125 # Hz
+    
       joint_state_broadcaster:
         type: joint_state_broadcaster/JointStateBroadcaster
 
       joint_trajectory_controller:
-        type: fanuc_controller/FanucJointTrajectoryController
+        type: motoman_controller/MotomanJointTrajectoryController
 
       pneumatic_gripper_controller:
         type: pneumatic_controller/PneumaticGripperController
@@ -15,17 +15,18 @@
   joint_trajectory_controller:
     ros__parameters:
       joints:
-        - joint_1
-        - joint_2
-        - joint_3
-        - joint_4
-        - joint_5
-        - joint_6
-
+        - joint_s
+        - joint_l
+        - joint_e    
+        - joint_u
+        - joint_r
+        - joint_b
+        - joint_t
+      
   pneumatic_gripper_controller:
     ros__parameters:
       joints:
         - finger_1_joint
         - finger_2_joint
       
-      robot_name: fanuc
+      robot_name: motoman

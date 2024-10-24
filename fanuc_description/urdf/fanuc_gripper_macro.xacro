@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="fanuc_gripper" params="
+    parent
+  ">
+    <!-- Gripper Link -->
+    <link name="fanuc_gripper">
+      <visual name="fanuc_gripper_visual">
+        <origin rpy="0 1.571 0" xyz="-.085 0 0" />
+        <geometry>
+          <cylinder length="0.17" radius="0.04"/>
+        </geometry>
+        <material name="Cyan">
+          <color rgba="0 1.0 1.0 1.0"/>
+        </material>
+      </visual>
+    </link>
+
+     <link name="fanuc_finger_1">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find fanuc_description)/meshes/visual/fanuc_finger_1.STL" />
+        </geometry>
+        <material name="">
+          <color rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+      </visual>
+    </link>
+
+    <link name="fanuc_finger_2">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find fanuc_description)/meshes/visual/fanuc_finger_2.STL" />
+        </geometry>
+        <material name="">
+          <color rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+      </visual>
+    </link>
+
+    <!-- Gripper Joint -->
+    <joint name="gripper_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="fanuc_gripper"/>
+      <origin xyz=".17 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Finger 1 Joint -->
+    <joint name="finger_1_joint" type="prismatic">
+      <origin xyz="0.0 0.02 0.010995" rpy="3.1416 6.123E-17 1.5708" />
+      <parent link="fanuc_gripper" />
+      <child link="fanuc_finger_1" />
+      <axis xyz="-1 0 0" />
+      <limit lower="0.0" upper="0.0075" effort="1000" velocity="1000"/>
+    </joint>
+
+    <!-- Finger 2 Joint -->
+    <joint name="finger_2_joint" type="prismatic">
+      <origin xyz="0.0 0 -0.010995" rpy="3.1416 -6.123E-17 -1.5708" />
+      <parent link="fanuc_gripper" />
+      <child link="fanuc_finger_2" />
+      <axis xyz="1 0 0" />
+      <limit lower="0.0" upper="0.0075" effort="1000" velocity="1000"/>
+    </joint>
+
+  </xacro:macro>
+  
+</robot>

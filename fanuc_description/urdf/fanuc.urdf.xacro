@@ -4,6 +4,9 @@
   <!-- Inclue fanuc robot macro -->
   <xacro:include filename="$(find fanuc_description)/urdf/fanuc_macro.xacro"/>
 
+  <!-- Inclue gripper macro -->
+  <xacro:include filename="$(find fanuc_description)/urdf/fanuc_gripper_macro.xacro"/>
+
   <!-- Include ROS2 Control macro -->
   <xacro:include filename="$(find fanuc_description)/urdf/fanuc.ros2_control.xacro"/>
 
@@ -11,6 +14,9 @@
 
   <!-- Run fanuc macro -->
   <xacro:fanuc parent="world" />
+
+  <!-- Run gripper macro -->
+  <xacro:fanuc_gripper parent="link_6" />
 
   <!-- Run ros2 macro -->
   <xacro:fanuc_ros2_control name="fanuc" />

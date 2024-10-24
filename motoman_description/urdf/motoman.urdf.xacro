@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="motoman">
+    <!-- Inclue motoman robot macro -->
+    <xacro:include filename="$(find motoman_description)/urdf/motoman_sia20_macro.xacro"/>
+
+    <!-- Include ROS2 Control macro -->
+    <xacro:include filename="$(find motoman_description)/urdf/motoman.ros2_control.xacro"/>
+
+    <!-- Inclue gripper macro -->
+    <xacro:include filename="$(find motoman_description)/urdf/gripper/motoman_gripper_macro.xacro"/>
+
+    <link name="world"/>
+    <!-- Run motoman macro -->
+    <xacro:motoman_sia20d parent="world"/>
+
+    <!-- Run motoman macro -->
+    <xacro:motoman_ros2_control name="motoman"/>
+
+    <!-- Run gripper macro -->
+    <xacro:motoman_gripper
+      parent="link_t"
+      > 
+    </xacro:motoman_gripper>
+</robot>
