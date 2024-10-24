@@ -39,6 +39,8 @@ class MotomanConveyer(VisionTable):
     calibrate_rows = 18
     calibrate_columns = 32
     generate_map_area = 0.1
+    tray_detection_lower = (0,51,0)
+    tray_detection_upper = (180,255,255)
 
     angle_offset = math.pi
     suffix = 'motoman_conveyer'
@@ -59,10 +61,9 @@ class MotomanConveyer(VisionTable):
         super().__init__("conveyer_vision", "motoman")
     
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
+        # The point for calibrate trays for the motoman conveyer system lines up with the first hole on the 
+        # left with the left-most screw of the motoman
         vertical_offset = 1
-
-        cv2.imshow('window',frame)
-        cv2.waitKey(0)
 
         # Corners are manually deduced from location of screw heads in table
         top_left = (self.top_left_x, self.top_left_y + vertical_offset)
@@ -77,9 +78,6 @@ class MotomanConveyer(VisionTable):
         cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
 
         active_region = cv2.bitwise_and(frame, maskImage)
-
-        cv2.imshow('window',active_region)
-        cv2.waitKey(0)
 
         # Detect optical table holes 
         blur = cv2.GaussianBlur(active_region,(5,5),0)
@@ -106,9 +104,6 @@ class MotomanConveyer(VisionTable):
 
     
         just_holes = cv2.bitwise_and(threshold, mask2)
-
-        cv2.imshow('window',just_holes)
-        cv2.waitKey(0)
         
         cv2.rectangle(just_holes,(307,170),(314,177),(0,0,0),-1)
         cv2.rectangle(just_holes,(187,50),(189,54),(0,0,0),-1)
@@ -123,9 +118,6 @@ class MotomanConveyer(VisionTable):
             if area >= self.generate_map_area:
                 filtered_contours.append(contour)
                 i = i+1
-        cv2.drawContours(just_holes,filtered_contours,-1,120,2)        
-        cv2.imshow('window',just_holes)
-        cv2.waitKey(0)
 
         rows = self.calibrate_rows
         columns = self.calibrate_columns
@@ -196,4 +188,11 @@ class MotomanConveyer(VisionTable):
         np.save(f"{filepath}{self.map_y_image}", map_y_32)
 
         return True
+    
+    def remove_background(self, frame: MatLike) -> MatLike:
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        trays = cv2.inRange(hsv, self.tray_detection_lower, self.tray_detection_upper ) # type: ignore
+        
+        return cv2.bitwise_and(frame,frame,mask=trays)
     

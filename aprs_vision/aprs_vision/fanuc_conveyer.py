@@ -16,7 +16,7 @@ from typing import Optional
 
 class FanucConveyer(VisionTable):
     #TODO Fill in real values
-    table_origin = Point(x=-279.4, y=758.825, z=-0.01)
+    table_origin = Point(x=279.4, y=-758.825, z=-0.01)
     tray_height = 0.017
     gear_height = 0.02
 
@@ -39,8 +39,10 @@ class FanucConveyer(VisionTable):
     calibrate_rows = 18
     calibrate_columns = 32
     generate_map_area = 0.1
+    tray_detection_lower = (0,51,0)
+    tray_detection_upper = (180,255,255)
 
-    angle_offset = math.pi
+    angle_offset = 0
     suffix = 'fanuc_conveyer'
     vision_location = 'conveyer_vision'
 
@@ -59,10 +61,8 @@ class FanucConveyer(VisionTable):
         super().__init__("conveyer_vision", "fanuc")
     
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
+        # The point for calibrate trays for the fanuc conveyer system lines up with the tape on the table
         vertical_offset = 1
-
-        cv2.imshow('window',frame)
-        cv2.waitKey(0)
 
         # Corners are manually deduced from location of screw heads in table
         top_left = (self.top_left_x, self.top_left_y + vertical_offset)
@@ -77,9 +77,6 @@ class FanucConveyer(VisionTable):
         cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
 
         active_region = cv2.bitwise_and(frame, maskImage)
-
-        cv2.imshow('window',active_region)
-        cv2.waitKey(0)
 
         # Detect optical table holes 
         blur = cv2.GaussianBlur(active_region,(5,5),0)
@@ -107,13 +104,12 @@ class FanucConveyer(VisionTable):
     
         just_holes = cv2.bitwise_and(threshold, mask2)
 
-        cv2.imshow('window',just_holes)
-        cv2.waitKey(0)
         
         cv2.rectangle(just_holes,(846,175),(850,178),(0,0,0),-1)
-        cv2.rectangle(just_holes,(728,51),(737,61),(0,0,0),-1)
-        cv2.rectangle(just_holes,(731,56),(734,58),(255,255,255),-1)
-        cv2.rectangle(just_holes,(1116,94),(1117,95),(0,0,0),-1)
+        # cv2.rectangle(just_holes,(728,51),(737,61),(0,0,0),-1)
+        # cv2.rectangle(just_holes,(731,56),(734,58),(255,255,255),-1)
+        cv2.rectangle(just_holes,(1105,71),(1109,74),(0,0,0),-1)
+        cv2.rectangle(just_holes,(1116,94),(1121,97),(0,0,0),-1)
 
         contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -124,9 +120,6 @@ class FanucConveyer(VisionTable):
             if area >= self.generate_map_area:
                 filtered_contours.append(contour)
                 i = i+1
-        cv2.drawContours(just_holes,filtered_contours,-1,120,2)        
-        cv2.imshow('window',just_holes)
-        cv2.waitKey(0)
 
         rows = self.calibrate_rows
         columns = self.calibrate_columns
@@ -170,16 +163,13 @@ class FanucConveyer(VisionTable):
                 
             sorted_points += sorted(working_points, key=lambda k: [k[0]])
 
-            cv2.line(just_holes,start,end,255,2)
-            cv2.line(just_holes,start_1,end_1,255,2)
+            # cv2.line(just_holes,start,end,255,2)
+            # cv2.line(just_holes,start_1,end_1,255,2)
 
             working_points.clear()
 
             center_y_left += 14
             center_y_right += 13
-
-        cv2.imshow('window',just_holes)
-        cv2.waitKey(0)
 
         print(f"Sorted Points:  {len(sorted_points)}  Center Points:  {len(center_points)}")
 
@@ -210,4 +200,11 @@ class FanucConveyer(VisionTable):
         np.save(f"{filepath}{self.map_y_image}", map_y_32)
 
         return True
+    
+    def remove_background(self, frame: MatLike) -> MatLike:
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        trays = cv2.inRange(hsv, self.tray_detection_lower, self.tray_detection_upper ) # type: ignore
+        
+        return cv2.bitwise_and(frame,frame,mask=trays)
     

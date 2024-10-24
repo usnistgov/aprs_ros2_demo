@@ -50,7 +50,7 @@ class MotomanTable(VisionTable):
     background_threshold = 12
     gear_detection_values = {
         SlotInfo.LARGE: GearDetection((40, 30, 123), (85, 165, 215), 60),
-        SlotInfo.MEDIUM: GearDetection((6, 100, 140), (24, 162, 255), 44),
+        SlotInfo.MEDIUM: GearDetection((0, 136, 165), (23, 255, 255), 44),
         SlotInfo.SMALL: GearDetection((18, 80, 170), (45, 135, 255), 30)
     }
 
