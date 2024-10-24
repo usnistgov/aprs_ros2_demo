@@ -32,6 +32,7 @@ set(srv_files
   "srv/GenerateInitState.srv"
   "srv/GeneratePlan.srv"
   "srv/GenerateGridMaps.srv"
+  "srv/LocateTrays.srv"
   "srv/PneumaticGripperControl.srv"
 )
 
