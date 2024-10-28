@@ -161,7 +161,7 @@ namespace motoman_controller {
     action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
       get_node()->get_node_base_interface(), get_node()->get_node_clock_interface(),
       get_node()->get_node_logging_interface(), get_node()->get_node_waitables_interface(),
-      "follow_joint_trajectory",
+      std::string(get_node()->get_name()) + "/follow_joint_trajectory",
       std::bind(&MotomanJointTrajectoryController::handle_goal, this, _1, _2),
       std::bind(&MotomanJointTrajectoryController::handle_cancel, this, _1),
       std::bind(&MotomanJointTrajectoryController::handle_accepted, this, _1));
