@@ -22,13 +22,6 @@
           <color rgba="0.15 0.15 0.15 1.0" />
       </material>
     </visual>
-
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0" />
-      <geometry>
-        <mesh filename="file://$(find fanuc_description)/meshes/fanuc_base_plate.stl" />
-      </geometry>
-    </collision>
   </link>
 
   <joint name = "fanuc_base_plate_joint" type = "fixed">

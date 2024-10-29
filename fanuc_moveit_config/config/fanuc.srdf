@@ -19,7 +19,11 @@
     <disable_collisions link1="link_3" link2="link_4" reason="Adjacent" />
     <disable_collisions link1="link_4" link2="link_5" reason="Adjacent" />
     <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
+    <disable_collisions link1="fanuc_base_plate" link2="fanuc_base_link" reason="Adjacent" />
+    <disable_collisions link1="link_2" link2="link_4" reason="Never" />
     <disable_collisions link1="link_3" link2="link_5" reason="Never" />
     <disable_collisions link1="link_3" link2="link_6" reason="Never" />
-    <disable_collisions link1="link_6" link2="fanuc_gripper" reason="Adjacent" />
+    <disable_collisions link1="link_6" link2="fanuc_gripper_link" reason="Adjacent" />
+    <disable_collisions link1="fanuc_left_finger" link2="fanuc_gripper_link" reason="Adjacent" />
+    <disable_collisions link1="fanuc_right_finger" link2="fanuc_gripper_link" reason="Adjacent" />
 </robot>

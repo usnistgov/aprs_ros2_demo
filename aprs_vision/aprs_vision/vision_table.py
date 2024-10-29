@@ -25,7 +25,7 @@ from example_interfaces.srv import Trigger
 from sensor_msgs.msg import Image
 from aprs_interfaces.msg import Trays, Tray, SlotInfo, PixelCenter, SlotPixel, PixelSlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
-from geometry_msgs.msg import TransformStamped, Point, Quaternion
+from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped
     
 class VisionTable(Node):    
     tray_names = {
@@ -313,7 +313,7 @@ class VisionTable(Node):
             # Ignore contours under a size threshold
             if cv2.contourArea(contour) < 200:
                 continue
-            cv2.drawContours(table_image,contour,-1,(255,255,255),2)
+            # cv2.drawContours(table_image,contour,-1,(255,255,255),2)
 
             # Approximate the contour as a polygon
             peri = cv2.arcLength(contour, True)
@@ -412,16 +412,17 @@ class VisionTable(Node):
 
                     # Publish TF frame
                     tray_frame_name = f'{tray_msg.name}_{self.suffix}'
-                    transform_placehold = self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta)
-                    tray_msg.transform_stamped = transform_placehold
+                    tray_msg.tray_pose = self.generate_pose(image_base, tray_center, 0.0, math.pi, theta)
                     if self.publish_frames:
-                        self.transforms.append(transform_placehold)
+                        self.transforms.append(
+                            self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta)
+                        )
  
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                     # Create slot info for each slot
                     slot_info = SlotInfo()
                     pixel_slot_info = PixelSlotInfo()
-                    slot_info.name = f"{tray_msg.name}_{slot_name}"
+                    slot_info.name = f"{tray_msg.name}_{slot_name}_{self.suffix}"
                     pixel_slot_info.name = f"{tray_msg.name}_{slot_name}"
 
                     if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
@@ -441,9 +442,9 @@ class VisionTable(Node):
                             y= y_off, 
                             z= self.gear_height
                         )
-                        slot_frame_name = f'{slot_info.name}_{self.suffix}'
+                        slot_info.slot_pose = self.generate_pose(tray_frame_name,slot_center_tray, 0.0, 0.0, 0.0)
                         if self.publish_frames:
-                            self.transforms.append(self.generate_transform(tray_frame_name, slot_frame_name, slot_center_tray, 0.0, 0.0, 0.0))
+                            self.transforms.append(self.generate_transform(tray_frame_name, slot_info.name, slot_center_tray, 0.0, 0.0, 0.0))
 
                     # Store pixel coordinates for center of slot
                 
@@ -644,6 +645,19 @@ class VisionTable(Node):
         t.transform.rotation = self.quaternion_from_euler(roll, pitch, yaw)
 
         return t
+    
+    def generate_pose(self, parent_frame: str, pt: Point, roll: float, pitch: float, yaw: float) -> PoseStamped:
+        p = PoseStamped()
+
+        p.header.stamp = self.get_clock().now().to_msg()
+        p.header.frame_id = parent_frame
+
+        p.pose.position.x = pt.x
+        p.pose.position.y = pt.y
+        p.pose.position.z = pt.z
+        p.pose.orientation = self.quaternion_from_euler(roll, pitch, yaw)
+
+        return p
             
     def build_img_msg_from_mat(self, mat: MatLike) -> Image:
         img_msg = Image()

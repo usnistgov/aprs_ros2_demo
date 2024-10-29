@@ -87,8 +87,8 @@ def launch_setup(context, *args, **kwargs):
         motoman_vision,
         motoman_conveyer_vision,
         fanuc_conveyer_vision,
-        motoman_base_static_transform,
-        fanuc_base_static_transform
+        # motoman_base_static_transform,
+        # fanuc_base_static_transform
     ]
 
     return nodes_to_start

@@ -14,6 +14,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   aprs_interfaces
   example_interfaces
   moveit_ros_planning_interface
+  shape_msgs
 )
 
 find_package(ament_cmake REQUIRED)
@@ -58,7 +59,7 @@ install(
 )
 
 install(
-  DIRECTORY launch
+  DIRECTORY launch meshes
   DESTINATION share/${PROJECT_NAME}
 )
 

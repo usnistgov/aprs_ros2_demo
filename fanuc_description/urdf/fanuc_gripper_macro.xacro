@@ -67,7 +67,7 @@
     <joint name="fanuc_gripper_joint" type="fixed">
       <parent link="${parent}"/>
       <child link="fanuc_gripper_link"/>
-      <origin xyz="0.16046 0 0" rpy="0 0 0"/>
+      <origin xyz="0.152 0 0" rpy="0 0 0"/>
     </joint>
 
     <!-- Finger 1 Joint -->

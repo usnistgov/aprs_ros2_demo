@@ -32,11 +32,20 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
     client_cb_group_
   );
 
+  // Create Subscriber
+  trays_info_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
+      "/fanuc/table_vision/trays_info", rclcpp::SensorDataQoS(),
+      std::bind(&RobotCommander::trays_info_cb, this, std::placeholders::_1));
+
   // Create publishers
   joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
 
   // Create clients
   gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/fanuc/actuate_gripper");
+
+  //Load objects into planning scene
+  geometry_msgs::msg::Pose optical_table_pose;
+  planning_scene_.applyCollisionObject(CreateCollisionObject("optical_table","world","optical_table.stl", optical_table_pose));  
 }
 
 bool RobotCommander::actuate_gripper(bool enable)
@@ -76,7 +85,6 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   }
 
   // Send trajectory to controller
-  // send_trajectory(plan.second);
   planning_interface_.execute(plan.second);
 
   return std::make_pair(true, "Sent trajectory to move to" + pose_name);
@@ -89,14 +97,14 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   // Get slot transform from TF
   geometry_msgs::msg::Transform slot_t;
   try {
-    slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
+    slot_t = tf_buffer->lookupTransform("world", slot_name, tf2::TimePointZero).transform;
   } catch (tf2::LookupException& e) {
     return std::make_pair(false, "Not a valid frame name");
   }
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset, 0.0);
+  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset, 0.0);
 
   plan = plan_cartesian(above_slot);
   
@@ -111,7 +119,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   // Move to pick pose
   geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
+  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset, 0.0);
 
   plan = plan_cartesian(pick_pose);
   
@@ -123,6 +131,8 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   sleep(0.5);
 
   actuate_gripper(true);
+
+  // planning_interface_.attachObject(slot_name);
 
   sleep(0.5);
 
@@ -147,34 +157,36 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   geometry_msgs::msg::Transform slot_t;
 
   try {
-    slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
+    slot_t = tf_buffer->lookupTransform("world", slot_name, tf2::TimePointZero).transform;
   } catch (tf2::LookupException& e) {
     return std::make_pair(false, "Not a valid frame name");
   }
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + place_offset, 0.0);
+  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset, 0.0);
 
   plan = plan_cartesian(above_slot);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  send_trajectory(plan.second);
+  planning_interface_.execute(plan.second);
 
   // Move to place pose
   geometry_msgs::msg::Pose place_pose;
-  place_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
+  place_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + place_offset, 0.0);
 
   plan = plan_cartesian(place_pose);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to place pose");
 
-  send_trajectory(plan.second);
+  planning_interface_.execute(plan.second);
 
   actuate_gripper(false);
+
+  // planning_interface_.detachObject();
 
   holding_part = false;
 
@@ -184,7 +196,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  send_trajectory(plan.second);
+  planning_interface_.execute(plan.second);
 
   return std::make_pair(true, "Successfully placed part");
 }
@@ -272,69 +284,6 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
   return std::make_pair(true, trajectory);
 }
 
-void RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory)
-{
-  // Handle J23 translation
-  // handle_j23_transform(trajectory);
-  
-  std_msgs::msg::Float64MultiArray joint_positions;
-
-  joint_positions.data = trajectory.joint_trajectory.points.back().positions;
-  joint_command_publisher_->publish(joint_positions);
-
-  // for (auto point : trajectory.joint_trajectory.points)
-  // {
-  //   joint_positions.data = point.positions;
-    
-  //   joint_command_publisher_->publish(joint_positions);
-    
-  //   usleep(trajectory_spacing_);
-  // }
-
-  std::vector<double> goal_positions = trajectory.joint_trajectory.points.back().positions;
-  std::vector<double> current_positions; 
-
-  bool finished_motion = false;
-
-  while (!finished_motion) {
-    current_positions = planning_interface_.getCurrentJointValues();
-
-    current_positions[2] -= current_positions[1];
-
-    double error = largest_error(current_positions, goal_positions);
-
-    if (error < goal_joint_tolerance) {
-      finished_motion = true;
-    }
-
-    sleep(0.1);
-  }
-
-RCLCPP_INFO_STREAM(get_logger(), "Reached goal position");
-
-}
-
-double RobotCommander::largest_error(std::vector<double> v1, std::vector<double> v2)
-{
-  std::vector<double> d;
-
-  for (size_t i=0; i<v1.size(); i++) {
-    d.push_back(std::abs(v1[i] - v2[i]));
-  }
-
-  return *std::max_element(std::begin(d), std::end(d));
-} 
-
-
-
-void RobotCommander::handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory)
-{
-  for (trajectory_msgs::msg::JointTrajectoryPoint &point : trajectory.joint_trajectory.points)
-  {
-    point.positions[2] -= point.positions[1];
-  }
-}
-
 geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, double z, double rotation)
 {
   geometry_msgs::msg::Pose p;
@@ -351,4 +300,75 @@ geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, do
   p.orientation.w = q.getW();
 
   return p;
+}
+
+moveit_msgs::msg::CollisionObject RobotCommander::CreateCollisionObject(
+  std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation)
+{
+  moveit_msgs::msg::CollisionObject collision;
+
+  collision.id = name;
+  collision.header.frame_id = parent_frame;
+
+  shape_msgs::msg::Mesh mesh;
+  shapes::ShapeMsg mesh_msg;
+
+  std::string package_share_directory = ament_index_cpp::get_package_share_directory("robot_commander");
+  std::stringstream path;
+  path << "file://" << package_share_directory << "/meshes/" << mesh_file;
+  std::string model_path = path.str();
+
+  shapes::Mesh *m = shapes::createMeshFromResource(model_path);
+  shapes::constructMsgFromShape(m, mesh_msg);
+
+  mesh = boost::get<shape_msgs::msg::Mesh>(mesh_msg);
+
+  collision.meshes.push_back(mesh);
+  collision.mesh_poses.push_back(model_pose);
+
+  collision.operation = operation;
+
+  return collision;
+}
+
+void RobotCommander::trays_info_cb(
+  const aprs_interfaces::msg::Trays::ConstSharedPtr msg
+){
+  for (auto kit_tray : msg->kit_trays){
+      planning_scene_.applyCollisionObject(
+        CreateCollisionObject(
+          kit_tray.name, 
+          kit_tray.tray_pose.header.frame_id, 
+          tray_stl_names[kit_tray.identifier], 
+          kit_tray.tray_pose.pose,
+          moveit_msgs::msg::CollisionObject::APPEND
+        )
+      );
+  }
+
+  for (auto part_tray : msg->part_trays){
+      planning_scene_.applyCollisionObject(
+        CreateCollisionObject(
+          part_tray.name, 
+          part_tray.tray_pose.header.frame_id, 
+          tray_stl_names[part_tray.identifier], 
+          part_tray.tray_pose.pose,
+          moveit_msgs::msg::CollisionObject::APPEND
+        )
+      );
+      // for (auto slot : part_tray.slots){
+      //   if (slot.occupied){
+      //     planning_scene_.applyCollisionObject(
+      //       CreateCollisionObject(
+      //         slot.name, 
+      //         part_tray.name, 
+      //         gear_stl_names[slot.size], 
+      //         slot.slot_pose.pose,
+      //         moveit_msgs::msg::CollisionObject::APPEND
+      //       )
+      //     );
+      //   }
+      // }
+        
+  }
 }

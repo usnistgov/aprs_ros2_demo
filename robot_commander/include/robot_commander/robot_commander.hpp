@@ -11,8 +11,16 @@
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 
+#include <geometric_shapes/shapes.h>
+#include <geometric_shapes/shape_operations.h>
+#include <shape_msgs/msg/mesh.h>
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <example_interfaces/srv/trigger.hpp>
+#include <aprs_interfaces/msg/trays.hpp>
+#include <aprs_interfaces/msg/tray.hpp>
 #include <aprs_interfaces/srv/pick.hpp>
 #include <aprs_interfaces/srv/place.hpp>
 #include <aprs_interfaces/srv/move_to_named_pose.hpp>
@@ -32,13 +40,9 @@ class RobotCommander : public rclcpp::Node
     // Robot Move Functions
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_to_target();
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_cartesian(geometry_msgs::msg::Pose pose);
-    
-    void send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory);
 
     // Utility Functions
-    void handle_j23_transform(moveit_msgs::msg::RobotTrajectory &trajectory);
     geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
-    double largest_error(std::vector<double> v1, std::vector<double> v2);
 
     // MoveIt
     moveit::planning_interface::MoveGroupInterface planning_interface_;
@@ -54,6 +58,11 @@ class RobotCommander : public rclcpp::Node
 
     // Clients
     rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr gripper_client_;
+
+    // Subscriber
+
+    rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_sub_;
+    void trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
 
 
     // Services
@@ -80,16 +89,20 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
 
+    moveit_msgs::msg::CollisionObject CreateCollisionObject(
+      std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation = moveit_msgs::msg::CollisionObject::ADD);
+
     // Response callbacks
     // void gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future);
 
     double vsf = 0.1;
     double asf = 0.5;
     double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
-    double pick_offset = 0.1;
-    double place_offset = 0.1;
+    double pick_offset = 0.030;
+    double place_offset = 0.040;
+    double above_slot_offset = 0.1;
     double gripper_roll = 0;
-    double gripper_pitch = M_PI_2;
+    double gripper_pitch = M_PI;
 
     double goal_joint_tolerance = 0.01;
     
@@ -97,4 +110,17 @@ class RobotCommander : public rclcpp::Node
     std::string group_name;
 
     bool holding_part = false;
+    std::map<int, std::string> tray_stl_names = {
+      {aprs_interfaces::msg::Tray::S2L2_KIT_TRAY, "s2l2_kit_tray.stl"},
+      {aprs_interfaces::msg::Tray::M2L1_KIT_TRAY, "m2l1_kit_tray.stl"},
+      {aprs_interfaces::msg::Tray::SMALL_GEAR_TRAY, "small_gear_tray.stl"},
+      {aprs_interfaces::msg::Tray::MEDIUM_GEAR_TRAY, "medium_gear_tray.stl"},
+      {aprs_interfaces::msg::Tray::LARGE_GEAR_TRAY, "large_gear_tray.stl"}
+    };
+
+    std::map<int, std::string> gear_stl_names = {
+      {aprs_interfaces::msg::SlotInfo::SMALL, "small_gear.stl"},
+      {aprs_interfaces::msg::SlotInfo::MEDIUM, "medium_gear.stl"},
+      {aprs_interfaces::msg::SlotInfo::LARGE, "large_gear.stl"},
+    };
 };
