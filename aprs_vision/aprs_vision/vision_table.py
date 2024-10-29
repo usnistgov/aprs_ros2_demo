@@ -158,8 +158,8 @@ class VisionTable(Node):
         except:
             response.success = False
             response.message = "Unable to detect trays properly. Is the robot arm in the way?"
-            cv2.imshow('Error Reason', frame)
-            cv2.waitKey(0)
+            # cv2.imshow('Error Reason', frame)
+            # cv2.waitKey(0)
 
         return response
     

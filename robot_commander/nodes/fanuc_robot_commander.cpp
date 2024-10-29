@@ -6,7 +6,10 @@ int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto fanuc_commander = std::make_shared<RobotCommander>("fanuc_robot_commander", "fanuc_arm");
+  moveit::planning_interface::MoveGroupInterface::Options opt("fanuc_arm");
+  opt.move_group_namespace = "fanuc";
+
+  auto fanuc_commander = std::make_shared<RobotCommander>("fanuc_robot_commander", opt);
 
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(fanuc_commander);

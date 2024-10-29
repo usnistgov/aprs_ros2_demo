@@ -93,8 +93,6 @@ def launch_setup(context, *args, **kwargs):
         joint_state_broadcaster,
         joint_trajectory_controller,
         pneumatic_gripper_controller,
-        # forward_position_controller,
-        # fanuc_gripper_control,
         rviz_node
     ]
 

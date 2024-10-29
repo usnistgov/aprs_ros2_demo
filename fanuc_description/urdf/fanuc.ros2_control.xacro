@@ -56,12 +56,12 @@
         <state_interface name="position"/>
       </joint>
 
-      <joint name="finger_1_joint">
+      <joint name="fanuc_left_finger_joint">
         <command_interface name="position"/>
         <state_interface name="position"/>
       </joint>
 
-      <joint name="finger_2_joint">
+      <joint name="fanuc_right_finger_joint">
         <command_interface name="position"/>
         <state_interface name="position"/>
       </joint>

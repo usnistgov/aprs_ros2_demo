@@ -12,8 +12,33 @@
 
   <link name="world"/>
 
+  <link name="fanuc_base_plate">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find fanuc_description)/meshes/fanuc_base_plate.stl" />
+      </geometry>
+      <material name="">
+          <color rgba="0.15 0.15 0.15 1.0" />
+      </material>
+    </visual>
+
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0" />
+      <geometry>
+        <mesh filename="file://$(find fanuc_description)/meshes/fanuc_base_plate.stl" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name = "fanuc_base_plate_joint" type = "fixed">
+    <origin rpy = "0 0 0" xyz = "0.762 0.1778 .0254"/>
+    <parent link = "world"/>
+    <child link = "fanuc_base_plate"/>
+  </joint>
+  
   <!-- Run fanuc macro -->
-  <xacro:fanuc parent="world" />
+  <xacro:fanuc parent="fanuc_base_plate" />
 
   <!-- Run gripper macro -->
   <xacro:fanuc_gripper parent="link_6" />

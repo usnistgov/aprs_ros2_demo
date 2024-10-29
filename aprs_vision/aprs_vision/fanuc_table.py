@@ -6,7 +6,7 @@ import math
 
 class FanucTable(VisionTable):
     table_origin = Point(x=228.591, y=228.287, z=-0.01)
-    tray_height = 0.017
+    tray_height = -0.017
     gear_height = 0.02
 
     video_stream = "http://192.168.1.104/mjpg/video.mjpg"
