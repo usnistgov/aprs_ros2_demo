@@ -21,10 +21,9 @@
 class RobotCommander : public rclcpp::Node
 {
   public:
-    RobotCommander(std::string node_name, std::string group_name);
+    RobotCommander(std::string node_name, moveit::planning_interface::MoveGroupInterface::Options opt);
 
-    bool open_gripper();
-    bool close_gripper();
+    bool actuate_gripper(bool enable);
     std::pair<bool, std::string> move_to_named_pose(const std::string &pose_name);
     std::pair<bool, std::string> pick_part(const std::string &slot_name);
     std::pair<bool, std::string> place_part(const std::string &slot_name);
@@ -51,7 +50,7 @@ class RobotCommander : public rclcpp::Node
     rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr joint_command_publisher_;
 
     // Clients
-    rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr actuate_gripper_client_;
+    rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr gripper_client_;
 
     // Services
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;
@@ -76,16 +75,6 @@ class RobotCommander : public rclcpp::Node
       const std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Request> request,
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
-
-    // Response callbacks
-    void open_gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future);
-    void close_gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future);
-
-    // Reponse flags
-    bool recieved_open_gripper_response = false;
-    bool recieved_close_gripper_response = false;
-    aprs_interfaces::srv::PneumaticGripperControl::Response open_gripper_response;
-    aprs_interfaces::srv::PneumaticGripperControl::Response close_gripper_response;
 
     double vsf = 0.1;
     double asf = 0.5;

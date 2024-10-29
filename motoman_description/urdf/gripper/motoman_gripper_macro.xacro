@@ -5,15 +5,15 @@
         ">
 
         <!-- Gripper Link -->
-        <link name="motoman_gripper_base">
-            <visual name="motoman_gripper_base_visual">
+        <link name="motoman_gripper_link">
+            <visual>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
                     <mesh filename="file://$(find motoman_description)/meshes/motoman_gripper_link.STL" />
                 </geometry>
             </visual>
 
-            <collision name="motoman_gripper_base_collision">
+            <collision>
                 <origin xyz="0 0 -0.005" rpy="0 0 0"/>
                 <geometry>
                     <mesh filename="file://$(find motoman_description)/meshes/motoman_gripper_link.STL" />
@@ -27,13 +27,13 @@
             </inertial>
         </link>
 
-        <joint name="robot_to_gripper_base" type="fixed">
+        <joint name="motoman_gripper_joint" type="fixed">
             <parent link="${parent}"/>
-            <child link="motoman_gripper_base"/>
+            <child link="motoman_gripper_link"/>
             <origin xyz="0.0 0.021 0.00" rpy="-1.57 -1.57 0.0"/>
         </joint>
 
-        <link name="motoman_finger_1">
+        <link name="motoman_left_finger">
             <inertial>
             <origin
                 xyz="0.022998 0.021681 -9.1584E-06"
@@ -53,7 +53,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="file://$(find motoman_description)/meshes/motoman_finger_1.STL" />
+                <mesh filename="file://$(find motoman_description)/meshes/motoman_left_finger.STL" />
             </geometry>
             <material
                 name="">
@@ -66,20 +66,20 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="file://$(find motoman_description)/meshes/motoman_finger_1.STL" />
+                <mesh filename="file://$(find motoman_description)/meshes/motoman_left_finger.STL" />
             </geometry>
             </collision>
         </link>
         <joint
-            name="finger_1_joint"
+            name="motoman_left_finger_joint"
             type="prismatic">
             <origin
             xyz="0.0005 0 0.162"
             rpy="1.5708 0 0" />
             <parent
-            link="motoman_gripper_base" />
+            link="motoman_gripper_link" />
             <child
-            link="motoman_finger_1" />
+            link="motoman_left_finger" />
             <axis
             xyz="1 0 0" />
             <limit
@@ -89,7 +89,7 @@
             velocity="100" />
         </joint>
         <link
-            name="motoman_finger_2">
+            name="motoman_right_finger">
             <inertial>
                 <origin
                     xyz="0.022998 0.021681 -9.8018E-06"
@@ -109,7 +109,7 @@
                     xyz="0 0 0"
                     rpy="0 3.1415 0" />
                 <geometry>
-                    <mesh filename="file://$(find motoman_description)/meshes/motoman_finger_2.STL" />
+                    <mesh filename="file://$(find motoman_description)/meshes/motoman_right_finger.STL" />
                 </geometry>
                 <material
                     name="">
@@ -122,20 +122,23 @@
                     xyz="0 0 0"
                     rpy="0 3.1415 0" />
                 <geometry>
-                    <mesh filename="file://$(find motoman_description)/meshes/motoman_finger_2.STL" />
+                    <mesh filename="file://$(find motoman_description)/meshes/motoman_right_finger.STL" />
                 </geometry>
             </collision>
         </link>
+
+        <link name="motoman_tool0"/>
+        
         <joint
-            name="finger_2_joint"
+            name="motoman_right_finger_joint"
             type="prismatic">
             <origin
             xyz="-0.0005 0 0.162"
             rpy="1.5708 0 0" />
             <parent
-            link="motoman_gripper_base" />
+            link="motoman_gripper_link" />
             <child
-            link="motoman_finger_2" />
+            link="motoman_right_finger" />
             <axis
             xyz="-1 0 0" />
             <limit
@@ -144,6 +147,12 @@
             effort="100"
             velocity="100" />
             <!-- <mimic joint="motoman_prism_1" multiplier="1" offset="0"/> -->
+        </joint>
+
+        <joint name="motoman_tool0_joint" type="fixed">
+            <origin xyz=" 0.042 0.0 0.0" rpy="0.0 1.57 0.0" />
+            <parent link="motoman_gripper_link"/>
+            <child link="motoman_tool0"/>
         </joint>
     </xacro:macro>
   

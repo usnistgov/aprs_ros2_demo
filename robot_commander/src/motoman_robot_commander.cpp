@@ -1,10 +1,10 @@
 #include <robot_commander/motoman_robot_commander.hpp>
 
-RobotCommander::RobotCommander(std::string node_name, std::string move_group_name)
+RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface::MoveGroupInterface::Options opt)
 : Node(node_name),
-  planning_interface_(std::shared_ptr<rclcpp::Node>(std::move(this)), move_group_name),
-  planning_scene_(),
-  group_name(move_group_name)
+  planning_interface_(std::shared_ptr<rclcpp::Node>(std::move(this)), opt, std::shared_ptr<tf2_ros::Buffer>()),
+  planning_scene_("motoman"),
+  group_name(opt.group_name)
 {
   RCLCPP_INFO(get_logger(), "Starting robot commander node");
 
@@ -12,21 +12,21 @@ RobotCommander::RobotCommander(std::string node_name, std::string move_group_nam
 
   // Start up service servers
   pick_srv_ = create_service<aprs_interfaces::srv::Pick>(
-    "/pick_from_slot", 
+    "/motoman/pick_from_slot", 
     std::bind(&RobotCommander::pick_from_slot_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
   );
 
   place_srv_ = create_service<aprs_interfaces::srv::Place>(
-    "/place_in_slot", 
+    "/motoman/place_in_slot", 
     std::bind(&RobotCommander::place_in_slot_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
   );
 
   move_to_named_pose_srv_ = create_service<aprs_interfaces::srv::MoveToNamedPose>(
-    "/move_to_named_pose", 
+    "/motoman/move_to_named_pose", 
     std::bind(&RobotCommander::move_to_named_pose_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
@@ -36,55 +36,19 @@ RobotCommander::RobotCommander(std::string node_name, std::string move_group_nam
   joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
 
   // Create clients
-  actuate_gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/motoman/actuate_gripper");
+  gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/motoman/actuate_gripper");
 }
 
-bool RobotCommander::open_gripper()
+bool RobotCommander::actuate_gripper(bool enable)
 {
-  auto request = std::make_shared<aprs_interfaces::srv::PneumaticGripperControl::Request>();
-  request->enable = false;
+  auto req = std::make_shared<aprs_interfaces::srv::PneumaticGripperControl::Request>();
+  req->enable = enable;
 
-  recieved_open_gripper_response = false;
-  open_gripper_response = aprs_interfaces::srv::PneumaticGripperControl::Response();
+  auto future = gripper_client_->async_send_request(req);
 
-  actuate_gripper_client_->async_send_request(
-    request,
-    std::bind(&RobotCommander::open_gripper_response_cb, this, std::placeholders::_1)
-  );
+  future.wait();
 
-  while (!recieved_open_gripper_response) {}
-
-  if (!open_gripper_response.success) {
-    RCLCPP_ERROR_STREAM(get_logger(), open_gripper_response.status);
-    return false;
-  } 
-  
-  RCLCPP_INFO(get_logger(), "Opened gripper");
-  return true;
-}
-
-bool RobotCommander::close_gripper()
-{
-  auto request = std::make_shared<aprs_interfaces::srv::PneumaticGripperControl::Request>();
-  request->enable = true;
-
-  recieved_close_gripper_response = false;
-  close_gripper_response = aprs_interfaces::srv::PneumaticGripperControl::Response();
-
-  actuate_gripper_client_->async_send_request(
-    request,
-    std::bind(&RobotCommander::close_gripper_response_cb, this, std::placeholders::_1)
-  );
-
-  while (!recieved_close_gripper_response) {}
-
-  if (!close_gripper_response.success) {
-    RCLCPP_ERROR_STREAM(get_logger(), close_gripper_response.status);
-    return false;
-  } 
-  
-  RCLCPP_INFO(get_logger(), "Closed gripper");
-  return true;
+  return future.get()->success;
 }
 
 std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::string &pose_name)
@@ -139,7 +103,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   planning_interface_.execute(plan.second);
 
-  open_gripper();
+  actuate_gripper(false);
 
   sleep(0.5);
 
@@ -156,7 +120,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   sleep(0.5);
 
-  close_gripper();
+  actuate_gripper(true);
 
   sleep(0.5);
 
@@ -208,7 +172,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   planning_interface_.execute(plan.second);
 
-  open_gripper();
+  actuate_gripper(false);
 
   holding_part = false;
 
@@ -253,22 +217,6 @@ void RobotCommander::place_in_slot_cb(
 
   response->success = result.first;
   response->status = result.second;
-} 
-
-void RobotCommander::open_gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future)
-{
-  open_gripper_response.success = future.get()->success;
-  open_gripper_response.status = future.get()->status;
-
-  recieved_open_gripper_response = true;
-}
-
-void RobotCommander::close_gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future)
-{
-  close_gripper_response.success = future.get()->success;
-  close_gripper_response.status = future.get()->status;
-  
-  recieved_close_gripper_response = true;
 }
 
 void RobotCommander::move_to_named_pose_cb(

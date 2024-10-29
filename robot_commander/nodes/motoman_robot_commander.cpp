@@ -6,8 +6,14 @@ int main(int argc, char *argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto motoman_commander = std::make_shared<RobotCommander>("motoman_robot_commander", "motoman_arm");
+  moveit::planning_interface::MoveGroupInterface::Options opt("motoman_arm");
+  opt.move_group_namespace = "motoman";
 
+  auto motoman_commander = std::make_shared<RobotCommander>("motoman_robot_commander", opt);
+
+  sleep(3);
+  
+  std::cout << "After sleep" << std::endl;
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(motoman_commander);
 

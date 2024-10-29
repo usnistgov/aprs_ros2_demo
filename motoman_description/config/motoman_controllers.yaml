@@ -26,7 +26,7 @@
   pneumatic_gripper_controller:
     ros__parameters:
       joints:
-        - finger_1_joint
-        - finger_2_joint
+        - motoman_left_finger_joint
+        - motoman_right_finger_joint
       
       robot_name: motoman
