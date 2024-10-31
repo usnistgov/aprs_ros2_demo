@@ -1,6 +1,7 @@
 #include <math.h>
 
 #include <rclcpp/rclcpp.hpp>
+#include "rclcpp_action/rclcpp_action.hpp"
 
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
@@ -13,6 +14,9 @@
 
 #include <std_msgs/msg/float64_multi_array.hpp>
 #include <example_interfaces/srv/trigger.hpp>
+#include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <control_msgs/msg/joint_tolerance.hpp>
+#include <action_msgs/msg/goal_status.hpp>
 #include <aprs_interfaces/srv/pick.hpp>
 #include <aprs_interfaces/srv/place.hpp>
 #include <aprs_interfaces/srv/move_to_named_pose.hpp>
@@ -32,6 +36,8 @@ class RobotCommander : public rclcpp::Node
     // Robot Move Functions
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_to_target();
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_cartesian(geometry_msgs::msg::Pose pose);
+
+    bool send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory);
   
     // Utility Functions
     geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
@@ -51,6 +57,9 @@ class RobotCommander : public rclcpp::Node
 
     // Clients
     rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr gripper_client_;
+
+    // Action client
+    rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr trajectory_client_;
 
     // Services
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;

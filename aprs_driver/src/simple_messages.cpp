@@ -151,7 +151,7 @@ namespace simple_message {
     }
 
     i=0;
-    s << "\velocities:\n";
+    s << "\tvelocities:\n";
     for (float v : velocities){
       s << "\t\tjoint" << i << ": " << v << "\n";
       i++;

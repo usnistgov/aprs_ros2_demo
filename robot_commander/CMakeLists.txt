@@ -11,6 +11,7 @@ endif()
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
+  control_msgs
   aprs_interfaces
   example_interfaces
   moveit_ros_planning_interface

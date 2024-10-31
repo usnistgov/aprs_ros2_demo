@@ -41,47 +41,6 @@ namespace motoman_controller {
       executing_ = true;
       current_seq_ = 0;
       ready_for_next_point_ = true;
-
-      std::vector<float> current_positions;
-      for (int i = 0; i < int(state_interfaces_.size()); ++i) {
-        const auto& position_interface = state_interfaces_.at(i);
-        current_positions.push_back(position_interface.get_value());
-      }
-      
-      std::vector<float> velocities(10,0);
-      std::vector<float> accelerations(10,0);
-      int length;
-      simple_message::MotoMotionReply reply;
-
-      simple_message::JointTrajPtFull initial_point(0, 0.0, current_positions, velocities, accelerations);
-      write_to_socket(motion_socket_, initial_point.to_bytes());
-      length = get_packet_length(motion_socket_);
-      reply.init(read_from_socket(motion_socket_, length));
-
-      RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
-      current_seq_++;
-
-      for (auto point: current_goal_->get_goal()->trajectory.points){
-        std::vector<float> positions;
-
-        for (auto p: point.positions){
-          positions.push_back(float(p));
-        }
-
-        float time_from_start = 0;
-        rclcpp::Time current_point_time(goal_point_.time_from_start.sec, goal_point_.time_from_start.nanosec);
-
-        time_from_start = current_point_time.seconds();
-        
-        simple_message::JointTrajPtFull goal_point(1, time_from_start, positions, velocities, accelerations);
-        write_to_socket(motion_socket_, goal_point.to_bytes());
-        length = get_packet_length(motion_socket_);
-        reply.init(read_from_socket(motion_socket_, length));
-
-        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
-
-        current_seq_++;
-      }
     }
 
     if (executing_) {
@@ -98,22 +57,104 @@ namespace motoman_controller {
         executing_ = false;
       }
 
-       // Check if goal is reached
+      if (ready_for_next_point_){
+        std::vector<float> current_positions;
+
+        for (int i = 0; i < int(state_interfaces_.size()); ++i) {
+          const auto& position_interface = state_interfaces_.at(i);
+          current_positions.push_back(position_interface.get_value());
+        }
+        
+        std::vector<float> velocities(10,0);
+        std::vector<float> accelerations(10,0);
+        int length;
+        simple_message::MotoMotionReply reply;
+
+        if(current_seq_ == 0){
+          simple_message::JointTrajPtFull initial_point(0, 0.0, current_positions, velocities, accelerations);
+          write_to_socket(motion_socket_, initial_point.to_bytes());
+          length = get_packet_length(motion_socket_);
+          reply.init(read_from_socket(motion_socket_, length));
+
+          RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
+          current_seq_++;
+        }
+        
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Points size: " << current_goal_->get_goal()->trajectory.points.size());
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), "current_sequence: " << current_seq_);
+
+        // RCLCPP_INFO(get_node()->get_logger(), "times: ");
+        // for(auto point : current_goal_->get_goal()->trajectory.points){
+        //   rclcpp::Time current_point_time(point.time_from_start.sec, point.time_from_start.nanosec);
+
+        //   RCLCPP_INFO_STREAM(get_node()->get_logger(), current_point_time.seconds());
+        // }        
+        
+        goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_ - 1];
+        
+
+        RCLCPP_INFO(get_node()->get_logger(), "After goal point created");
+        float time_from_start = 0;
+        rclcpp::Time current_point_time(goal_point_.time_from_start.sec, goal_point_.time_from_start.nanosec);
+
+        time_from_start = 5.0 * current_seq_;
+
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Time from start: " << time_from_start);
+
+        std::vector<float> positions;
+
+        for (auto p: goal_point_.positions) {
+          positions.push_back(float(p));
+        }
+
+        
+        simple_message::JointTrajPtFull goal_point(current_seq_, time_from_start, positions, velocities, accelerations);
+        write_to_socket(motion_socket_, goal_point.to_bytes());
+        length = get_packet_length(motion_socket_);
+        reply.init(read_from_socket(motion_socket_, length));
+
+        if(reply.get_result_num() == 1){
+          return controller_interface::return_type::OK;
+        }
+
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
+
+        ready_for_next_point_ = false;
+      }
+
+      // Check if goal is reached
       std::vector<double> joint_errors;
+
+      // RCLCPP_INFO(get_node()->get_logger(), "Current positions:");
       for (int i = 0; i < int(state_interfaces_.size()); ++i) {
         const auto& position_interface = state_interfaces_.at(i);
-
+        // RCLCPP_INFO_STREAM(get_node()->get_logger(), "Goal: " << goal_point_.positions[i] << "\tPosition interface: " << position_interface.get_value());
         joint_errors.push_back(abs(goal_point_.positions[i] - position_interface.get_value()));
       }
 
-      if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {        
-        executing_ = false;
-        RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
-        auto result = std::make_shared<FollowJointTrajectory::Result>();
-        result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
-        current_goal_->succeed(result);
+      // RCLCPP_INFO(get_node()->get_logger(), "Joint errors:");
+      // for(auto i : joint_errors){
+      //   RCLCPP_INFO_STREAM(get_node()->get_logger(), i);
+      // }
+
+      
+      if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {
+        ready_for_next_point_ = true;
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Finished execution for point " << current_seq_);
+        
+        // Check if all points reached
+        if (current_goal_->get_goal()->trajectory.points.size() == current_seq_ ) {
+          executing_ = false;
+          RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
+          auto result = std::make_shared<FollowJointTrajectory::Result>();
+          result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
+          current_goal_->succeed(result);
+        } else {
+          current_seq_++;
+        }
       }
     }
+
     return controller_interface::return_type::OK;
   
   }
@@ -158,7 +199,7 @@ namespace motoman_controller {
   CallbackReturn MotomanJointTrajectoryController::on_activate(
       const rclcpp_lifecycle::State&)
   {
-    // Connect to motion socket
+     // Connect to motion socket
     motion_socket_ = socket(AF_INET, SOCK_STREAM, 0);
     motion_socket_address_.sin_family = AF_INET;
     motion_socket_address_.sin_port = htons(motion_port_);

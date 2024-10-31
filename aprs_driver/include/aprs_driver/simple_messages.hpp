@@ -126,6 +126,7 @@ namespace simple_message {
       bool init(char* input);
       std::string output();
       bool is_successful(){return result == 0;};
+      int get_result_num(){return result;};
       std::string get_result(){return result_codes[result];};
       std::string get_subcode(){return subcodes[subcode];};
     private:
