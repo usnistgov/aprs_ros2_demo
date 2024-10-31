@@ -43,6 +43,10 @@ class RobotCommander : public rclcpp::Node
 
     // Utility Functions
     geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
+    moveit_msgs::msg::CollisionObject create_collision_object(
+      std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation = moveit_msgs::msg::CollisionObject::ADD);
+    std_msgs::msg::ColorRGBA get_object_color(int identifier);
+    std::vector<std::string> split_string(std::string s, std::string delimiter);
 
     // MoveIt
     moveit::planning_interface::MoveGroupInterface planning_interface_;
@@ -69,6 +73,7 @@ class RobotCommander : public rclcpp::Node
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;
     rclcpp::Service<aprs_interfaces::srv::Place>::SharedPtr place_srv_;
     rclcpp::Service<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr move_to_named_pose_srv_;
+    rclcpp::Service<example_interfaces::srv::Trigger>::SharedPtr initialize_planning_scene_srv_;
 
     // Callback groups
     rclcpp::CallbackGroup::SharedPtr client_cb_group_;
@@ -89,8 +94,10 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<aprs_interfaces::srv::MoveToNamedPose::Response> response
     );
 
-    moveit_msgs::msg::CollisionObject CreateCollisionObject(
-      std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation = moveit_msgs::msg::CollisionObject::ADD);
+    void initialize_planning_scene_cb(
+      const std::shared_ptr<example_interfaces::srv::Trigger::Request> request,
+      std::shared_ptr<example_interfaces::srv::Trigger::Response> response
+    );
 
     // Response callbacks
     // void gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future);
@@ -109,7 +116,26 @@ class RobotCommander : public rclcpp::Node
     std::string base_link = "fanuc_base_link";
     std::string group_name;
 
+    bool received_tray_info = false;
+    aprs_interfaces::msg::Trays table_trays_info;
+
     bool holding_part = false;
+    std::string attached_part_name;
+
+    std::map<int, int> gear_counter = {
+      {aprs_interfaces::msg::SlotInfo::SMALL, 0},
+      {aprs_interfaces::msg::SlotInfo::MEDIUM, 0},
+      {aprs_interfaces::msg::SlotInfo::LARGE, 0}
+    };
+
+    std::map<int, std::string> gear_names = {
+      {aprs_interfaces::msg::SlotInfo::SMALL, "small_gear"},
+      {aprs_interfaces::msg::SlotInfo::MEDIUM, "medium_gear"},
+      {aprs_interfaces::msg::SlotInfo::LARGE, "large_gear"},
+    };
+
+    std::map<std::string, std::string> slot_objects;
+
     std::map<int, std::string> tray_stl_names = {
       {aprs_interfaces::msg::Tray::S2L2_KIT_TRAY, "s2l2_kit_tray.stl"},
       {aprs_interfaces::msg::Tray::M2L1_KIT_TRAY, "m2l1_kit_tray.stl"},
@@ -122,5 +148,29 @@ class RobotCommander : public rclcpp::Node
       {aprs_interfaces::msg::SlotInfo::SMALL, "small_gear.stl"},
       {aprs_interfaces::msg::SlotInfo::MEDIUM, "medium_gear.stl"},
       {aprs_interfaces::msg::SlotInfo::LARGE, "large_gear.stl"},
+    };
+
+    std::map<int, std::string> object_colors = {
+      {aprs_interfaces::msg::Tray::S2L2_KIT_TRAY, "red"},
+      {aprs_interfaces::msg::Tray::M2L1_KIT_TRAY, "white"},
+      {aprs_interfaces::msg::Tray::SMALL_GEAR_TRAY, "blue"},
+      {aprs_interfaces::msg::Tray::MEDIUM_GEAR_TRAY, "pink"},
+      {aprs_interfaces::msg::Tray::LARGE_GEAR_TRAY, "purple"},
+      {aprs_interfaces::msg::SlotInfo::SMALL, "yellow"},
+      {aprs_interfaces::msg::SlotInfo::MEDIUM, "orange"},
+      {aprs_interfaces::msg::SlotInfo::LARGE, "green"},
+      {-1, "black"}
+    };
+
+    std::map<std::string, std::vector<double>> color_values = {
+      {"red", std::vector<double>{204, 51, 0, 1}},
+      {"green", std::vector<double>{0, 204, 0, 1}},
+      {"blue", std::vector<double>{0, 153, 255, 1}},
+      {"orange", std::vector<double>{255, 153, 0, 1}},
+      {"yellow", std::vector<double>{255, 255, 0, 1}},
+      {"purple", std::vector<double>{153, 0, 204, 1}},
+      {"pink", std::vector<double>{255, 0, 255, 1}},
+      {"white", std::vector<double>{255, 255, 255, 1}},
+      {"black", std::vector<double>{0, 0, 0, 0.1}}
     };
 };

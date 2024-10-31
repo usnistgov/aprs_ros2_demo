@@ -32,6 +32,13 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
     client_cb_group_
   );
 
+  initialize_planning_scene_srv_ = create_service<example_interfaces::srv::Trigger>(
+    "/fanuc/initialize_planning_scene", 
+    std::bind(&RobotCommander::initialize_planning_scene_cb, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS(),
+    client_cb_group_
+  );
+
   // Create Subscriber
   trays_info_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
       "/fanuc/table_vision/trays_info", rclcpp::SensorDataQoS(),
@@ -41,11 +48,7 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
   joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
 
   // Create clients
-  gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/fanuc/actuate_gripper");
-
-  //Load objects into planning scene
-  geometry_msgs::msg::Pose optical_table_pose;
-  planning_scene_.applyCollisionObject(CreateCollisionObject("optical_table","world","optical_table.stl", optical_table_pose));  
+  gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/fanuc/actuate_gripper");    
 }
 
 bool RobotCommander::actuate_gripper(bool enable)
@@ -132,7 +135,19 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   actuate_gripper(true);
 
-  // planning_interface_.attachObject(slot_name);
+  attached_part_name = slot_objects[slot_name];
+
+  // moveit_msgs::msg::CollisionObject gear;
+  // gear.header.frame_id = "world";
+  // gear.header.stamp = now();
+  // gear.id = attached_part_name;
+  // gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
+  // gear.pose.position.z += pick_offset;
+  // gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
+  // planning_scene_.applyCollisionObject(gear);
+
+  planning_interface_.attachObject(slot_objects[slot_name],"fanuc_tool0");
+  slot_objects[slot_name] = "";
 
   sleep(0.5);
 
@@ -186,7 +201,20 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   actuate_gripper(false);
 
-  // planning_interface_.detachObject();
+  planning_interface_.detachObject(attached_part_name);
+
+  sleep(0.5);
+
+  moveit_msgs::msg::CollisionObject gear;
+  gear.header.frame_id = "world";
+  gear.header.stamp = now();
+  gear.id = attached_part_name;
+  gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
+  gear.pose.position.z -= (place_offset-pick_offset);
+  gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
+  planning_scene_.applyCollisionObject(gear);
+  slot_objects[slot_name] = attached_part_name;
+  attached_part_name = "";
 
   holding_part = false;
 
@@ -302,7 +330,7 @@ geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, do
   return p;
 }
 
-moveit_msgs::msg::CollisionObject RobotCommander::CreateCollisionObject(
+moveit_msgs::msg::CollisionObject RobotCommander::create_collision_object(
   std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation)
 {
   moveit_msgs::msg::CollisionObject collision;
@@ -332,43 +360,116 @@ moveit_msgs::msg::CollisionObject RobotCommander::CreateCollisionObject(
 }
 
 void RobotCommander::trays_info_cb(
-  const aprs_interfaces::msg::Trays::ConstSharedPtr msg
-){
-  for (auto kit_tray : msg->kit_trays){
-      planning_scene_.applyCollisionObject(
-        CreateCollisionObject(
-          kit_tray.name, 
-          kit_tray.tray_pose.header.frame_id, 
-          tray_stl_names[kit_tray.identifier], 
-          kit_tray.tray_pose.pose,
-          moveit_msgs::msg::CollisionObject::APPEND
-        )
-      );
+  const aprs_interfaces::msg::Trays::ConstSharedPtr msg)
+{
+  received_tray_info = true;
+  table_trays_info = *msg;
+}
+
+void RobotCommander::initialize_planning_scene_cb(
+  const std::shared_ptr<example_interfaces::srv::Trigger::Request>,
+  std::shared_ptr<example_interfaces::srv::Trigger::Response> response)
+{
+  if (!received_tray_info){
+    response->success = false;
+    response->message = "Tray info not yet received";
+    return;
   }
 
-  for (auto part_tray : msg->part_trays){
-      planning_scene_.applyCollisionObject(
-        CreateCollisionObject(
-          part_tray.name, 
-          part_tray.tray_pose.header.frame_id, 
-          tray_stl_names[part_tray.identifier], 
-          part_tray.tray_pose.pose,
-          moveit_msgs::msg::CollisionObject::APPEND
-        )
-      );
-      // for (auto slot : part_tray.slots){
-      //   if (slot.occupied){
-      //     planning_scene_.applyCollisionObject(
-      //       CreateCollisionObject(
-      //         slot.name, 
-      //         part_tray.name, 
-      //         gear_stl_names[slot.size], 
-      //         slot.slot_pose.pose,
-      //         moveit_msgs::msg::CollisionObject::APPEND
-      //       )
-      //     );
-      //   }
-      // }
-        
+  // Clear Planning Scene
+  std::vector<std::string> object_ids;
+  for(const auto& [object_id,_] : planning_scene_.getObjects()){
+    object_ids.push_back(object_id);
   }
+  if (!object_ids.empty()){
+    planning_scene_.removeCollisionObjects(object_ids);
+  }
+
+  geometry_msgs::msg::Pose optical_table_pose;
+  planning_scene_.applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
+  
+  // Add kit trays
+  for (auto kit_tray : table_trays_info.kit_trays){
+    planning_scene_.applyCollisionObject(
+      create_collision_object(
+        kit_tray.name, 
+        kit_tray.tray_pose.header.frame_id, 
+        tray_stl_names[kit_tray.identifier], 
+        kit_tray.tray_pose.pose,
+        moveit_msgs::msg::CollisionObject::APPEND
+      ),
+      get_object_color(kit_tray.identifier)
+    );
+  }
+
+  // Add part trays
+  for (auto part_tray : table_trays_info.part_trays){
+    planning_scene_.applyCollisionObject(
+      create_collision_object(
+        part_tray.name, 
+        part_tray.tray_pose.header.frame_id, 
+        tray_stl_names[part_tray.identifier], 
+        part_tray.tray_pose.pose,
+        moveit_msgs::msg::CollisionObject::APPEND
+      ), 
+      get_object_color(part_tray.identifier)
+    );
+    
+    // Add gears
+    for (auto slot : part_tray.slots){
+      if (slot.occupied){
+        gear_counter[slot.size]++;
+        std::string gear_name = gear_names[slot.size] + "_" + std::to_string(gear_counter[slot.size]);
+        slot_objects.insert_or_assign(slot.name, gear_name);
+
+        planning_scene_.applyCollisionObject(
+          create_collision_object(
+            gear_name, 
+            part_tray.name, 
+            gear_stl_names[slot.size], 
+            slot.slot_pose.pose,
+            moveit_msgs::msg::CollisionObject::APPEND
+          ),
+          get_object_color(slot.size)
+        );
+      } else{
+        slot_objects.insert_or_assign(slot.name, "");
+      }
+    }     
+  }
+
+  response->success = true;
+  response->message = "Planning scene objects set!";
+}
+
+std_msgs::msg::ColorRGBA RobotCommander::get_object_color(int identifier){
+  std_msgs::msg::ColorRGBA color;
+  auto values = color_values[object_colors[identifier]];
+  color.r = values[0];
+  color.g = values[1];
+  color.b = values[2];
+  color.a = values[3];
+
+  return color;    
+}
+
+std::vector<std::string> RobotCommander::split_string(std::string s, std::string delimiter){
+  std::vector<std::string> v;
+  if(s.empty()){
+    return v;
+  }
+  
+  int start = 0;
+  do {
+    int idx = s.find(delimiter, start);
+    if (idx == std::string::npos){
+      break;
+    }
+    int length = idx - start;
+    v.push_back(s.substr(start,length));
+    start+= (length + delimiter.size());
+  } while (true);
+  v.push_back(s.substr(start));
+
+  return v;
 }

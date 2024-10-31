@@ -405,7 +405,7 @@ class VisionTable(Node):
                     tray_center = Point(
                         x=(x * self.conversion_factor) / 1000,
                         y=(y * self.conversion_factor) / 1000, 
-                        z=self.tray_height
+                        z=-self.tray_height
                     )
 
                     theta = math.radians(-angle) + math.pi
