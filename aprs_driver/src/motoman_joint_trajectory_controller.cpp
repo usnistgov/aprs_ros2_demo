@@ -97,7 +97,7 @@ namespace motoman_controller {
         float time_from_start = 0;
         rclcpp::Time current_point_time(goal_point_.time_from_start.sec, goal_point_.time_from_start.nanosec);
 
-        time_from_start = 5.0 * current_seq_;
+        time_from_start = 3.0 * current_seq_;
 
         RCLCPP_INFO_STREAM(get_node()->get_logger(), "Time from start: " << time_from_start);
 
