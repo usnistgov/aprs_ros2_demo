@@ -171,6 +171,6 @@ class RobotCommander : public rclcpp::Node
       {"purple", std::vector<double>{153, 0, 204, 1}},
       {"pink", std::vector<double>{255, 0, 255, 1}},
       {"white", std::vector<double>{255, 255, 255, 1}},
-      {"black", std::vector<double>{0, 0, 0, 0.1}}
+      {"black", std::vector<double>{0, 0, 0, 1}}
     };
 };

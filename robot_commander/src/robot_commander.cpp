@@ -386,7 +386,12 @@ void RobotCommander::initialize_planning_scene_cb(
   }
 
   geometry_msgs::msg::Pose optical_table_pose;
+  geometry_msgs::msg::Pose conveyer_belt_pose;
+  conveyer_belt_pose.position.x = 0.015;
+  conveyer_belt_pose.position.y = -0.625;
+  conveyer_belt_pose.position.z = -0.155;
   planning_scene_.applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
+  planning_scene_.applyCollisionObject(create_collision_object("conveyer_belt", "world", "conveyer.stl", conveyer_belt_pose), get_object_color(-1));
   
   // Add kit trays
   for (auto kit_tray : table_trays_info.kit_trays){
