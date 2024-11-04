@@ -7,6 +7,5 @@ uint8 S2L2_KIT_TRAY=17
 
 uint8 identifier
 string name
-geometry_msgs/TransformStamped transform_stamped
+geometry_msgs/PoseStamped tray_pose
 aprs_interfaces/SlotInfo[] slots
-

@@ -78,22 +78,10 @@ namespace motoman_controller {
 
           RCLCPP_INFO_STREAM(get_node()->get_logger(), "Result: " << reply.get_result() << "\nSubcode: " << reply.get_subcode());
           current_seq_++;
-        }
-        
-        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Points size: " << current_goal_->get_goal()->trajectory.points.size());
-        RCLCPP_INFO_STREAM(get_node()->get_logger(), "current_sequence: " << current_seq_);
-
-        // RCLCPP_INFO(get_node()->get_logger(), "times: ");
-        // for(auto point : current_goal_->get_goal()->trajectory.points){
-        //   rclcpp::Time current_point_time(point.time_from_start.sec, point.time_from_start.nanosec);
-
-        //   RCLCPP_INFO_STREAM(get_node()->get_logger(), current_point_time.seconds());
-        // }        
+        }    
         
         goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_ - 1];
-        
 
-        RCLCPP_INFO(get_node()->get_logger(), "After goal point created");
         float time_from_start = 0;
         rclcpp::Time current_point_time(goal_point_.time_from_start.sec, goal_point_.time_from_start.nanosec);
 
@@ -128,14 +116,8 @@ namespace motoman_controller {
       // RCLCPP_INFO(get_node()->get_logger(), "Current positions:");
       for (int i = 0; i < int(state_interfaces_.size()); ++i) {
         const auto& position_interface = state_interfaces_.at(i);
-        // RCLCPP_INFO_STREAM(get_node()->get_logger(), "Goal: " << goal_point_.positions[i] << "\tPosition interface: " << position_interface.get_value());
         joint_errors.push_back(abs(goal_point_.positions[i] - position_interface.get_value()));
       }
-
-      // RCLCPP_INFO(get_node()->get_logger(), "Joint errors:");
-      // for(auto i : joint_errors){
-      //   RCLCPP_INFO_STREAM(get_node()->get_logger(), i);
-      // }
 
       
       if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {
