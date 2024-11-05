@@ -16,9 +16,9 @@ from typing import Optional
 
 class FanucConveyer(VisionTable):
     #TODO Fill in real values
-    table_origin = Point(x=279.4, y=-758.825, z=-0.01)
-    tray_height = 0.017
-    gear_height = 0.02
+    table_origin = Point(x=279.4, y=-758.825, z=38.1)
+    tray_height = 0.0015
+    gear_height = 0.005
 
     video_stream = "http://192.168.1.107/mjpg/video.mjpg"
     map_x_image = 'fanuc_conveyer_map_x.npy'

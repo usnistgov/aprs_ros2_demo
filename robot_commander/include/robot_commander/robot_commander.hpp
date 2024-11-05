@@ -65,8 +65,10 @@ class RobotCommander : public rclcpp::Node
 
     // Subscriber
 
-    rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_sub_;
-    void trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
+    rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_table_vision_sub_;
+    rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_conveyor_vision_sub_;
+    void table_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
+    void conveyor_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
 
 
     // Services
@@ -116,11 +118,14 @@ class RobotCommander : public rclcpp::Node
     std::string base_link = "fanuc_base_link";
     std::string group_name;
 
-    bool received_tray_info = false;
+    bool received_table_tray_info = false;
+    bool received_conveyor_tray_info = false;
     aprs_interfaces::msg::Trays table_trays_info;
+    aprs_interfaces::msg::Trays conveyor_trays_info;
 
     bool holding_part = false;
     std::string attached_part_name;
+    int attached_part_type;
 
     std::map<int, int> gear_counter = {
       {aprs_interfaces::msg::SlotInfo::SMALL, 0},
@@ -135,6 +140,7 @@ class RobotCommander : public rclcpp::Node
     };
 
     std::map<std::string, std::string> slot_objects;
+    std::map<std::string, int> slot_types;
 
     std::map<int, std::string> tray_stl_names = {
       {aprs_interfaces::msg::Tray::S2L2_KIT_TRAY, "s2l2_kit_tray.stl"},
@@ -152,9 +158,9 @@ class RobotCommander : public rclcpp::Node
 
     std::map<int, std::string> object_colors = {
       {aprs_interfaces::msg::Tray::S2L2_KIT_TRAY, "red"},
-      {aprs_interfaces::msg::Tray::M2L1_KIT_TRAY, "white"},
-      {aprs_interfaces::msg::Tray::SMALL_GEAR_TRAY, "blue"},
-      {aprs_interfaces::msg::Tray::MEDIUM_GEAR_TRAY, "pink"},
+      {aprs_interfaces::msg::Tray::M2L1_KIT_TRAY, "brown"},
+      {aprs_interfaces::msg::Tray::SMALL_GEAR_TRAY, "pink"},
+      {aprs_interfaces::msg::Tray::MEDIUM_GEAR_TRAY, "blue"},
       {aprs_interfaces::msg::Tray::LARGE_GEAR_TRAY, "purple"},
       {aprs_interfaces::msg::SlotInfo::SMALL, "yellow"},
       {aprs_interfaces::msg::SlotInfo::MEDIUM, "orange"},
@@ -163,14 +169,14 @@ class RobotCommander : public rclcpp::Node
     };
 
     std::map<std::string, std::vector<double>> color_values = {
-      {"red", std::vector<double>{204, 51, 0, 1}},
-      {"green", std::vector<double>{0, 204, 0, 1}},
-      {"blue", std::vector<double>{0, 153, 255, 1}},
-      {"orange", std::vector<double>{255, 153, 0, 1}},
-      {"yellow", std::vector<double>{255, 255, 0, 1}},
-      {"purple", std::vector<double>{153, 0, 204, 1}},
-      {"pink", std::vector<double>{255, 0, 255, 1}},
-      {"white", std::vector<double>{255, 255, 255, 1}},
-      {"black", std::vector<double>{0, 0, 0, 1}}
+      {"red", std::vector<double>{.96, .26, .21, 1}},
+      {"green", std::vector<double>{.3, .69, .31, 1}},
+      {"blue", std::vector<double>{.13, .59, .95, 1}},
+      {"orange", std::vector<double>{1, .6, 0, 1}},
+      {"yellow", std::vector<double>{1, .76, .03, 1}},
+      {"purple", std::vector<double>{.4, .23, .72, 1}},
+      {"pink", std::vector<double>{.91, .12, .39, 1}},
+      {"brown", std::vector<double>{.47, .33, .28, 1}},
+      {"black", std::vector<double>{0, 0, 0, 0.8}}
     };
 };

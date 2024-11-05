@@ -40,9 +40,14 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
   );
 
   // Create Subscriber
-  trays_info_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
+  trays_info_table_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
       "/fanuc/table_vision/trays_info", rclcpp::SensorDataQoS(),
-      std::bind(&RobotCommander::trays_info_cb, this, std::placeholders::_1));
+      std::bind(&RobotCommander::table_trays_info_cb, this, std::placeholders::_1));
+
+  trays_info_conveyor_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
+      "/fanuc/conveyer_vision/trays_info", rclcpp::SensorDataQoS(),
+      std::bind(&RobotCommander::conveyor_trays_info_cb, this, std::placeholders::_1));
+      
 
   // Create publishers
   joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
@@ -90,7 +95,7 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   // Send trajectory to controller
   planning_interface_.execute(plan.second);
 
-  return std::make_pair(true, "Sent trajectory to move to" + pose_name);
+  return std::make_pair(true, "Sent trajectory to move to " + pose_name);
 }
 
 std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_name)
@@ -104,6 +109,24 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   } catch (tf2::LookupException& e) {
     return std::make_pair(false, "Not a valid frame name");
   }
+
+  double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
+  RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
+
+  if (slot_name.find("conveyer") != std::string::npos && joint_1_pos > 0){
+    RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
+    auto result = move_to_named_pose("above_conveyer");
+    if (!result.first){
+      return result;
+    }
+  } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
+  {
+    RCLCPP_INFO(get_logger(),"Moving to Above Table");
+    auto result = move_to_named_pose("above_table");
+    if (!result.first){
+      return result;
+    }
+  }  
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
@@ -136,6 +159,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   actuate_gripper(true);
 
   attached_part_name = slot_objects[slot_name];
+  attached_part_type = slot_types[slot_name];
 
   // moveit_msgs::msg::CollisionObject gear;
   // gear.header.frame_id = "world";
@@ -148,6 +172,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   planning_interface_.attachObject(slot_objects[slot_name],"fanuc_tool0");
   slot_objects[slot_name] = "";
+  slot_types[slot_name] = -1;
 
   sleep(0.5);
 
@@ -175,6 +200,15 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
     slot_t = tf_buffer->lookupTransform("world", slot_name, tf2::TimePointZero).transform;
   } catch (tf2::LookupException& e) {
     return std::make_pair(false, "Not a valid frame name");
+  }
+
+  double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
+
+  if (slot_name.find("conveyer") != std::string::npos && joint_1_pos > 0){
+    move_to_named_pose("above_conveyer");
+  } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
+  {
+    move_to_named_pose("above_table");
   }
 
   // Move to pose above slot
@@ -212,9 +246,11 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
   gear.pose.position.z -= (place_offset-pick_offset);
   gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
-  planning_scene_.applyCollisionObject(gear);
+  planning_scene_.applyCollisionObject(gear, get_object_color(attached_part_type));
   slot_objects[slot_name] = attached_part_name;
+  slot_types[slot_name] = attached_part_type;
   attached_part_name = "";
+  attached_part_type = -1;
 
   holding_part = false;
 
@@ -359,18 +395,25 @@ moveit_msgs::msg::CollisionObject RobotCommander::create_collision_object(
   return collision;
 }
 
-void RobotCommander::trays_info_cb(
+void RobotCommander::table_trays_info_cb(
   const aprs_interfaces::msg::Trays::ConstSharedPtr msg)
 {
-  received_tray_info = true;
+  received_table_tray_info = true;
   table_trays_info = *msg;
+}
+
+void RobotCommander::conveyor_trays_info_cb(
+  const aprs_interfaces::msg::Trays::ConstSharedPtr msg)
+{
+  received_conveyor_tray_info = true;
+  conveyor_trays_info = *msg;
 }
 
 void RobotCommander::initialize_planning_scene_cb(
   const std::shared_ptr<example_interfaces::srv::Trigger::Request>,
   std::shared_ptr<example_interfaces::srv::Trigger::Response> response)
 {
-  if (!received_tray_info){
+  if (!received_table_tray_info && !received_conveyor_tray_info){
     response->success = false;
     response->message = "Tray info not yet received";
     return;
@@ -387,50 +430,48 @@ void RobotCommander::initialize_planning_scene_cb(
 
   geometry_msgs::msg::Pose optical_table_pose;
   geometry_msgs::msg::Pose conveyer_belt_pose;
-  conveyer_belt_pose.position.x = 0.015;
-  conveyer_belt_pose.position.y = -0.625;
-  conveyer_belt_pose.position.z = -0.155;
+  conveyer_belt_pose.position.x = -0.3937;
+  conveyer_belt_pose.position.y = -0.0762;
+  conveyer_belt_pose.position.z = 0.0625;
   planning_scene_.applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
   planning_scene_.applyCollisionObject(create_collision_object("conveyer_belt", "world", "conveyer.stl", conveyer_belt_pose), get_object_color(-1));
   
-  // Add kit trays
-  for (auto kit_tray : table_trays_info.kit_trays){
-    planning_scene_.applyCollisionObject(
-      create_collision_object(
-        kit_tray.name, 
-        kit_tray.tray_pose.header.frame_id, 
-        tray_stl_names[kit_tray.identifier], 
-        kit_tray.tray_pose.pose,
-        moveit_msgs::msg::CollisionObject::APPEND
-      ),
-      get_object_color(kit_tray.identifier)
-    );
+  // Create vector of all trays and gears
+  std::vector<aprs_interfaces::msg::Tray> all_trays;
+  if (received_table_tray_info){
+    all_trays.insert(all_trays.end(),table_trays_info.kit_trays.begin(),table_trays_info.kit_trays.end());
+    all_trays.insert(all_trays.end(),table_trays_info.part_trays.begin(),table_trays_info.part_trays.end());
+  }
+  if (received_conveyor_tray_info){
+    all_trays.insert(all_trays.end(),conveyor_trays_info.kit_trays.begin(),conveyor_trays_info.kit_trays.end());
+    all_trays.insert(all_trays.end(),conveyor_trays_info.part_trays.begin(),conveyor_trays_info.part_trays.end());
   }
 
-  // Add part trays
-  for (auto part_tray : table_trays_info.part_trays){
+  // Add trays to planning scene
+  for (auto tray : all_trays){
     planning_scene_.applyCollisionObject(
       create_collision_object(
-        part_tray.name, 
-        part_tray.tray_pose.header.frame_id, 
-        tray_stl_names[part_tray.identifier], 
-        part_tray.tray_pose.pose,
+        tray.name, 
+        tray.tray_pose.header.frame_id, 
+        tray_stl_names[tray.identifier], 
+        tray.tray_pose.pose,
         moveit_msgs::msg::CollisionObject::APPEND
-      ), 
-      get_object_color(part_tray.identifier)
+      ),
+      get_object_color(tray.identifier)
     );
-    
-    // Add gears
-    for (auto slot : part_tray.slots){
+
+    // Add gears to planning scene
+    for (auto slot : tray.slots){
       if (slot.occupied){
         gear_counter[slot.size]++;
         std::string gear_name = gear_names[slot.size] + "_" + std::to_string(gear_counter[slot.size]);
         slot_objects.insert_or_assign(slot.name, gear_name);
+        slot_types.insert_or_assign(slot.name, slot.size);
 
         planning_scene_.applyCollisionObject(
           create_collision_object(
             gear_name, 
-            part_tray.name, 
+            tray.name, 
             gear_stl_names[slot.size], 
             slot.slot_pose.pose,
             moveit_msgs::msg::CollisionObject::APPEND
@@ -440,7 +481,7 @@ void RobotCommander::initialize_planning_scene_cb(
       } else{
         slot_objects.insert_or_assign(slot.name, "");
       }
-    }     
+    } 
   }
 
   response->success = true;

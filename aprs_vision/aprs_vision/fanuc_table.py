@@ -30,7 +30,7 @@ class FanucTable(VisionTable):
     generate_map_area = 10
 
     angle_offset = 0
-    suffix = 'fanuc'
+    suffix = 'fanuc_table'
     vision_location = "table_vision"
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm

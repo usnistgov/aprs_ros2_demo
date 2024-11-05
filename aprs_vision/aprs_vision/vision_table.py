@@ -183,7 +183,7 @@ class VisionTable(Node):
     def calibrate_maps_cb(self, request: GenerateGridMaps.Request, response: GenerateGridMaps.Response) -> GenerateGridMaps.Response:
         # TODO: Generate and save new maps for calibration
 
-        if self.current_frame is None:
+        if self.full_frame is None:
             response.message = "Unable to connect to camera"
             response.success = False
             return response
@@ -192,14 +192,14 @@ class VisionTable(Node):
             response.success = False
             return response
 
-        if self.generate_grid_maps(self.current_frame,request.filepath) is False:
+        if self.generate_grid_maps(self.full_frame,request.filepath) is False:
             response.success = False
             response.message = "Unable to Calibrate Map"
         else:
             response.success = True
             response.message = "Map Calibrated"
             if request.save_background_image:
-                cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.current_frame))
+                cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.full_frame))
 
         return response
 
@@ -227,6 +227,7 @@ class VisionTable(Node):
         ret, self.current_frame = self.capture.read()
 
         if ret:
+            self.full_frame = self.current_frame.copy()
             self.current_frame = self.rectify_frame(self.current_frame)
         # Save current frame as ROS message for publishing
             self.current_image_msg = self.build_img_msg_from_mat(self.current_frame)
@@ -392,7 +393,7 @@ class VisionTable(Node):
                 # Gather info for publishing TF frames
                 tray_msg = Tray()
                 tray_msg.identifier = identifier
-                tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}'
+                tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}_{self.suffix}'
 
                 pixel_tray_msg = PixelCenter()
                 pixel_tray_msg.identifier = identifier
@@ -411,7 +412,7 @@ class VisionTable(Node):
                     theta = math.radians(-angle) + math.pi
 
                     # Publish TF frame
-                    tray_frame_name = f'{tray_msg.name}_{self.suffix}'
+                    tray_frame_name = f'{tray_msg.name}'
                     tray_msg.tray_pose = self.generate_pose(image_base, tray_center, 0.0, math.pi, theta)
                     if self.publish_frames:
                         self.transforms.append(
@@ -422,7 +423,7 @@ class VisionTable(Node):
                     # Create slot info for each slot
                     slot_info = SlotInfo()
                     pixel_slot_info = PixelSlotInfo()
-                    slot_info.name = f"{tray_msg.name}_{slot_name}_{self.suffix}"
+                    slot_info.name = f"{tray_msg.name}_{slot_name}"
                     pixel_slot_info.name = f"{tray_msg.name}_{slot_name}"
 
                     if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
