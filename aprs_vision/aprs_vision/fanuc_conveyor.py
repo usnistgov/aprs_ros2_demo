@@ -26,14 +26,22 @@ class FanucConveyor(VisionTable):
     background_image = 'fanuc_conveyor_background.jpg'
     publish_frames = True
 
-    top_left_x = 718
-    top_left_y = 41
-    bottom_left_x = 722
-    bottom_left_y = 307
-    top_right_x = 1148
-    top_right_y = 58
-    bottom_right_x = 1158
-    bottom_right_y = 308
+    # top_left_x = 718
+    # top_left_y = 41
+    # bottom_left_x = 722
+    # bottom_left_y = 307
+    # top_right_x = 1148
+    # top_right_y = 58
+    # bottom_right_x = 1158
+    # bottom_right_y = 308
+    top_left_x = 0
+    top_left_y = 0
+    bottom_left_x = 0
+    bottom_left_y = 0
+    top_right_x = 0
+    top_right_y = 0
+    bottom_right_x = 0
+    bottom_right_y = 0
     grid_hsv_lower = (0, 0, 10)
     grid_hsv_upper = (255, 255, 140)
     calibrate_rows = 18
@@ -41,6 +49,8 @@ class FanucConveyor(VisionTable):
     generate_map_area = 0.1
     tray_detection_lower = (0,51,0)
     tray_detection_upper = (180,255,255)
+    click = 0
+    refpt = []
 
     angle_offset = 0
     suffix = 'fanuc_conveyor'
@@ -63,6 +73,24 @@ class FanucConveyor(VisionTable):
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
         # The point for calibrate trays for the fanuc conveyor system lines up with the tape on the table
         vertical_offset = 1
+        self.counter = 0
+
+        cv2.namedWindow('window')
+        cv2.imshow('window',frame)
+        cv2.setMouseCallback('window',self.click_input_on_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        self.top_left_x = self.refpt[0][0]
+        self.top_left_y = self.refpt[0][1]
+        self.bottom_left_x = self.refpt[1][0]
+        self.bottom_left_y = self.refpt[1][1]
+        self.top_right_x = self.refpt[2][0]
+        self.top_right_y = self.refpt[2][1]
+        self.bottom_right_x = self.refpt[3][0]
+        self.bottom_right_y = self.refpt[3][1]
+
+        self.refpt.clear()
 
         # Corners are manually deduced from location of screw heads in table
         top_left = (self.top_left_x, self.top_left_y + vertical_offset)
@@ -87,29 +115,34 @@ class FanucConveyor(VisionTable):
 
         threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
-        top_offset = 3
-        offset = 10
+        offset = 3
 
-        top_left = (self.top_left_x + offset, self.top_left_y + top_offset + vertical_offset)
-        top_right = (self.top_right_x - offset, self.top_right_y + top_offset + vertical_offset)
-        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
-        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
+        top_left = (self.top_left_x, self.top_left_y + vertical_offset)
+        top_right = (self.top_right_x, self.top_right_y + vertical_offset)
+        bottom_right = (self.bottom_right_x, self.bottom_right_y)
+        bottom_left = (self.bottom_left_x, self.bottom_left_y)
 
         corners = np.array([top_right, bottom_right, bottom_left, top_left])
 
         mask2 = np.zeros(threshold.shape, dtype=np.uint8)
         
-        cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
-
+        cv2.drawContours(mask2, [corners], -1, 255, -1) # type: ignore
     
         just_holes = cv2.bitwise_and(threshold, mask2)
+        # only_holes = just_holes[self.top_left_y+offset:self.bottom_right_y-offset,self.top_left_x + offset:self.bottom_right_x - offset]
+        cv2.drawContours(just_holes,[corners],-1,0,2) # type: ignore
 
-        
-        cv2.rectangle(just_holes,(846,175),(850,178),(0,0,0),-1)
-        # cv2.rectangle(just_holes,(728,51),(737,61),(0,0,0),-1)
-        # cv2.rectangle(just_holes,(731,56),(734,58),(255,255,255),-1)
-        cv2.rectangle(just_holes,(1105,71),(1109,74),(0,0,0),-1)
-        cv2.rectangle(just_holes,(1116,94),(1121,97),(0,0,0),-1)
+        cv2.namedWindow('window')
+        cv2.imshow('window', just_holes)
+        cv2.setMouseCallback('window',self.click_input_on_image)
+        cv2.waitKey(0)
+        rectangles = round(len(self.refpt)/2)
+        for i in range(rectangles):
+            cv2.rectangle(just_holes,self.refpt[2*i-2],self.refpt[2*i-1],(0,0,0),-1)
+
+        cv2.imshow('window', just_holes)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -207,4 +240,11 @@ class FanucConveyor(VisionTable):
         trays = cv2.inRange(hsv, self.tray_detection_lower, self.tray_detection_upper ) # type: ignore
         
         return cv2.bitwise_and(frame,frame,mask=trays)
+    
+    def click_input_on_image(self,event,x,y,flags,param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            print(f"The point selected is x: {x}, y: {y}")
+            self.refpt.append((x,y))
+                
+    
     
