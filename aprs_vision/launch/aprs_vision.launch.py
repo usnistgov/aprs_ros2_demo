@@ -30,15 +30,15 @@ def launch_setup(context, *args, **kwargs):
         output='screen'
     )
 
-    motoman_conveyer_vision = Node(
+    motoman_conveyor_vision = Node(
         package='aprs_vision',
-        executable='motoman_conveyer_node.py',
+        executable='motoman_conveyor_node.py',
         output='screen'
     )
 
-    fanuc_conveyer_vision = Node(
+    fanuc_conveyor_vision = Node(
         package='aprs_vision',
-        executable='fanuc_conveyer_node.py',
+        executable='fanuc_conveyor_node.py',
         output='screen'
     )
 
@@ -85,8 +85,8 @@ def launch_setup(context, *args, **kwargs):
         fanuc_vision,
         teach_table_vision,
         motoman_vision,
-        motoman_conveyer_vision,
-        fanuc_conveyer_vision,
+        motoman_conveyor_vision,
+        fanuc_conveyor_vision,
         # motoman_base_static_transform,
         # fanuc_base_static_transform
     ]

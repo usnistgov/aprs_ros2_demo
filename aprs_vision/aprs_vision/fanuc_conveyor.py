@@ -14,16 +14,16 @@ from rclpy.qos import qos_profile_default
 from cv2.typing import MatLike
 from typing import Optional
 
-class FanucConveyer(VisionTable):
+class FanucConveyor(VisionTable):
     #TODO Fill in real values
     table_origin = Point(x=279.4, y=-758.825, z=38.1)
     tray_height = 0.0015
     gear_height = 0.005
 
     video_stream = "http://192.168.1.107/mjpg/video.mjpg"
-    map_x_image = 'fanuc_conveyer_map_x.npy'
-    map_y_image = 'fanuc_conveyer_map_y.npy'
-    background_image = 'fanuc_conveyer_background.jpg'
+    map_x_image = 'fanuc_conveyor_map_x.npy'
+    map_y_image = 'fanuc_conveyor_map_y.npy'
+    background_image = 'fanuc_conveyor_background.jpg'
     publish_frames = True
 
     top_left_x = 718
@@ -43,8 +43,8 @@ class FanucConveyer(VisionTable):
     tray_detection_upper = (180,255,255)
 
     angle_offset = 0
-    suffix = 'fanuc_conveyer'
-    vision_location = 'conveyer_vision'
+    suffix = 'fanuc_conveyor'
+    vision_location = 'conveyor_vision'
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
@@ -58,10 +58,10 @@ class FanucConveyer(VisionTable):
     base_frame = 'fanuc_base_link'
 
     def __init__(self):
-        super().__init__("conveyer_vision", "fanuc")
+        super().__init__("conveyor_vision", "fanuc")
     
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
-        # The point for calibrate trays for the fanuc conveyer system lines up with the tape on the table
+        # The point for calibrate trays for the fanuc conveyor system lines up with the tape on the table
         vertical_offset = 1
 
         # Corners are manually deduced from location of screw heads in table

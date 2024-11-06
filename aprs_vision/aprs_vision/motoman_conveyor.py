@@ -14,16 +14,16 @@ from rclpy.qos import qos_profile_default
 from cv2.typing import MatLike
 from typing import Optional
 
-class MotomanConveyer(VisionTable):
+class MotomanConveyor(VisionTable):
     #TODO Fill in real values
     table_origin = Point(x=-165.1, y=746.125, z=-0.01)
     tray_height = 0.017
     gear_height = 0.02
 
     video_stream = "http://192.168.1.107/mjpg/video.mjpg"
-    map_x_image = 'motoman_conveyer_map_x.npy'
-    map_y_image = 'motoman_conveyer_map_y.npy'
-    background_image = 'motoman_conveyer_background.jpg'
+    map_x_image = 'motoman_conveyor_map_x.npy'
+    map_y_image = 'motoman_conveyor_map_y.npy'
+    background_image = 'motoman_conveyor_background.jpg'
     publish_frames = True
 
     top_left_x = 177
@@ -43,8 +43,8 @@ class MotomanConveyer(VisionTable):
     tray_detection_upper = (180,255,255)
 
     angle_offset = math.pi
-    suffix = 'motoman_conveyer'
-    vision_location = 'conveyer_vision'
+    suffix = 'motoman_conveyor'
+    vision_location = 'conveyor_vision'
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm
 
@@ -58,10 +58,10 @@ class MotomanConveyer(VisionTable):
     base_frame = 'motoman_base_link'
 
     def __init__(self):
-        super().__init__("conveyer_vision", "motoman")
+        super().__init__("conveyor_vision", "motoman")
     
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
-        # The point for calibrate trays for the motoman conveyer system lines up with the first hole on the 
+        # The point for calibrate trays for the motoman conveyor system lines up with the first hole on the 
         # left with the left-most screw of the motoman
         vertical_offset = 1
 

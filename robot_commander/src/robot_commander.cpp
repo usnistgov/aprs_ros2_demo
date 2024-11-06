@@ -45,7 +45,7 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
       std::bind(&RobotCommander::table_trays_info_cb, this, std::placeholders::_1));
 
   trays_info_conveyor_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/fanuc/conveyer_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/fanuc/conveyor_vision/trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::conveyor_trays_info_cb, this, std::placeholders::_1));
       
 
@@ -113,9 +113,9 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
   RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
 
-  if (slot_name.find("conveyer") != std::string::npos && joint_1_pos > 0){
+  if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
     RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
-    auto result = move_to_named_pose("above_conveyer");
+    auto result = move_to_named_pose("above_conveyor");
     if (!result.first){
       return result;
     }
@@ -204,8 +204,8 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
 
-  if (slot_name.find("conveyer") != std::string::npos && joint_1_pos > 0){
-    move_to_named_pose("above_conveyer");
+  if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
+    move_to_named_pose("above_conveyor");
   } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
   {
     move_to_named_pose("above_table");
@@ -429,12 +429,12 @@ void RobotCommander::initialize_planning_scene_cb(
   }
 
   geometry_msgs::msg::Pose optical_table_pose;
-  geometry_msgs::msg::Pose conveyer_belt_pose;
-  conveyer_belt_pose.position.x = -0.3937;
-  conveyer_belt_pose.position.y = -0.0762;
-  conveyer_belt_pose.position.z = 0.0625;
+  geometry_msgs::msg::Pose conveyor_belt_pose;
+  conveyor_belt_pose.position.x = -0.3937;
+  conveyor_belt_pose.position.y = -0.0762;
+  conveyor_belt_pose.position.z = 0.0625;
   planning_scene_.applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
-  planning_scene_.applyCollisionObject(create_collision_object("conveyer_belt", "world", "conveyer.stl", conveyer_belt_pose), get_object_color(-1));
+  planning_scene_.applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
   
   // Create vector of all trays and gears
   std::vector<aprs_interfaces::msg::Tray> all_trays;
