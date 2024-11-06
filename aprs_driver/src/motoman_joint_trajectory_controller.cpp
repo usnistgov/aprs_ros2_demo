@@ -85,7 +85,8 @@ namespace motoman_controller {
         float time_from_start = 0;
         rclcpp::Time current_point_time(goal_point_.time_from_start.sec, goal_point_.time_from_start.nanosec);
 
-        time_from_start = 3.0 * current_seq_;
+        time_from_start = current_point_time.seconds();
+        // time_from_start = 3.0 * current_seq_;
 
         RCLCPP_INFO_STREAM(get_node()->get_logger(), "Time from start: " << time_from_start);
 
@@ -95,6 +96,9 @@ namespace motoman_controller {
           positions.push_back(float(p));
         }
 
+        for(auto point : current_goal_->get_goal()->trajectory.points){
+          rclcpp::Time current_point_time(point.time_from_start.sec, point.time_from_start.nanosec);
+        }
         
         simple_message::JointTrajPtFull goal_point(current_seq_, time_from_start, positions, velocities, accelerations);
         write_to_socket(motion_socket_, goal_point.to_bytes());
