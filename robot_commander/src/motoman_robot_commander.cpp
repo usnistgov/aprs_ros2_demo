@@ -90,6 +90,8 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
     return std::make_pair(false, "Unable to plan to " + pose_name);
   }
 
+  RCLCPP_INFO(get_logger(), "ABOUT To SEND TRAJECTORY");
+
   // Send trajectory to controller
   send_trajectory(plan.second);
 
@@ -324,7 +326,7 @@ geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, do
 
 bool RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory)
 {
-  robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), "motoman");
+  robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), "motoman_arm");
   rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
   totg_.computeTimeStamps(rt, vsf, asf);
   rt.getRobotTrajectoryMsg(trajectory);
@@ -350,13 +352,18 @@ bool RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajector
   }
 
   goal.goal_time_tolerance.sec = 30;
+
   
   trajectory_client_->wait_for_action_server();
+
+
+  RCLCPP_INFO(get_logger(), "After wait for action server");
 
   auto future = trajectory_client_->async_send_goal(goal);
 
   auto goal_handle = future.get();
 
+  RCLCPP_INFO(get_logger(), "Waiting until motion complete");
   while(goal_handle->get_status() != action_msgs::msg::GoalStatus::STATUS_SUCCEEDED){
     sleep(0.1);
   }
