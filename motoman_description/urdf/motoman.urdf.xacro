@@ -4,7 +4,7 @@
     <xacro:include filename="$(find motoman_description)/urdf/motoman_sia20_macro.xacro"/>
 
     <!-- Inclue gripper macro -->
-    <xacro:include filename="$(find motoman_description)/urdf/gripper/motoman_gripper_macro.xacro"/>
+    <xacro:include filename="$(find motoman_description)/urdf/motoman_gripper_macro.xacro"/>
 
     <!-- Include ROS2 Control macro -->
     <xacro:include filename="$(find motoman_description)/urdf/motoman.ros2_control.xacro"/>
@@ -24,7 +24,7 @@
     </link>
 
     <joint name = "motoman_base_plate_joint" type = "fixed">
-      <origin rpy = "0 0 0" xyz = "1.9685 0.1651 .0381"/>
+      <origin rpy = "0 0 3.14159" xyz = "1.9685 0.1651 .0381"/>
       <parent link = "world"/>
       <child link = "motoman_base_plate"/>
     </joint>

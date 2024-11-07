@@ -96,7 +96,7 @@ def launch_setup(context, *args, **kwargs):
         joint_state_broadcaster,
         joint_trajectory_controller,
         pneumatic_gripper_controller,
-        # rviz_node
+        rviz_node
     ]
 
     return nodes_to_start

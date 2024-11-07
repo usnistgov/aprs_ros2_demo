@@ -9,7 +9,7 @@
 	<!-- Defitnitions of convinience macro -->
 	<xacro:macro name="default_mesh" params="name">
 		<geometry>
-			<mesh filename="file://$(find motoman_description)/meshes/${name}.STL"/>
+			<mesh filename="file://$(find motoman_description)/meshes/${name}.stl"/>
 		</geometry>
 	</xacro:macro>
 

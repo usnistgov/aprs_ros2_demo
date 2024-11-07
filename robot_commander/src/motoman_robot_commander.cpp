@@ -8,8 +8,8 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
 {
   RCLCPP_INFO(get_logger(), "Starting robot commander node");
 
-  planning_interface_.setMaxAccelerationScalingFactor(1.0);
-  planning_interface_.setMaxVelocityScalingFactor(1.0);
+  planning_interface_.setMaxAccelerationScalingFactor(0.1);
+  planning_interface_.setMaxVelocityScalingFactor(0.1);
   planning_interface_.setPlanningTime(10.0);
   planning_interface_.setNumPlanningAttempts(5);
   planning_interface_.allowReplanning(true);
@@ -47,12 +47,12 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
   );
 
   // Create publishers
-  joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
+  // joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
 
   // Create clients
   gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/motoman/actuate_gripper");
 
-  trajectory_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, "/motoman/joint_trajectory_controller/follow_joint_trajectory");
+  // trajectory_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(this, "/motoman/joint_trajectory_controller/follow_joint_trajectory");
 }
 
 bool RobotCommander::actuate_gripper(bool enable)
@@ -85,15 +85,24 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   // Plan to target
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan = plan_to_target();
 
+  RCLCPP_INFO_STREAM(get_logger(), "Trajectory has " << plan.second.joint_trajectory.points.size() << " points");
+
+  // for(auto point: plan.second.joint_trajectory.points){
+  //   rclcpp::Time time(point.time_from_start.sec, point.time_from_start.nanosec);
+  //   RCLCPP_INFO_STREAM(get_logger(), "Time from start: " << time.seconds());
+  // }
+  // return std::make_pair(false, "Testing");
   //
   if (!plan.first) {
     return std::make_pair(false, "Unable to plan to " + pose_name);
   }
 
-  RCLCPP_INFO(get_logger(), "ABOUT To SEND TRAJECTORY");
+  // 
+
+  planning_interface_.execute(plan.second);
 
   // Send trajectory to controller
-  send_trajectory(plan.second);
+  // send_trajectory(plan.second);
 
   return std::make_pair(true, "Sent trajectory to move to" + pose_name);
 }
@@ -273,6 +282,12 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_to_targe
 
   if (success)
   {
+    // Retime trajectory
+    // robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), group_name);
+    // rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
+    // totg_.computeTimeStamps(rt, vsf, asf);
+    // rt.getRobotTrajectoryMsg(trajectory);
+
     return std::make_pair(true, trajectory);
   }
   else
@@ -326,47 +341,47 @@ geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, do
 
 bool RobotCommander::send_trajectory(moveit_msgs::msg::RobotTrajectory trajectory)
 {
-  robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), "motoman_arm");
-  rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
-  totg_.computeTimeStamps(rt, vsf, asf);
-  rt.getRobotTrajectoryMsg(trajectory);
+  // robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), "motoman_arm");
+  // rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
+  // totg_.computeTimeStamps(rt, vsf, asf);
+  // rt.getRobotTrajectoryMsg(trajectory);
 
-  auto goal = control_msgs::action::FollowJointTrajectory::Goal();
-  goal.trajectory = trajectory.joint_trajectory;
+  // auto goal = control_msgs::action::FollowJointTrajectory::Goal();
+  // goal.trajectory = trajectory.joint_trajectory;
 
-  for(std::string name :goal.trajectory.joint_names){
-    control_msgs::msg::JointTolerance path_tolerance;
-    path_tolerance.name = name;
-    path_tolerance.position = 0.0;
-    path_tolerance.velocity = 0.0;
-    path_tolerance.acceleration = 0.0;
+  // for(std::string name :goal.trajectory.joint_names){
+  //   control_msgs::msg::JointTolerance path_tolerance;
+  //   path_tolerance.name = name;
+  //   path_tolerance.position = 0.0;
+  //   path_tolerance.velocity = 0.0;
+  //   path_tolerance.acceleration = 0.0;
 
-    control_msgs::msg::JointTolerance goal_tolerance;
-    goal_tolerance.name = name;
-    goal_tolerance.position = 0.05;
-    goal_tolerance.velocity = 0.05;
-    goal_tolerance.acceleration = 0.05;
+  //   control_msgs::msg::JointTolerance goal_tolerance;
+  //   goal_tolerance.name = name;
+  //   goal_tolerance.position = 0.05;
+  //   goal_tolerance.velocity = 0.05;
+  //   goal_tolerance.acceleration = 0.05;
 
-    goal.path_tolerance.push_back(path_tolerance);
-    goal.goal_tolerance.push_back(goal_tolerance);
-  }
+  //   goal.path_tolerance.push_back(path_tolerance);
+  //   goal.goal_tolerance.push_back(goal_tolerance);
+  // }
 
-  goal.goal_time_tolerance.sec = 30;
+  // goal.goal_time_tolerance.sec = 30;
 
   
-  trajectory_client_->wait_for_action_server();
+  // trajectory_client_->wait_for_action_server();
 
 
-  RCLCPP_INFO(get_logger(), "After wait for action server");
+  // RCLCPP_INFO(get_logger(), "After wait for action server");
 
-  auto future = trajectory_client_->async_send_goal(goal);
+  // auto future = trajectory_client_->async_send_goal(goal);
 
-  auto goal_handle = future.get();
+  // auto goal_handle = future.get();
 
-  RCLCPP_INFO(get_logger(), "Waiting until motion complete");
-  while(goal_handle->get_status() != action_msgs::msg::GoalStatus::STATUS_SUCCEEDED){
-    sleep(0.1);
-  }
+  // RCLCPP_INFO(get_logger(), "Waiting until motion complete");
+  // while(goal_handle->get_status() != action_msgs::msg::GoalStatus::STATUS_SUCCEEDED){
+  //   sleep(0.1);
+  // }
 
   return true;
 }

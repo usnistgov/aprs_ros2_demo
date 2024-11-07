@@ -123,7 +123,7 @@ namespace simple_message {
   */
   class MotoMotionReply{
     public:
-      bool init(char* input);
+      bool update(char* input);
       std::string output();
       bool is_successful(){return result == 0;};
       int get_result_num(){return result;};

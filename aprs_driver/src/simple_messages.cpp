@@ -324,7 +324,7 @@ namespace simple_message {
   MOTO MOTION REPLY
   ==============================================================================
   */
-  bool MotoMotionReply::init(char* input){
+  bool MotoMotionReply::update(char* input){
     std::vector<int> input_data;
     char temp[4];
 
@@ -353,6 +353,8 @@ namespace simple_message {
     command = input_data[5];
     result = input_data[6];
     subcode = input_data[7];
+
+    data.clear();
 
     for(int i = 0; i < 10; i++){
       for(int j = 0; j < 4; j++){
