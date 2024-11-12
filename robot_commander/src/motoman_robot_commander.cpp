@@ -4,7 +4,8 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
 : Node(node_name),
   planning_interface_(std::shared_ptr<rclcpp::Node>(std::move(this)), opt, std::shared_ptr<tf2_ros::Buffer>()),
   planning_scene_("motoman"),
-  group_name(opt.group_name)
+  group_name(opt.group_name),
+  totg_(0.1, 1.0)
 {
   RCLCPP_INFO(get_logger(), "Starting robot commander node");
 
@@ -85,86 +86,135 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   // Plan to target
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan = plan_to_target();
 
-  RCLCPP_INFO_STREAM(get_logger(), "Trajectory has " << plan.second.joint_trajectory.points.size() << " points");
+  for (auto name : plan.second.joint_trajectory.joint_names) {
+    RCLCPP_INFO_STREAM(get_logger(), name);
+  }
+
+  for (auto pos : plan.second.joint_trajectory.points.front().positions) {
+    RCLCPP_INFO_STREAM(get_logger(), pos);
+  }
+
+  // RCLCPP_INFO_STREAM(get_logger(), "Trajectory has " << plan.second.joint_trajectory.points.size() << " points");
 
   // for(auto point: plan.second.joint_trajectory.points){
   //   rclcpp::Time time(point.time_from_start.sec, point.time_from_start.nanosec);
   //   RCLCPP_INFO_STREAM(get_logger(), "Time from start: " << time.seconds());
   // }
+
   // return std::make_pair(false, "Testing");
-  //
+
   if (!plan.first) {
     return std::make_pair(false, "Unable to plan to " + pose_name);
   }
 
-  // 
+  // for (auto name : planning_interface_.getJointNames()) {
+  //   RCLCPP_INFO_STREAM(get_logger(), name);
+  // } 
 
   planning_interface_.execute(plan.second);
 
   // Send trajectory to controller
   // send_trajectory(plan.second);
 
-  return std::make_pair(true, "Sent trajectory to move to" + pose_name);
+  return std::make_pair(true, "Sent trajectory to move to " + pose_name);
 }
 
 std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_name)
 {
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan;
 
-  // Get slot transform from TF
-  geometry_msgs::msg::Transform slot_t;
-  try {
-    slot_t = tf_buffer->lookupTransform(base_link, slot_name, tf2::TimePointZero).transform;
-  } catch (tf2::LookupException& e) {
-    return std::make_pair(false, "Not a valid frame name");
-  }
-
-  // Move to pose above slot
-  geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset, 0.0);
-
-  plan = plan_cartesian(above_slot);
+  geometry_msgs::msg::Pose current_pose = planning_interface_.getCurrentPose().pose;
+  current_pose.position.z += 0.1;
+  plan = plan_cartesian(current_pose);
   
   if (!plan.first)
-    return std::make_pair(false, "Unable to plan to above slot");
+    return std::make_pair(false, "Unable to plan up cartesian");
 
-  send_trajectory(plan.second);
+  planning_interface_.execute(plan.second);
 
-  actuate_gripper(false);
+  // // Get slot transform from TF
+  // geometry_msgs::msg::Transform slot_t;
+  // try {
+  //   slot_t = tf_buffer->lookupTransform("world", slot_name, tf2::TimePointZero).transform;
+  // } catch (tf2::LookupException& e) {
+  //   return std::make_pair(false, "Not a valid frame name");
+  // }
 
-  sleep(0.5);
+  // double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
+  // RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
 
-  // Move to pick pose
-  geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z, 0.0);
+  // if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
+  //   RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
+  //   auto result = move_to_named_pose("above_conveyor");
+  //   if (!result.first){
+  //     return result;
+  //   }
+  // } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
+  // {
+  //   RCLCPP_INFO(get_logger(),"Moving to Above Table");
+  //   auto result = move_to_named_pose("above_table");
+  //   if (!result.first){
+  //     return result;
+  //   }
+  // }  
 
-  plan = plan_cartesian(pick_pose);
+  // // Move to pose above slot
+  // geometry_msgs::msg::Pose above_slot;
+  // above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset, 0.0);
+
+  // plan = plan_cartesian(above_slot);
   
-  if (!plan.first)
-    return std::make_pair(false, "Unable to plan to pick pose");
+  // if (!plan.first)
+  //   return std::make_pair(false, "Unable to plan to above slot");
 
-  send_trajectory(plan.second);
+  // planning_interface_.execute(plan.second);
 
-  sleep(0.5);
+  // actuate_gripper(false);
 
-  actuate_gripper(true);
+  // sleep(0.5);
 
-  attached_part_name = slot_objects[slot_name];
+  // // Move to pick pose
+  // geometry_msgs::msg::Pose pick_pose;
+  // pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset, 0.0);
 
-  planning_interface_.attachObject(slot_objects[slot_name],"motoman_tool0");
-  slot_objects[slot_name] = "";
-
-  sleep(0.5);
-
-  holding_part = true;
-
-  // Move back up
-  plan = plan_cartesian(above_slot);
+  // plan = plan_cartesian(pick_pose);
   
-  if (!plan.first)
-    return std::make_pair(false, "Unable to plan to above slot");
+  // if (!plan.first)
+  //   return std::make_pair(false, "Unable to plan to pick pose");
 
-  send_trajectory(plan.second);
+  // planning_interface_.execute(plan.second);
+
+  // sleep(0.5);
+
+  // actuate_gripper(true);
+
+  // attached_part_name = slot_objects[slot_name];
+  // attached_part_type = slot_types[slot_name];
+
+  // // moveit_msgs::msg::CollisionObject gear;
+  // // gear.header.frame_id = "world";
+  // // gear.header.stamp = now();
+  // // gear.id = attached_part_name;
+  // // gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
+  // // gear.pose.position.z += pick_offset;
+  // // gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
+  // // planning_scene_.applyCollisionObject(gear);
+
+  // planning_interface_.attachObject(slot_objects[slot_name],"fanuc_tool0");
+  // slot_objects[slot_name] = "";
+  // slot_types[slot_name] = -1;
+
+  // sleep(0.5);
+
+  // holding_part = true;
+
+  // // Move back up
+  // plan = plan_cartesian(above_slot);
+  
+  // if (!plan.first)
+  //   return std::make_pair(false, "Unable to plan to above slot");
+
+  // planning_interface_.execute(plan.second);
 
   return std::make_pair(true, "Successfully picked part");
 }
@@ -283,10 +333,13 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_to_targe
   if (success)
   {
     // Retime trajectory
-    // robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), group_name);
-    // rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
-    // totg_.computeTimeStamps(rt, vsf, asf);
-    // rt.getRobotTrajectoryMsg(trajectory);
+    robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), group_name);
+    rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
+
+    // trajectory_processing::totgComputeTimeStamps(10, rt);
+
+    totg_.computeTimeStamps(rt, vsf, asf);
+    rt.getRobotTrajectoryMsg(trajectory);
 
     return std::make_pair(true, trajectory);
   }
@@ -477,6 +530,7 @@ void RobotCommander::initialize_planning_scene_cb(
         gear_counter[slot.size]++;
         std::string gear_name = gear_names[slot.size] + "_" + std::to_string(gear_counter[slot.size]);
         slot_objects.insert_or_assign(slot.name, gear_name);
+        slot_types.insert_or_assign(slot.name, slot.size);
 
         planning_scene_.applyCollisionObject(
           create_collision_object(

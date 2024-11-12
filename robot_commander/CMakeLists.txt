@@ -81,6 +81,11 @@ install(TARGETS motoman_robot_commander
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  nodes/test_follow_joint_trajectory.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(
   DIRECTORY include/
   DESTINATION include

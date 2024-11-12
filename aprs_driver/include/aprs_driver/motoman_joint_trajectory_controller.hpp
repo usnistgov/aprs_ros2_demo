@@ -47,18 +47,18 @@ class MotomanJointTrajectoryController : public controller_interface::Controller
   std::vector<std::string> joint_names_;
   std::vector<double> joint_states_;
 
-  bool executing_ = false;
   bool received_goal_ = false;
+  bool executing_ = false;
   bool sending_trajectory_ = false;
   bool cancel_requsted_ = false;
+
   rclcpp::Time trajectory_start_time_;
   rclcpp::Time previous_sent_time_;
   trajectory_msgs::msg::JointTrajectoryPoint goal_point_;
   double position_threshold_ = 0.01;
-  // control_msgs::action::FollowJointTrajectory::Result::SharedPtr result_;
+  const int num_robot_joints_ = 7;
 
   std::shared_ptr<GoalHandleFollowJointTrajectory> current_goal_;
-  // trajectory_msgs::msg::JointTrajectory current_trajectory_;
 
   rclcpp_action::Server<FollowJointTrajectory>::SharedPtr action_server_;
 

@@ -107,8 +107,8 @@ class RobotCommander : public rclcpp::Node
     );
 
     double vsf = 0.1;
-    double asf = 0.5;
-    double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
+    double asf = 0.1;
+
     double pick_offset = 0.1;
     double place_offset = 0.1;
     double gripper_roll = 0;
@@ -124,6 +124,9 @@ class RobotCommander : public rclcpp::Node
 
     bool holding_part = false;
     std::string attached_part_name;
+    std::string attached_part_type;
+
+    std::map<std::string, int> slot_types;
 
     std::map<int, int> gear_counter = {
       {aprs_interfaces::msg::SlotInfo::SMALL, 0},

@@ -324,7 +324,7 @@ namespace simple_message {
   MOTO MOTION REPLY
   ==============================================================================
   */
-  bool MotoMotionReply::update(char* input){
+  bool MotoMotionReply::init(char* input){
     std::vector<int> input_data;
     char temp[4];
 
@@ -354,8 +354,6 @@ namespace simple_message {
     result = input_data[6];
     subcode = input_data[7];
 
-    data.clear();
-
     for(int i = 0; i < 10; i++){
       for(int j = 0; j < 4; j++){
         temp[j] = *(input+j);
@@ -371,7 +369,7 @@ namespace simple_message {
   {
     std::stringstream s;
 
-    s << "JOINT FEEDBACK MESSAGE\n";
+    s << "\n\nMOTO MOTION REPLY\n";
     s << "\trobot id: " << robot_id << "\n";
     s << "\tvalid fields: " << sequence << "\n";
 
@@ -381,7 +379,7 @@ namespace simple_message {
       s << "\tcommand: " << "NOT_FOUND (" << command << ")\n";
 
     if (result_codes.find(result) != result_codes.end())
-      s << "\rresult: " << result_codes[result] << "\n";
+      s << "\tresult: " << result_codes[result] << "\n";
     else
       s << "\tresult: " << "NOT_FOUND (" << result << ")\n";
 
