@@ -9,6 +9,8 @@ find_package(builtin_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(plansys2_msgs REQUIRED)
+
 set(msg_files
   "msg/Object.msg"
   "msg/Objects.msg"
@@ -32,6 +34,7 @@ set(srv_files
   "srv/GenerateInitState.srv"
   "srv/GeneratePlan.srv"
   "srv/GenerateGridMaps.srv"
+  "srv/ClearCurrentState.srv"
   "srv/LocateTrays.srv"
   "srv/PneumaticGripperControl.srv"
 )
@@ -49,6 +52,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   builtin_interfaces
   std_msgs
   geometry_msgs
+  plansys2_msgs
+  
   ADD_LINTER_TESTS
 )
 ament_export_dependencies(rosidl_default_runtime)
