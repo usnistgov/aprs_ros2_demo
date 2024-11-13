@@ -92,8 +92,8 @@
         (and 
             (slot_occupied m2l1_kit_tray_2_lg_1 large)
             (slot_occupied m2l1_kit_tray_2_mg_1 medium)
-            ; (slot_occupied m2l1_kit_tray_1_lg_1 large)
-            ; (slot_occupied m2l1_kit_tray_1_mg_1 medium)
+            (slot_occupied m2l1_kit_tray_1_lg_1 large)
+            (slot_occupied m2l1_kit_tray_1_mg_1 medium)
             (slot_occupied m2l1_kit_tray_3_lg_1 large)
             (slot_occupied m2l1_kit_tray_3_mg_1 medium)
             (slot_occupied m2l1_kit_tray_3_mg_2 medium)

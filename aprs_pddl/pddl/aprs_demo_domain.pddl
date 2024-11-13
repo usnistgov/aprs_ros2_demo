@@ -84,11 +84,8 @@
         :effect (and 
             (at start (not (conveyor_used_by fanuc)))
             (at end (conveyor_used_by motoman))
-            ; (forall (?slot_name - slot)
-            ;     (and (at start(slot_at ?slot_name fanuc_conveyor))
-            ;     (at end (not (slot_at ?slot_name fanuc_conveyor)))
-            ;     (at end (slot_at ?slot_name motoman_conveyor)))
-            ; )
+            (at end (not (in_reach fanuc_conveyor fanuc)))
+            (at end (in_reach fanuc_conveyor motoman))
         )
     )
 
