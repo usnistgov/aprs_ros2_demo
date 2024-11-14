@@ -516,123 +516,122 @@ class VisionTable(Node):
 
         return False   
          
-    # TODO: Fix
-    def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
-        offset = 15
+    # def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
+    #     offset = 15
 
-        # Corners are manually deduced from location of screw heads in table
-        top_left = (self.top_left_x + offset, self.top_left_y + offset)
-        top_right = (self.top_right_x - offset, self.top_right_y + offset)
-        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
-        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
+    #     # Corners are manually deduced from location of screw heads in table
+    #     top_left = (self.top_left_x + offset, self.top_left_y + offset)
+    #     top_right = (self.top_right_x - offset, self.top_right_y + offset)
+    #     bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
+    #     bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
 
-        # Black out everything from image that is not the active region
-        fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
+    #     # Black out everything from image that is not the active region
+    #     fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
 
-        maskImage = np.zeros(frame.shape, dtype=np.uint8)
-        cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
+    #     maskImage = np.zeros(frame.shape, dtype=np.uint8)
+    #     cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
 
-        active_region = cv2.bitwise_and(frame, maskImage)
+    #     active_region = cv2.bitwise_and(frame, maskImage)
 
-        # Detect optical table holes 
-        blur = cv2.GaussianBlur(active_region,(5,5),0)
+    #     # Detect optical table holes 
+    #     blur = cv2.GaussianBlur(active_region,(5,5),0)
 
-        hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+    #     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-        cv2.imwrite('hsv.jpg', hsv)
+    #     cv2.imwrite('hsv.jpg', hsv)
 
-        threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
+    #     threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
-        offset = 25
+    #     offset = 25
 
-        top_left = (self.top_left_x + offset, self.top_left_y + offset)
-        top_right = (self.top_right_x - offset, self.top_right_y + offset)
-        bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
-        bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
+    #     top_left = (self.top_left_x + offset, self.top_left_y + offset)
+    #     top_right = (self.top_right_x - offset, self.top_right_y + offset)
+    #     bottom_right = (self.bottom_right_x - offset, self.bottom_right_y - offset)
+    #     bottom_left = (self.bottom_left_x + offset, self.bottom_left_y - offset)
 
-        corners = np.array([top_right, bottom_right, bottom_left, top_left])
+    #     corners = np.array([top_right, bottom_right, bottom_left, top_left])
 
-        mask2 = np.zeros(threshold.shape, dtype=np.uint8)
+    #     mask2 = np.zeros(threshold.shape, dtype=np.uint8)
         
-        cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
+    #     cv2.drawContours(mask2, [corners], 0, 255, -1) # type: ignore
 
     
-        just_holes = cv2.bitwise_and(threshold, mask2)
+    #     just_holes = cv2.bitwise_and(threshold, mask2)
 
-        contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    #     contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        filtered_contours = []
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            if area >= self.generate_map_area:
-                filtered_contours.append(contour)
+    #     filtered_contours = []
+    #     for contour in contours:
+    #         area = cv2.contourArea(contour)
+    #         if area >= self.generate_map_area:
+    #             filtered_contours.append(contour)
 
-        rows = self.calibrate_rows
-        columns = self.calibrate_columns
+    #     rows = self.calibrate_rows
+    #     columns = self.calibrate_columns
 
-        # cv2.drawContours(just_holes,filtered_contours,-1,120,2)
-        # cv2.imshow('window', just_holes)
-        # cv2.waitKey(0)
+    #     # cv2.drawContours(just_holes,filtered_contours,-1,120,2)
+    #     # cv2.imshow('window', just_holes)
+    #     # cv2.waitKey(0)
 
-        if not len(filtered_contours) == rows * columns:
-            self.get_logger().error("Not able to detect all holes")
-            return False
+    #     if not len(filtered_contours) == rows * columns:
+    #         self.get_logger().error("Not able to detect all holes")
+    #         return False
 
-        center_points = []
+    #     center_points = []
 
-        for contour in filtered_contours:
-            # Calculate moments for each contour
-            M = cv2.moments(contour)
+    #     for contour in filtered_contours:
+    #         # Calculate moments for each contour
+    #         M = cv2.moments(contour)
 
-            # Calculate center of contour
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
+    #         # Calculate center of contour
+    #         if M["m00"] != 0:
+    #             cX = int(M["m10"] / M["m00"])
+    #             cY = int(M["m01"] / M["m00"])
 
-                center_points.append((cX, cY))
+    #             center_points.append((cX, cY))
 
-        center_y = 210
-        sorted_points = []
-        working_points = []
+    #     center_y = 210
+    #     sorted_points = []
+    #     working_points = []
 
-        for i in range(rows):
-            for point in center_points:
-                if center_y - 18 <= point[1] <= center_y + 18:
-                    working_points.append(point)
+    #     for i in range(rows):
+    #         for point in center_points:
+    #             if center_y - 18 <= point[1] <= center_y + 18:
+    #                 working_points.append(point)
                 
-            sorted_points += sorted(working_points, key=lambda k: [k[0]])
+    #         sorted_points += sorted(working_points, key=lambda k: [k[0]])
 
-            working_points.clear()
+    #         working_points.clear()
 
-            center_y += 25
+    #         center_y += 25
 
-        if not len(sorted_points) == len(center_points):
-            self.get_logger().error("Not able to properly sort holes")
-            return False
+    #     if not len(sorted_points) == len(center_points):
+    #         self.get_logger().error("Not able to properly sort holes")
+    #         return False
         
-        actual_points = []
+    #     actual_points = []
 
-        for i in range(rows):
-            x = (i * 30)
-            for j in range(columns):
-                y = (j * 30)
-                actual_points.append([x, y])
+    #     for i in range(rows):
+    #         x = (i * 30)
+    #         for j in range(columns):
+    #             y = (j * 30)
+    #             actual_points.append([x, y])
 
-        grid_x, grid_y = np.mgrid[0:rows*30, 0:columns*30]
+    #     grid_x, grid_y = np.mgrid[0:rows*30, 0:columns*30]
 
-        destination = np.array(actual_points)
-        source = np.array(sorted_points)
+    #     destination = np.array(actual_points)
+    #     source = np.array(sorted_points)
 
-        grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
-        map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape(rows*30,columns*30)
-        map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape(rows*30,columns*30)
-        map_x_32 = map_x.astype('float32')
-        map_y_32 = map_y.astype('float32')
+    #     grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
+    #     map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape(rows*30,columns*30)
+    #     map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape(rows*30,columns*30)
+    #     map_x_32 = map_x.astype('float32')
+    #     map_y_32 = map_y.astype('float32')
 
-        np.save(f"{filepath}{self.map_x_image}", map_x_32)
-        np.save(f"{filepath}{self.map_y_image}", map_y_32)
+    #     np.save(f"{filepath}{self.map_x_image}", map_x_32)
+    #     np.save(f"{filepath}{self.map_y_image}", map_y_32)
 
-        return True
+    #     return True
     def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, roll: float, pitch: float, yaw: float) -> TransformStamped:
         t = TransformStamped()
 

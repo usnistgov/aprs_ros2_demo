@@ -63,6 +63,9 @@ class TeachTable(VisionTable):
     def generate_grid_maps(self, frame: MatLike, filepath: str) -> Optional[bool]:
         offset = 15
 
+        cv2.imshow('window', frame)
+        cv2.waitKey(0)
+
         # Corners are manually deduced from location of screw heads in table
         top_left = (self.top_left_x + offset, self.top_left_y + offset)
         top_right = (self.top_right_x - offset, self.top_right_y + offset)
