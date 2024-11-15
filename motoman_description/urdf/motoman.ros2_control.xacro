@@ -98,7 +98,7 @@
           </state_interface>
       </joint>
 
-      <joint name="finger_1_joint">
+      <joint name="motoman_left_finger_joint">
           <command_interface name="position">
             <param name="min">0</param>
             <param name="max">0.02</param>
@@ -107,7 +107,7 @@
           </state_interface>
       </joint>
 
-      <joint name="finger_2_joint">
+      <joint name="motoman_right_finger_joint">
           <command_interface name="position">
           <param name="min">0</param>
           <param name="max">0.02</param>

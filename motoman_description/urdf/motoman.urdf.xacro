@@ -3,22 +3,40 @@
     <!-- Inclue motoman robot macro -->
     <xacro:include filename="$(find motoman_description)/urdf/motoman_sia20_macro.xacro"/>
 
+    <!-- Inclue gripper macro -->
+    <xacro:include filename="$(find motoman_description)/urdf/motoman_gripper_macro.xacro"/>
+
     <!-- Include ROS2 Control macro -->
     <xacro:include filename="$(find motoman_description)/urdf/motoman.ros2_control.xacro"/>
 
-    <!-- Inclue gripper macro -->
-    <xacro:include filename="$(find motoman_description)/urdf/gripper/motoman_gripper_macro.xacro"/>
-
     <link name="world"/>
+
+    <link name="motoman_base_plate">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_base_plate.stl" />
+        </geometry>
+        <material name="">
+            <color rgba="0.15 0.15 0.15 1.0" />
+        </material>
+      </visual>
+    </link>
+
+    <joint name = "motoman_base_plate_joint" type = "fixed">
+      <origin rpy = "0 0 3.14159" xyz = "1.9685 0.1651 .0381"/>
+      <parent link = "world"/>
+      <child link = "motoman_base_plate"/>
+    </joint>
+    
     <!-- Run motoman macro -->
-    <xacro:motoman_sia20d parent="world"/>
+    <xacro:motoman_sia20d parent="motoman_base_plate"/>
+
+    <!-- Run gripper macro -->
+    <xacro:motoman_gripper parent="link_t" />
 
     <!-- Run motoman macro -->
     <xacro:motoman_ros2_control name="motoman"/>
 
-    <!-- Run gripper macro -->
-    <xacro:motoman_gripper
-      parent="link_t"
-      > 
-    </xacro:motoman_gripper>
+    
 </robot>
