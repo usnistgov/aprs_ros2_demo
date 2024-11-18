@@ -1,6 +1,10 @@
 (define (problem kit_building)
     (:domain aprs_demo)
     (:objects
+        fanuc motoman - robot
+        small medium large - size
+        fanuc_table motoman_table fanuc_conveyor motoman_conveyor - location
+        
         m2l1_kit_tray_1_lg_1 m2l1_kit_tray_1_mg_1 m2l1_kit_tray_1_mg_2 - slot
         m2l1_kit_tray_2_lg_1 m2l1_kit_tray_2_mg_1 m2l1_kit_tray_2_mg_2 - slot
         m2l1_kit_tray_3_lg_1 m2l1_kit_tray_3_mg_1 m2l1_kit_tray_3_mg_2 - slot
@@ -41,20 +45,20 @@
         (slot_occupied medium_gear_tray_1_slot_1 medium)
         (slot_occupied medium_gear_tray_1_slot_2 medium)
         (slot_occupied medium_gear_tray_1_slot_3 medium)
-        (slot_occupied medium_gear_tray_1_slot_4 medium)
+        (slot_empty medium_gear_tray_1_slot_4 medium)
 
         (slot_occupied medium_gear_tray_2_slot_1 medium)
         (slot_occupied medium_gear_tray_2_slot_2 medium)
         (slot_occupied medium_gear_tray_2_slot_3 medium)
-        (slot_occupied medium_gear_tray_2_slot_4 medium)
+        (slot_empty medium_gear_tray_2_slot_4 medium)
 
         (slot_empty m2l1_kit_tray_1_lg_1 large)
         (slot_empty m2l1_kit_tray_1_mg_1 medium)
-        (slot_empty m2l1_kit_tray_1_mg_2 medium)
+        (slot_occupied m2l1_kit_tray_1_mg_2 medium)
 
         (slot_empty m2l1_kit_tray_2_lg_1 large)
         (slot_empty m2l1_kit_tray_2_mg_1 medium)
-        (slot_empty m2l1_kit_tray_2_mg_2 medium)
+        (slot_occupied m2l1_kit_tray_2_mg_2 medium)
 
         (slot_empty m2l1_kit_tray_3_lg_1 large)
         (slot_empty m2l1_kit_tray_3_mg_1 medium)
@@ -90,10 +94,12 @@
 
     (:goal
         (and 
-            (slot_occupied m2l1_kit_tray_2_lg_1 large)
-            (slot_occupied m2l1_kit_tray_2_mg_1 medium)
             (slot_occupied m2l1_kit_tray_1_lg_1 large)
             (slot_occupied m2l1_kit_tray_1_mg_1 medium)
+            (slot_empty m2l1_kit_tray_1_mg_2 medium)
+            (slot_occupied m2l1_kit_tray_2_lg_1 large)
+            (slot_occupied m2l1_kit_tray_2_mg_1 medium)
+            (slot_empty m2l1_kit_tray_2_mg_2 medium)
             (slot_occupied m2l1_kit_tray_3_lg_1 large)
             (slot_occupied m2l1_kit_tray_3_mg_1 medium)
             (slot_occupied m2l1_kit_tray_3_mg_2 medium)

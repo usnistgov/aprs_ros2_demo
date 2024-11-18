@@ -2,8 +2,11 @@
 
 TaskPlanner::TaskPlanner() : Node("task_planner")
 {
-  teach_trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach_table_vision/trays_info", 10, bind(&TaskPlanner::TeachTraysInfoCallback, this, std::placeholders::_1));
-  fanuc_trays_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc_vision/trays_info", 10, bind(&TaskPlanner::FanucTraysInfoCallback, this, std::placeholders::_1));
+  fanuc_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc/table_vision/trays_info", 10, bind(&TaskPlanner::FanucTableTraysInfoCallback, this, std::placeholders::_1));
+  fanuc_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc/conveyor_vision/trays_info", 10, bind(&TaskPlanner::FanucConveyorTraysInfoCallback, this, std::placeholders::_1));
+  motoman_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/table_vision/trays_info", 10, bind(&TaskPlanner::MotomanTableTraysInfoCallback, this, std::placeholders::_1));
+  motoman_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/conveyor_vision/trays_info", 10, bind(&TaskPlanner::MotomanConveyorTraysInfoCallback, this, std::placeholders::_1));
+  teach_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach_table_vision/trays_info", 10, bind(&TaskPlanner::TeachTableTraysInfoCallback, this, std::placeholders::_1));
 
   generate_init_state_server_ = this->create_service<aprs_interfaces::srv::GenerateInitState>(
     "/generate_pddl_init_state",
@@ -36,22 +39,49 @@ TaskPlanner::~TaskPlanner()
 {
 }
 
-void TaskPlanner::FanucTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
+void TaskPlanner::FanucTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (fanuc_kit_trays_.empty() && fanuc_part_trays_.empty()){
-    fanuc_kit_trays_ = msg->kit_trays;
-    fanuc_part_trays_ = msg->part_trays;
+  if (fanuc_table_kit_trays_.empty() && fanuc_table_part_trays_.empty()){
+    fanuc_table_kit_trays_ = msg->kit_trays;
+    fanuc_table_part_trays_ = msg->part_trays;
   }
-  recieved_fanuc_tray_info = true;
+  recieved_fanuc_table_info = true;
 }
 
-void TaskPlanner::TeachTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
+void TaskPlanner::FanucConveyorTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (teach_kit_trays_.empty() && teach_part_trays_.empty()){
-    teach_kit_trays_ = msg->kit_trays;
-    teach_part_trays_ = msg->part_trays;
+  if (fanuc_conveyor_kit_trays_.empty() && fanuc_conveyor_part_trays_.empty()){
+    fanuc_conveyor_kit_trays_ = msg->kit_trays;
+    fanuc_conveyor_part_trays_ = msg->part_trays;
   }
-  recieved_teach_tray_info = true;
+  recieved_fanuc_conveyor_info = true;
+}
+
+void TaskPlanner::MotomanTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
+{
+  if (motoman_table_kit_trays_.empty() && motoman_table_part_trays_.empty()){
+    motoman_table_kit_trays_ = msg->kit_trays;
+    motoman_table_part_trays_ = msg->part_trays;
+  }
+  recieved_motoman_table_info = true;
+}
+
+void TaskPlanner::MotomanConveyorTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
+{
+  if (motoman_conveyor_kit_trays_.empty() && motoman_conveyor_part_trays_.empty()){
+    motoman_conveyor_kit_trays_ = msg->kit_trays;
+    motoman_conveyor_part_trays_ = msg->part_trays;
+  }
+  recieved_motoman_conveyor_info = true;
+}
+
+void TaskPlanner::TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
+{
+  if (teach_table_kit_trays_.empty() && teach_table_part_trays_.empty()){
+    teach_table_kit_trays_ = msg->kit_trays;
+    teach_table_part_trays_ = msg->part_trays;
+  }
+  recieved_teach_table_info = true;
 }
 
 void TaskPlanner::GenerateInitStateCallback(const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Request> request,
@@ -181,62 +211,159 @@ void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::Server
 
 void TaskPlanner::init_world_state(){
 
-  problem_expert_->addInstance(plansys2::Instance{"small", "size"});
-  problem_expert_->addInstance(plansys2::Instance{"medium", "size"});
-  problem_expert_->addInstance(plansys2::Instance{"large", "size"});
+  // problem_expert_->addInstance(plansys2::Instance{"small", "size"});
+  // problem_expert_->addInstance(plansys2::Instance{"medium", "size"});
+  // problem_expert_->addInstance(plansys2::Instance{"large", "size"});
 
-  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby"));
-  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty"));
+  // problem_expert_->addInstance(plansys2::Instance{"fanuc", "robot"});
+  // problem_expert_->addInstance(plansys2::Instance{"motoman", "robot"});
 
-  for (auto& kit_tray : fanuc_kit_trays_){
+  // problem_expert_->addInstance(plansys2::Instance{"fanuc_table", "location"});
+  // problem_expert_->addInstance(plansys2::Instance{"fanuc_conveyor", "location"});
+  // problem_expert_->addInstance(plansys2::Instance{"motoman_table", "location"});
+  // problem_expert_->addInstance(plansys2::Instance{"motoman_conveyor", "location"});
+
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby fanuc "));
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby motoman "));
+
+  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty fanuc "));
+  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty motoman "));
+
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_operational fanuc "));
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_operational motoman "));
+
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_table fanuc "));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_table motoman "));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor fanuc "));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_conveyor motoman "));
+
+  // Fanuc Table
+
+  for (auto& kit_tray : fanuc_table_kit_trays_){
     for (auto& kit_tray_slot : kit_tray.slots){
       problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + kit_tray_slot.name + " fanuc_table)"));
       if (!kit_tray_slot.occupied) {
-        problem_expert_->addPredicate(plansys2::Predicate("(kit_slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
       }
       else{
-        problem_expert_->addPredicate(plansys2::Predicate("(kit_slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
       }
     }
   }
 
-  for (auto& part_tray : fanuc_part_trays_){
+  for (auto& part_tray : fanuc_table_part_trays_){
     for (auto& part_tray_slot : part_tray.slots){
       problem_expert_->addInstance(plansys2::Instance{part_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + part_tray_slot.name + " fanuc_table)"));
       if (!part_tray_slot.occupied) {
         continue;
       }
       else{
-        problem_expert_->addPredicate(plansys2::Predicate("(in_part_tray " + GeneratePartName(part_tray_slot.size) + " " + part_tray_slot.name + " " + part_size_[part_tray_slot.size] + ")"));
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + part_tray_slot.name + " " + part_size_[part_tray_slot.size] + ")"));
       }
     }
   }
-}
 
-std::string TaskPlanner::GeneratePartName(const uint8_t part_size){
+  // Fanuc Conveyor
 
-  std::string part_name = part_size_[part_size] + "_" + std::to_string(part_size_count_[part_size]);
-  problem_expert_->addInstance(plansys2::Instance{part_name, "part"});
-  part_size_count_[part_size] += 1;
+  for (auto& kit_tray : fanuc_conveyor_kit_trays_){
+    for (auto& kit_tray_slot : kit_tray.slots){
+      problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + kit_tray_slot.name + " fanuc_conveyor)"));
+      if (!kit_tray_slot.occupied) {
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+      }
+      else{
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+      }
+    }
+  }
 
-  return part_name;
+  for (auto& part_tray : fanuc_conveyor_part_trays_){
+    for (auto& part_tray_slot : part_tray.slots){
+      problem_expert_->addInstance(plansys2::Instance{part_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + part_tray_slot.name + " fanuc_conveyor)"));
+      if (!part_tray_slot.occupied) {
+        continue;
+      }
+      else{
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + part_tray_slot.name + " " + part_size_[part_tray_slot.size] + ")"));
+      }
+    }
+  }
+
+  // Motoman Table
+
+  for (auto& kit_tray : motoman_table_kit_trays_){
+    for (auto& kit_tray_slot : kit_tray.slots){
+      problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + kit_tray_slot.name + " motoman_table)"));
+      if (!kit_tray_slot.occupied) {
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+      }
+      else{
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+      }
+    }
+  }
+  
+  for (auto& part_tray : motoman_table_part_trays_){
+    for (auto& part_tray_slot : part_tray.slots){
+      problem_expert_->addInstance(plansys2::Instance{part_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + part_tray_slot.name + " motoman_table)"));
+      if (!part_tray_slot.occupied) {
+        continue;
+      }
+      else{
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + part_tray_slot.name + " " + part_size_[part_tray_slot.size] + ")"));
+      }
+    }
+  }
+
+  // Motoman Conveyor
+
+  for (auto& kit_tray : motoman_conveyor_kit_trays_){
+    for (auto& kit_tray_slot : kit_tray.slots){
+      problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + kit_tray_slot.name + " motoman_conveyor)"));
+      if (!kit_tray_slot.occupied) {
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+      }
+      else{
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")"));
+      }
+    }
+  }
+
+  for (auto& part_tray : motoman_conveyor_part_trays_){
+    for (auto& part_tray_slot : part_tray.slots){
+      problem_expert_->addInstance(plansys2::Instance{part_tray_slot.name, "slot"});
+      problem_expert_->addPredicate(plansys2::Predicate("(slot_at " + part_tray_slot.name + " motoman_conveyor)"));
+      if (!part_tray_slot.occupied) {
+        continue;
+      }
+      else{
+        problem_expert_->addPredicate(plansys2::Predicate("(slot_occupied " + part_tray_slot.name + " " + part_size_[part_tray_slot.size] + ")"));
+      }
+    }
+  }
 }
 
 void TaskPlanner::init_goal_state(){
 
-  for (auto& kit_tray : teach_kit_trays_){
+  for (auto& kit_tray : fanuc_table_kit_trays_){
     for (auto& kit_tray_slot : kit_tray.slots){
-      problem_expert_->addInstance(plansys2::Instance{kit_tray_slot.name, "slot"});
       if (!kit_tray_slot.occupied) {
-        goal_str_ += ("(kit_slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");
+        goal_str_ += ("(slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");
       }
       else{
-        goal_str_ += ("(kit_slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");
+        goal_str_ += ("(slot_occupied " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");
       }
     }
   }
 
-  goal_str_ += ")";
+  goal_str_ += "(gripper_empty fanuc)(gripper_empty motoman))";
 
   RCLCPP_INFO_STREAM(get_logger(), "Goal is: " << goal_str_);
   problem_expert_->setGoal(plansys2::Goal(goal_str_));
