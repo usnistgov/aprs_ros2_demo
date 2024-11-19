@@ -20,18 +20,13 @@ set(msg_files
   "msg/PixelCenter.msg"
   "msg/SlotPixel.msg"
   "msg/PixelSlotInfo.msg"
-)
-set(srv_files
-  "srv/MoveToNamedPose.srv"
-  "srv/Pick.srv"
-  "srv/Place.srv"
+  "msg/RobotStatus.msg"
 )
 
 set(srv_files
   "srv/MoveToNamedPose.srv"
   "srv/Pick.srv"
   "srv/Place.srv"
-  "srv/GenerateInitState.srv"
   "srv/GeneratePlan.srv"
   "srv/GenerateGridMaps.srv"
   "srv/ClearCurrentState.srv"
