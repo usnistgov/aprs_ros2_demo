@@ -103,8 +103,6 @@
             (slot_occupied m2l1_kit_tray_3_lg_1 large)
             (slot_occupied m2l1_kit_tray_3_mg_1 medium)
             (slot_occupied m2l1_kit_tray_3_mg_2 medium)
-            (gripper_empty motoman)
-            (gripper_empty fanuc)
         )
     )
 

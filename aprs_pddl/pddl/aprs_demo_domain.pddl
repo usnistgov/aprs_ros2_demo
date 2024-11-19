@@ -5,11 +5,11 @@
         slot size robot location
     )
     
-    <!-- (:constants
-        fanuc motoman - robot
-        small medium large - size
-        fanuc_table motoman_table fanuc_conveyor motoman_conveyor - location
-    ) -->
+    ; (:constants
+    ;     fanuc motoman - robot
+    ;     small medium large - size
+    ;     fanuc_table motoman_table fanuc_conveyor motoman_conveyor - location
+    ; )
     
     (:predicates
         (slot_occupied ?slot_name - slot ?size - size)
