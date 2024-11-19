@@ -1,12 +1,15 @@
 fanuc_robot_commander:
   ros__parameters:
+    robot_name: fanuc
     planning_group_name: fanuc_arm
     end_effector_link: fanuc_tool0
 
     velocity_scaling_factor: 0.1
     acceleration_scaling_factor: 0.5
 
-    gripper_rpy: [0, pi, 0]
+    gripper_rotation:
+      roll: 0.0
+      pitch: 3.14159
 
     offsets:
       pick: 0.030

@@ -29,7 +29,7 @@
 class RobotCommander : public rclcpp::Node
 {
   public:
-    RobotCommander(std::string node_name, moveit::planning_interface::MoveGroupInterface::Options opt);
+    RobotCommander(std::string node_name);
 
     bool actuate_gripper(bool enable);
     std::pair<bool, std::string> move_to_named_pose(const std::string &pose_name);
@@ -48,8 +48,8 @@ class RobotCommander : public rclcpp::Node
     std_msgs::msg::ColorRGBA get_object_color(int identifier);
 
     // MoveIt
-    moveit::planning_interface::MoveGroupInterface planning_interface_;
-    moveit::planning_interface::PlanningSceneInterface planning_scene_;
+    std::unique_ptr<moveit::planning_interface::MoveGroupInterface> planning_interface_;
+    std::unique_ptr<moveit::planning_interface::PlanningSceneInterface> planning_scene_;
     trajectory_processing::TimeOptimalTrajectoryGeneration totg_;
 
     // TF
@@ -98,14 +98,20 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<example_interfaces::srv::Trigger::Response> response
     );
 
+    // ROS Parameters
+    std::string planning_group_name_;
+    std::string description_param_name_ = "robot_description";
+    std::string robot_name_;
+    std::string end_effector_link_;
+
     // Parameters
-    double vsf = 0.1;
-    double asf = 0.5;
-    double pick_offset = 0.030;
-    double place_offset = 0.040;
-    double above_slot_offset = 0.1;
-    double gripper_roll = 0;
-    double gripper_pitch = M_PI;
+    double vsf_;
+    double asf_;
+    double pick_offset_;
+    double place_offset_;
+    double above_slot_offset_;
+    double gripper_roll_;
+    double gripper_pitch_;
     
     std::string base_link = "fanuc_base_link";
     std::string group_name;

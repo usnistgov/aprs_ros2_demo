@@ -234,7 +234,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + place_offset, 0.0);
+  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + place_offset_, 0.0);
 
   plan = plan_cartesian(above_slot);
   
@@ -263,7 +263,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   gear.header.stamp = now();
   gear.id = attached_part_name;
   gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
-  gear.pose.position.z -= (place_offset-pick_offset);
+  gear.pose.position.z -= (place_offset_-pick_offset_);
   gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
   planning_scene_.applyCollisionObject(gear);
   slot_objects[slot_name] = attached_part_name;
@@ -338,7 +338,7 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_to_targe
 
     // trajectory_processing::totgComputeTimeStamps(10, rt);
 
-    totg_.computeTimeStamps(rt, vsf, asf);
+    totg_.computeTimeStamps(rt, vsf_, asf_);
     rt.getRobotTrajectoryMsg(trajectory);
 
     return std::make_pair(true, trajectory);
@@ -367,7 +367,7 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
   // Retime trajectory
   robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), group_name);
   rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
-  totg_.computeTimeStamps(rt, vsf, asf);
+  totg_.computeTimeStamps(rt, vsf_, asf_);
   
   rt.getRobotTrajectoryMsg(trajectory);
 
@@ -382,7 +382,7 @@ geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, do
   p.position.z = z;
 
   tf2::Quaternion q;
-  q.setRPY(gripper_roll, gripper_pitch, rotation);
+  q.setRPY(gripper_roll_, gripper_pitch_, rotation);
 
   p.orientation.x = q.getX();
   p.orientation.y = q.getY();

@@ -1,39 +1,105 @@
 #include <robot_commander/robot_commander.hpp>
 
-RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface::MoveGroupInterface::Options opt)
-: Node(node_name),
-  planning_interface_(std::shared_ptr<rclcpp::Node>(std::move(this)), opt, std::shared_ptr<tf2_ros::Buffer>(), rclcpp::Duration::from_seconds(2)),
-  planning_scene_("fanuc"),
-  group_name(opt.group_name)
+RobotCommander::RobotCommander(std::string node_name)
+: Node(node_name)
 {
   RCLCPP_INFO(get_logger(), "Starting robot commander node");
+
+  // Declare parameters  
+  declare_parameter("robot_name", "");
+  declare_parameter("planning_group_name", "");
+  declare_parameter("end_effector_link", "");
+
+  declare_parameter("velocity_scaling_factor", -1.0);
+  declare_parameter("acceleration_scaling_factor", -1.0);
+
+  declare_parameter("gripper_rotation.roll", -1.0);
+  declare_parameter("gripper_rotation.pitch", -1.0);
+
+  declare_parameter("offsets.pick", -1.0);
+  declare_parameter("offsets.place", -1.0);
+  declare_parameter("offsets.above_slot", -1.0);
+
+  // Get parameters
+  planning_group_name_ = get_parameter("planning_group_name").as_string();
+  robot_name_ = get_parameter("robot_name").as_string();
+  end_effector_link_ = get_parameter("end_effector_link").as_string();
+
+  vsf_ = get_parameter("velocity_scaling_factor").as_double();
+  asf_ = get_parameter("velocity_scaling_factor").as_double();
+
+  gripper_roll_ = get_parameter("gripper_rotation.roll").as_double();
+  gripper_pitch_ = get_parameter("gripper_rotation.pitch").as_double();
+
+  pick_offset_ = get_parameter("offsets.pick").as_double();
+  place_offset_ = get_parameter("offsets.place").as_double();
+  above_slot_offset_ = get_parameter("offsets.above_slot").as_double();
+
+  // Check that all params were set properly
+  std::vector<std::string> string_params = {
+    planning_group_name_,
+    robot_name_,
+    end_effector_link_};
+
+  std::vector<double> double_params = {
+    vsf_,
+    asf_,
+    gripper_roll_,
+    gripper_pitch_,
+    pick_offset_,
+    place_offset_,
+    above_slot_offset_
+  };
+
+  if ( std::any_of(string_params.begin(), string_params.end(), [](std::string s){return s == "";}) )
+  {
+    RCLCPP_ERROR(get_logger(), "Parameters not set properly");
+    exit(0);
+  }
+  
+  if ( std::any_of(double_params.begin(), double_params.end(), [](double d){return d == -1.0;}) )
+  {
+    RCLCPP_ERROR(get_logger(), "Parameters not set properly");
+    exit(0);
+  }
+
+  moveit::planning_interface::MoveGroupInterface::Options opt(
+    planning_group_name_,
+    description_param_name_,
+    robot_name_
+  );
+
+  planning_interface_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(
+    std::shared_ptr<rclcpp::Node>(std::move(this)), opt, std::shared_ptr<tf2_ros::Buffer>(), rclcpp::Duration::from_seconds(2));
+
+  planning_scene_ = std::make_unique<moveit::planning_interface::PlanningSceneInterface>(robot_name_);
 
   client_cb_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
   // Start up service servers
   pick_srv_ = create_service<aprs_interfaces::srv::Pick>(
-    "/fanuc/pick_from_slot", 
+    "/" + robot_name_ + "/pick_from_slot", 
     std::bind(&RobotCommander::pick_from_slot_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
   );
 
   place_srv_ = create_service<aprs_interfaces::srv::Place>(
-    "/fanuc/place_in_slot", 
+    "/" + robot_name_ + "/place_in_slot", 
     std::bind(&RobotCommander::place_in_slot_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
   );
 
   move_to_named_pose_srv_ = create_service<aprs_interfaces::srv::MoveToNamedPose>(
-    "/fanuc/move_to_named_pose", 
+    "/" + robot_name_ + "/move_to_named_pose", 
     std::bind(&RobotCommander::move_to_named_pose_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
   );
 
   initialize_planning_scene_srv_ = create_service<example_interfaces::srv::Trigger>(
-    "/fanuc/initialize_planning_scene", 
+    "/" + robot_name_ + "/initialize_planning_scene", 
     std::bind(&RobotCommander::initialize_planning_scene_cb, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS(),
     client_cb_group_
@@ -41,19 +107,15 @@ RobotCommander::RobotCommander(std::string node_name, moveit::planning_interface
 
   // Create Subscriber
   trays_info_table_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/fanuc/table_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/" + robot_name_ + "/table_vision/trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::table_trays_info_cb, this, std::placeholders::_1));
 
   trays_info_conveyor_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/fanuc/conveyor_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/" + robot_name_ + "/conveyor_vision/trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::conveyor_trays_info_cb, this, std::placeholders::_1));
-      
-
-  // Create publishers
-  joint_command_publisher_ = create_publisher<std_msgs::msg::Float64MultiArray>("forward_position_controller/commands", 10);
 
   // Create clients
-  gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/fanuc/actuate_gripper");    
+  gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/" + robot_name_ + "/actuate_gripper");    
 }
 
 bool RobotCommander::actuate_gripper(bool enable)
@@ -71,18 +133,19 @@ bool RobotCommander::actuate_gripper(bool enable)
 
 std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::string &pose_name)
 {
+
   // check to see if requested name exists for planning group
-  std::vector<std::string> named_targets = planning_interface_.getNamedTargets();
+  std::vector<std::string> named_targets = planning_interface_->getNamedTargets();
 
   if (std::find(named_targets.begin(), named_targets.end(), pose_name) == named_targets.end()) {
     return std::make_pair(false, "Pose " + pose_name + " not found");
   }
-  // planning_interface_.getCurrentState();
+  // planning_interface_->getCurrentState();
 
-  planning_interface_.setStartStateToCurrentState();
+  planning_interface_->setStartStateToCurrentState();
 
   // Set target
-  planning_interface_.setNamedTarget(pose_name);
+  planning_interface_->setNamedTarget(pose_name);
   
   // Plan to target
   std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan = plan_to_target();
@@ -93,7 +156,7 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   }
 
   // Send trajectory to controller
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   return std::make_pair(true, "Sent trajectory to move to " + pose_name);
 }
@@ -110,7 +173,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
     return std::make_pair(false, "Not a valid frame name");
   }
 
-  double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
+  double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
   RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
 
   if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
@@ -130,14 +193,14 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset, 0.0);
+  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset_, 0.0);
 
   plan = plan_cartesian(above_slot);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   actuate_gripper(false);
 
@@ -145,14 +208,14 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   // Move to pick pose
   geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset, 0.0);
+  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset_, 0.0);
 
   plan = plan_cartesian(pick_pose);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to pick pose");
 
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   sleep(0.5);
 
@@ -165,12 +228,12 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   // gear.header.frame_id = "world";
   // gear.header.stamp = now();
   // gear.id = attached_part_name;
-  // gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
+  // gear.pose = planning_scene_->getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
   // gear.pose.position.z += pick_offset;
   // gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
-  // planning_scene_.applyCollisionObject(gear);
+  // planning_scene_->applyCollisionObject(gear);
 
-  planning_interface_.attachObject(slot_objects[slot_name],"fanuc_tool0");
+  planning_interface_->attachObject(slot_objects[slot_name],"fanuc_tool0");
   slot_objects[slot_name] = "";
   slot_types[slot_name] = -1;
 
@@ -184,7 +247,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   return std::make_pair(true, "Successfully picked part");
 }
@@ -202,7 +265,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
     return std::make_pair(false, "Not a valid frame name");
   }
 
-  double joint_1_pos = planning_interface_.getCurrentJointValues()[0];
+  double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
 
   if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
     move_to_named_pose("above_conveyor");
@@ -213,29 +276,29 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset, 0.0);
+  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset_, 0.0);
 
   plan = plan_cartesian(above_slot);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   // Move to place pose
   geometry_msgs::msg::Pose place_pose;
-  place_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + place_offset, 0.0);
+  place_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + place_offset_, 0.0);
 
   plan = plan_cartesian(place_pose);
   
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to place pose");
 
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   actuate_gripper(false);
 
-  planning_interface_.detachObject(attached_part_name);
+  planning_interface_->detachObject(attached_part_name);
 
   sleep(0.5);
 
@@ -243,10 +306,10 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   gear.header.frame_id = "world";
   gear.header.stamp = now();
   gear.id = attached_part_name;
-  gear.pose = planning_scene_.getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
-  gear.pose.position.z -= (place_offset-pick_offset);
+  gear.pose = planning_scene_->getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
+  gear.pose.position.z -= (place_offset_-pick_offset_);
   gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
-  planning_scene_.applyCollisionObject(gear, get_object_color(attached_part_type));
+  planning_scene_->applyCollisionObject(gear, get_object_color(attached_part_type));
   slot_objects[slot_name] = attached_part_name;
   slot_types[slot_name] = attached_part_type;
   attached_part_name = "";
@@ -260,7 +323,7 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_.execute(plan.second);
+  planning_interface_->execute(plan.second);
 
   return std::make_pair(true, "Successfully placed part");
 }
@@ -310,7 +373,7 @@ void RobotCommander::move_to_named_pose_cb(
 std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_to_target()
 {
   moveit::planning_interface::MoveGroupInterface::Plan plan;
-  bool success = static_cast<bool>(planning_interface_.plan(plan));
+  bool success = static_cast<bool>(planning_interface_->plan(plan));
   moveit_msgs::msg::RobotTrajectory trajectory = plan.trajectory;
 
   if (success)
@@ -330,7 +393,7 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
 
   std::vector<geometry_msgs::msg::Pose> waypoints = {pose};
 
-  double path_fraction = planning_interface_.computeCartesianPath(waypoints, 0.01, 0.0, trajectory, false);
+  double path_fraction = planning_interface_->computeCartesianPath(waypoints, 0.01, 0.0, trajectory, false);
 
   if (path_fraction < 1.0)
   {
@@ -339,9 +402,9 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
   }
 
   // Retime trajectory
-  robot_trajectory::RobotTrajectory rt(planning_interface_.getCurrentState()->getRobotModel(), group_name);
-  rt.setRobotTrajectoryMsg(*planning_interface_.getCurrentState(), trajectory);
-  totg_.computeTimeStamps(rt, vsf, asf);
+  robot_trajectory::RobotTrajectory rt(planning_interface_->getCurrentState()->getRobotModel(), group_name);
+  rt.setRobotTrajectoryMsg(*planning_interface_->getCurrentState(), trajectory);
+  totg_.computeTimeStamps(rt, vsf_, asf_);
   
   rt.getRobotTrajectoryMsg(trajectory);
 
@@ -356,7 +419,7 @@ geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, do
   p.position.z = z;
 
   tf2::Quaternion q;
-  q.setRPY(gripper_roll, gripper_pitch, rotation);
+  q.setRPY(gripper_roll_, gripper_pitch_, rotation);
 
   p.orientation.x = q.getX();
   p.orientation.y = q.getY();
@@ -421,11 +484,11 @@ void RobotCommander::initialize_planning_scene_cb(
 
   // Clear Planning Scene
   std::vector<std::string> object_ids;
-  for(const auto& [object_id,_] : planning_scene_.getObjects()){
+  for(const auto& [object_id,_] : planning_scene_->getObjects()){
     object_ids.push_back(object_id);
   }
   if (!object_ids.empty()){
-    planning_scene_.removeCollisionObjects(object_ids);
+    planning_scene_->removeCollisionObjects(object_ids);
   }
 
   geometry_msgs::msg::Pose optical_table_pose;
@@ -433,8 +496,8 @@ void RobotCommander::initialize_planning_scene_cb(
   conveyor_belt_pose.position.x = -0.3937;
   conveyor_belt_pose.position.y = -0.0762;
   conveyor_belt_pose.position.z = 0.0625;
-  planning_scene_.applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
-  planning_scene_.applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
+  planning_scene_->applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
+  planning_scene_->applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
   
   // Create vector of all trays and gears
   std::vector<aprs_interfaces::msg::Tray> all_trays;
@@ -449,7 +512,7 @@ void RobotCommander::initialize_planning_scene_cb(
 
   // Add trays to planning scene
   for (auto tray : all_trays){
-    planning_scene_.applyCollisionObject(
+    planning_scene_->applyCollisionObject(
       create_collision_object(
         tray.name, 
         tray.tray_pose.header.frame_id, 
@@ -468,7 +531,7 @@ void RobotCommander::initialize_planning_scene_cb(
         slot_objects.insert_or_assign(slot.name, gear_name);
         slot_types.insert_or_assign(slot.name, slot.size);
 
-        planning_scene_.applyCollisionObject(
+        planning_scene_->applyCollisionObject(
           create_collision_object(
             gear_name, 
             tray.name, 

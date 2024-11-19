@@ -106,13 +106,13 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<example_interfaces::srv::Trigger::Response> response
     );
 
-    double vsf = 0.1;
-    double asf = 0.1;
+    double vsf_ = 0.1;
+    double asf_ = 0.1;
 
-    double pick_offset = 0.1;
-    double place_offset = 0.1;
-    double gripper_roll = 0;
-    double gripper_pitch = M_PI_2;
+    double pick_offset_ = 0.1;
+    double place_offset_ = 0.1;
+    double gripper_roll_ = 0;
+    double gripper_pitch_ = M_PI_2;
 
     double goal_joint_tolerance = 0.01;
     
