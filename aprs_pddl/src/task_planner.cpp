@@ -84,12 +84,11 @@ void TaskPlanner::TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays:
   recieved_teach_table_info = true;
 }
 
-void TaskPlanner::GenerateInitStateCallback(const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Request> request,
+void TaskPlanner::GenerateInitStateCallback(const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Request>,
                                             const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Response> response)
 {
-  (void)request;
   init_world_state();
-  init_goal_state();
+  // init_goal_state();
 
   response->success = true;
   response->status = "Successfully Created Plansys2 Problem File";
@@ -211,31 +210,31 @@ void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::Server
 
 void TaskPlanner::init_world_state(){
 
-  // problem_expert_->addInstance(plansys2::Instance{"small", "size"});
-  // problem_expert_->addInstance(plansys2::Instance{"medium", "size"});
-  // problem_expert_->addInstance(plansys2::Instance{"large", "size"});
+  problem_expert_->addInstance(plansys2::Instance{"small", "size"});
+  problem_expert_->addInstance(plansys2::Instance{"medium", "size"});
+  problem_expert_->addInstance(plansys2::Instance{"large", "size"});
 
-  // problem_expert_->addInstance(plansys2::Instance{"fanuc", "robot"});
-  // problem_expert_->addInstance(plansys2::Instance{"motoman", "robot"});
+  problem_expert_->addInstance(plansys2::Instance{"fanuc", "robot"});
+  problem_expert_->addInstance(plansys2::Instance{"motoman", "robot"});
 
-  // problem_expert_->addInstance(plansys2::Instance{"fanuc_table", "location"});
-  // problem_expert_->addInstance(plansys2::Instance{"fanuc_conveyor", "location"});
-  // problem_expert_->addInstance(plansys2::Instance{"motoman_table", "location"});
-  // problem_expert_->addInstance(plansys2::Instance{"motoman_conveyor", "location"});
+  problem_expert_->addInstance(plansys2::Instance{"fanuc_table", "location"});
+  problem_expert_->addInstance(plansys2::Instance{"fanuc_conveyor", "location"});
+  problem_expert_->addInstance(plansys2::Instance{"motoman_table", "location"});
+  problem_expert_->addInstance(plansys2::Instance{"motoman_conveyor", "location"});
 
-  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby fanuc "));
-  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby motoman "));
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby fanuc)"));
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_on_standby motoman)"));
 
-  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty fanuc "));
-  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty motoman "));
+  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty fanuc)"));
+  problem_expert_->addPredicate(plansys2::Predicate("(gripper_empty motoman)"));
 
-  problem_expert_->addPredicate(plansys2::Predicate("(robot_operational fanuc "));
-  problem_expert_->addPredicate(plansys2::Predicate("(robot_operational motoman "));
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_operational fanuc)"));
+  problem_expert_->addPredicate(plansys2::Predicate("(robot_operational motoman)"));
 
-  problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_table fanuc "));
-  problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_table motoman "));
-  problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor fanuc "));
-  problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_conveyor motoman "));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_table fanuc)"));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_table motoman)"));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor fanuc)"));
+  problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_conveyor motoman)"));
 
   // Fanuc Table
 
