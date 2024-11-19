@@ -498,24 +498,3 @@ std_msgs::msg::ColorRGBA RobotCommander::get_object_color(int identifier){
 
   return color;    
 }
-
-std::vector<std::string> RobotCommander::split_string(std::string s, std::string delimiter){
-  std::vector<std::string> v;
-  if(s.empty()){
-    return v;
-  }
-  
-  int start = 0;
-  do {
-    int idx = s.find(delimiter, start);
-    if (idx == std::string::npos){
-      break;
-    }
-    int length = idx - start;
-    v.push_back(s.substr(start,length));
-    start+= (length + delimiter.size());
-  } while (true);
-  v.push_back(s.substr(start));
-
-  return v;
-}

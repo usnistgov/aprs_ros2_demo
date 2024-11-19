@@ -46,7 +46,6 @@ class RobotCommander : public rclcpp::Node
     moveit_msgs::msg::CollisionObject create_collision_object(
       std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation = moveit_msgs::msg::CollisionObject::ADD);
     std_msgs::msg::ColorRGBA get_object_color(int identifier);
-    std::vector<std::string> split_string(std::string s, std::string delimiter);
 
     // MoveIt
     moveit::planning_interface::MoveGroupInterface planning_interface_;
@@ -64,12 +63,10 @@ class RobotCommander : public rclcpp::Node
     rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr gripper_client_;
 
     // Subscriber
-
     rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_table_vision_sub_;
     rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_conveyor_vision_sub_;
     void table_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
     void conveyor_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
-
 
     // Services
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;
@@ -101,19 +98,14 @@ class RobotCommander : public rclcpp::Node
       std::shared_ptr<example_interfaces::srv::Trigger::Response> response
     );
 
-    // Response callbacks
-    // void gripper_response_cb(rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedFuture future);
-
+    // Parameters
     double vsf = 0.1;
     double asf = 0.5;
-    double trajectory_spacing_ = 100000; // time between sending trajectory points in microseconds
     double pick_offset = 0.030;
     double place_offset = 0.040;
     double above_slot_offset = 0.1;
     double gripper_roll = 0;
     double gripper_pitch = M_PI;
-
-    double goal_joint_tolerance = 0.01;
     
     std::string base_link = "fanuc_base_link";
     std::string group_name;
