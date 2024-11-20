@@ -74,7 +74,6 @@ namespace motoman_controller {
       } 
 
     } else if (sending_trajectory_) {
-      RCLCPP_INFO(get_node()->get_logger(), "\n\nSENDING TRAJECTORY");
       // Construct joint trajectory point
       std::vector<float> positions;
       std::vector<float> velocities;
@@ -129,8 +128,6 @@ namespace motoman_controller {
         sending_trajectory_ = false;
       }
     } else if (executing_) {
-      RCLCPP_INFO(get_node()->get_logger(), "\n\nEXECUTING");
-
       // Check if final position has been reached
       std::vector<double> joint_errors;
       std::vector<float> goal_positions;

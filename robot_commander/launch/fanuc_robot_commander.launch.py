@@ -40,7 +40,8 @@ def launch_setup(context, *args, **kwargs):
     # Fanuc Robot Commander
     fanuc_robot_commander = Node(
         package="robot_commander",
-        executable="fanuc_robot_commander",
+        executable="robot_commander",
+        name="fanuc_robot_commander",
         output="screen",
         parameters=[
             moveit_config.to_dict(),

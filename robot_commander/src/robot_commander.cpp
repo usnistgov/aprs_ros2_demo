@@ -1,7 +1,7 @@
 #include <robot_commander/robot_commander.hpp>
 
-RobotCommander::RobotCommander(std::string node_name)
-: Node(node_name)
+RobotCommander::RobotCommander()
+: Node("robot_commander")
 {
   RCLCPP_INFO(get_logger(), "Starting robot commander node");
 
@@ -65,12 +65,14 @@ RobotCommander::RobotCommander(std::string node_name)
 
   moveit::planning_interface::MoveGroupInterface::Options opt(
     planning_group_name_,
-    description_param_name_,
+    "robot_description",
     robot_name_
   );
 
   planning_interface_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(
-    std::shared_ptr<rclcpp::Node>(std::move(this)), opt, std::shared_ptr<tf2_ros::Buffer>(), rclcpp::Duration::from_seconds(2));
+    std::shared_ptr<rclcpp::Node>(std::move(this)), 
+    opt, std::shared_ptr<tf2_ros::Buffer>(), 
+    rclcpp::Duration::from_seconds(5));
 
   planning_scene_ = std::make_unique<moveit::planning_interface::PlanningSceneInterface>(robot_name_);
 
@@ -140,7 +142,6 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
   if (std::find(named_targets.begin(), named_targets.end(), pose_name) == named_targets.end()) {
     return std::make_pair(false, "Pose " + pose_name + " not found");
   }
-  // planning_interface_->getCurrentState();
 
   planning_interface_->setStartStateToCurrentState();
 
@@ -223,15 +224,6 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   attached_part_name = slot_objects[slot_name];
   attached_part_type = slot_types[slot_name];
-
-  // moveit_msgs::msg::CollisionObject gear;
-  // gear.header.frame_id = "world";
-  // gear.header.stamp = now();
-  // gear.id = attached_part_name;
-  // gear.pose = planning_scene_->getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
-  // gear.pose.position.z += pick_offset;
-  // gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
-  // planning_scene_->applyCollisionObject(gear);
 
   planning_interface_->attachObject(slot_objects[slot_name],"fanuc_tool0");
   slot_objects[slot_name] = "";
@@ -378,6 +370,8 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_to_targe
 
   if (success)
   {
+    retime_trajectory(trajectory);
+
     return std::make_pair(true, trajectory);
   }
   else
@@ -393,7 +387,7 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
 
   std::vector<geometry_msgs::msg::Pose> waypoints = {pose};
 
-  double path_fraction = planning_interface_->computeCartesianPath(waypoints, 0.01, 0.0, trajectory, false);
+  double path_fraction = planning_interface_->computeCartesianPath(waypoints, 0.01, 0.0, trajectory);
 
   if (path_fraction < 1.0)
   {
@@ -401,14 +395,19 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
     return std::make_pair(false, trajectory);
   }
 
+  retime_trajectory(trajectory);
+
+  return std::make_pair(true, trajectory);
+}
+
+void RobotCommander::retime_trajectory(moveit_msgs::msg::RobotTrajectory& trajectory)
+{
   // Retime trajectory
-  robot_trajectory::RobotTrajectory rt(planning_interface_->getCurrentState()->getRobotModel(), group_name);
+  robot_trajectory::RobotTrajectory rt(planning_interface_->getCurrentState()->getRobotModel(), planning_group_name_);
   rt.setRobotTrajectoryMsg(*planning_interface_->getCurrentState(), trajectory);
   totg_.computeTimeStamps(rt, vsf_, asf_);
   
   rt.getRobotTrajectoryMsg(trajectory);
-
-  return std::make_pair(true, trajectory);
 }
 
 geometry_msgs::msg::Pose RobotCommander::build_robot_pose(double x, double y, double z, double rotation)
@@ -560,4 +559,19 @@ std_msgs::msg::ColorRGBA RobotCommander::get_object_color(int identifier){
   color.a = values[3];
 
   return color;    
+}
+
+int main(int argc, char *argv[])
+{
+  rclcpp::init(argc, argv);
+
+  auto robot_commander = std::make_shared<RobotCommander>();
+
+  // Add node to an executor
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(robot_commander);
+
+  executor.spin();
+
+  rclcpp::shutdown();
 }

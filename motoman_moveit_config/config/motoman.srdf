@@ -14,7 +14,7 @@
       <joint name="joint_u" value="-1.571"/>
     </group_state>
 
-    <group_state name="conveyor" group="motoman_arm">
+    <group_state name="above_conveyor" group="motoman_arm">
       <joint name="joint_b" value="-1.571"/>
       <joint name="joint_e" value="0.0"/>
       <joint name="joint_l" value="0.0"/>
@@ -22,16 +22,6 @@
       <joint name="joint_s" value="1.571"/>
       <joint name="joint_t" value="0.0"/>
       <joint name="joint_u" value="-1.571"/>
-    </group_state>
-
-    <group_state name="test_state" group="motoman_arm">
-      <joint name="joint_b" value="0.0"/>
-      <joint name="joint_e" value="0"/>
-      <joint name="joint_l" value="0"/>
-      <joint name="joint_r" value="-1.571"/>
-      <joint name="joint_s" value="-1.571"/>
-      <joint name="joint_t" value="1.571"/>
-      <joint name="joint_u" value="1.571"/>
     </group_state>
     
     <disable_collisions link1="link_b" link2="link_e" reason="Never"/>

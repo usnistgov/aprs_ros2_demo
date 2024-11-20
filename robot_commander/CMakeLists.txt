@@ -18,95 +18,44 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   shape_msgs
 )
 
+# Find packages
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_python REQUIRED)
 
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-# Add robot commander library
-add_library(robot_commander SHARED
-  src/robot_commander.cpp
-)
+# Build robot commander library
+add_library(robot_commander_library SHARED src/robot_commander.cpp)
 
-# Add motoman robot commander library
-add_library(motoman_robot_commander_lib SHARED
-  src/motoman_robot_commander.cpp
-)
-
-target_include_directories(robot_commander PUBLIC
+target_include_directories(robot_commander_library PUBLIC 
   include
 )
 
-target_include_directories(motoman_robot_commander_lib PUBLIC
-  include
-)
+ament_target_dependencies(robot_commander_library ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-ament_target_dependencies(${PROJECT_NAME} ${THIS_PACKAGE_INCLUDE_DEPENDS})
-ament_target_dependencies(motoman_robot_commander_lib ${THIS_PACKAGE_INCLUDE_DEPENDS})
-
-install(TARGETS robot_commander
+install(TARGETS robot_commander_library
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-install(TARGETS motoman_robot_commander_lib
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
+# Build robot commander executable
+add_executable(robot_commander src/robot_commander.cpp)
+target_link_libraries(robot_commander
+  robot_commander_library
 )
+ament_target_dependencies(robot_commander ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-# Add fanuc commander executable
-add_executable(fanuc_robot_commander nodes/fanuc_robot_commander.cpp)
-target_include_directories(fanuc_robot_commander PRIVATE include)
-target_link_libraries(fanuc_robot_commander
-    robot_commander
-)
-ament_target_dependencies(fanuc_robot_commander ${THIS_PACKAGE_INCLUDE_DEPENDS})
-
-install(TARGETS fanuc_robot_commander
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
-)
-
-# Add motoman commander executable
-add_executable(motoman_robot_commander nodes/motoman_robot_commander.cpp)
-target_include_directories(motoman_robot_commander PRIVATE include)
-target_link_libraries(motoman_robot_commander
-    motoman_robot_commander_lib
-)
-ament_target_dependencies(motoman_robot_commander ${THIS_PACKAGE_INCLUDE_DEPENDS})
-
-install(TARGETS motoman_robot_commander
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
-)
-
-install(PROGRAMS
-  nodes/test_follow_joint_trajectory.py
+install(TARGETS
+  robot_commander
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-  DIRECTORY include/
-  DESTINATION include
-)
-
+# Install other directories to the share folder
 install(
   DIRECTORY launch meshes config
   DESTINATION share/${PROJECT_NAME}
-)
-
-ament_export_libraries(
-  ${PROJECT_NAME}
-)
-
-ament_export_include_directories(
-  include
-)
-
-ament_export_dependencies(
-  ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
 ament_package()

@@ -5,11 +5,29 @@ fanuc_robot_commander:
     end_effector_link: fanuc_tool0
 
     velocity_scaling_factor: 0.1
-    acceleration_scaling_factor: 0.5
+    acceleration_scaling_factor: 0.1
 
     gripper_rotation:
       roll: 0.0
       pitch: 3.14159
+
+    offsets:
+      pick: 0.030
+      place: 0.040
+      above_slot: 0.1
+
+motoman_robot_commander:
+  ros__parameters:
+    robot_name: motoman
+    planning_group_name: motoman_arm
+    end_effector_link: motoman_tool0
+
+    velocity_scaling_factor: 0.1
+    acceleration_scaling_factor: 0.1
+
+    gripper_rotation:
+      roll: 0.0
+      pitch: 1.5708
 
     offsets:
       pick: 0.030

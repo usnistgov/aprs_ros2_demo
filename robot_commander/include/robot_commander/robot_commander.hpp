@@ -17,10 +17,10 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include <std_msgs/msg/float64_multi_array.hpp>
-#include <example_interfaces/srv/trigger.hpp>
 #include <aprs_interfaces/msg/trays.hpp>
 #include <aprs_interfaces/msg/tray.hpp>
+
+#include <example_interfaces/srv/trigger.hpp>
 #include <aprs_interfaces/srv/pick.hpp>
 #include <aprs_interfaces/srv/place.hpp>
 #include <aprs_interfaces/srv/move_to_named_pose.hpp>
@@ -29,7 +29,7 @@
 class RobotCommander : public rclcpp::Node
 {
   public:
-    RobotCommander(std::string node_name);
+    RobotCommander();
 
     bool actuate_gripper(bool enable);
     std::pair<bool, std::string> move_to_named_pose(const std::string &pose_name);
@@ -40,11 +40,17 @@ class RobotCommander : public rclcpp::Node
     // Robot Move Functions
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_to_target();
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_cartesian(geometry_msgs::msg::Pose pose);
+    void retime_trajectory(moveit_msgs::msg::RobotTrajectory& trajectory);
 
     // Utility Functions
     geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
     moveit_msgs::msg::CollisionObject create_collision_object(
-      std::string name, std::string parent_frame, std::string mesh_file, geometry_msgs::msg::Pose model_pose, int operation = moveit_msgs::msg::CollisionObject::ADD);
+      std::string name, 
+      std::string parent_frame,
+      std::string mesh_file,
+      geometry_msgs::msg::Pose model_pose,
+      int operation = moveit_msgs::msg::CollisionObject::ADD
+    );
     std_msgs::msg::ColorRGBA get_object_color(int identifier);
 
     // MoveIt
@@ -55,9 +61,6 @@ class RobotCommander : public rclcpp::Node
     // TF
     std::unique_ptr<tf2_ros::Buffer> tf_buffer = std::make_unique<tf2_ros::Buffer>(get_clock());
     std::shared_ptr<tf2_ros::TransformListener> tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
-    
-    // Publishers
-    rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr joint_command_publisher_;
 
     // Clients
     rclcpp::Client<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr gripper_client_;
@@ -100,11 +103,9 @@ class RobotCommander : public rclcpp::Node
 
     // ROS Parameters
     std::string planning_group_name_;
-    std::string description_param_name_ = "robot_description";
+    
     std::string robot_name_;
     std::string end_effector_link_;
-
-    // Parameters
     double vsf_;
     double asf_;
     double pick_offset_;
@@ -112,19 +113,19 @@ class RobotCommander : public rclcpp::Node
     double above_slot_offset_;
     double gripper_roll_;
     double gripper_pitch_;
-    
-    std::string base_link = "fanuc_base_link";
-    std::string group_name;
 
+    // Flags
     bool received_table_tray_info = false;
     bool received_conveyor_tray_info = false;
+    bool holding_part = false;
+
+    // Variables
     aprs_interfaces::msg::Trays table_trays_info;
     aprs_interfaces::msg::Trays conveyor_trays_info;
-
-    bool holding_part = false;
     std::string attached_part_name;
     int attached_part_type;
 
+    // Maps
     std::map<int, int> gear_counter = {
       {aprs_interfaces::msg::SlotInfo::SMALL, 0},
       {aprs_interfaces::msg::SlotInfo::MEDIUM, 0},
