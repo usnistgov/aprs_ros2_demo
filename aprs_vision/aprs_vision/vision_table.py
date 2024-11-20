@@ -36,6 +36,14 @@ class VisionTable(Node):
         Tray.S2L2_KIT_TRAY: 's2l2_kit_tray'
     }
 
+    tray_areas = {
+        Tray.SMALL_GEAR_TRAY: 24827,
+        Tray.MEDIUM_GEAR_TRAY: 33823,
+        Tray.LARGE_GEAR_TRAY: 28207,
+        Tray.S2L2_KIT_TRAY: 36986,
+        Tray.M2L1_KIT_TRAY: 29865
+    }
+
     kit_tray_types = [Tray.S2L2_KIT_TRAY, Tray.M2L1_KIT_TRAY]
     part_tray_types = [Tray.SMALL_GEAR_TRAY, Tray.MEDIUM_GEAR_TRAY, Tray.LARGE_GEAR_TRAY]
 
@@ -94,6 +102,7 @@ class VisionTable(Node):
         super().__init__(node_name, namespace=ns)
 
         self.capture = cv2.VideoCapture(self.video_stream)
+        self.aruco_detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50))
 
         share_path = get_package_share_directory('aprs_vision')
 
@@ -102,7 +111,6 @@ class VisionTable(Node):
         self.base_background = cv2.imread(os.path.join(share_path, 'config', self.background_image))
 
         self.slot_pixel_centers: dict[str, tuple[int, int]] = {}
-        self.slot_pixel_center_pub: Optional[SlotPixel] = None
         self.current_frame: Optional[MatLike] = None
 
         # ROS Messages
@@ -118,7 +126,6 @@ class VisionTable(Node):
         self.trays_info_pub = self.create_publisher(Trays, f'{self.vision_location}/trays_info', qos_profile_default)
         self.raw_image_pub = self.create_publisher(Image, f'{self.vision_location}/raw_image', 10)
         self.detected_trays_image_pub = self.create_publisher(Image, f'{self.vision_location}/detected_trays_image', qos_profile_default)
-        self.slot_centers_pub = self.create_publisher(SlotPixel,f'{self.vision_location}/slot_pixel_centers', qos_profile_default)
     
         # TF Broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -132,7 +139,6 @@ class VisionTable(Node):
         if self.trays_info is not None:
             if request.overwrite:
                 self.trays_info = None
-                self.slot_pixel_center_pub = None
             else: 
                 response.message = "Trays Already Found. Unable to perform without overwriting current data!"
                 response.success = False
@@ -148,33 +154,36 @@ class VisionTable(Node):
         # Function to determine the location of the trays provided an initial image
         original_img = frame.copy()
 
-        try:
-        # Remove table backgroud
-            frame = self.remove_background(frame)
+        frame = self.remove_background(frame)
+        self.trays_info = self.detect_trays(frame)
 
-        # Remove and replace and large gears present
-            frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
+        response.success = True
+        response.message = "Located trays"
+
+
+        # try:
+        # # Remove table backgroud
+        #     frame = self.remove_background(frame)
+
+        # # # Remove and replace and large gears present
+        # #     frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.LARGE)
         
-        # Remove and replace any medium gears present
-            frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
+        # # # Remove and replace any medium gears present
+        # #     frame = self.remove_and_replace_gears(frame, gear_size=SlotInfo.MEDIUM)
 
-        # # Remove and replace any small gears present
-            frame = self.remove_and_replace_gears(frame,gear_size=SlotInfo.SMALL)
+        # # # # Remove and replace any small gears present
+        # #     frame = self.remove_and_replace_gears(frame,gear_size=SlotInfo.SMALL)
 
-            trays_on_table = self.detect_trays(frame)
+        #     self.trays_info = self.detect_trays(frame)
 
-        # Fill tray info message
-            self.trays_info = self.determine_tray_info(trays_on_table)
-            self.slot_centers_pub.publish(self.slot_pixel_center_pub)
+        # # # Check if slots are occupied 
+        # #     self.update_slots(original_img)
 
-        # Check if slots are occupied 
-            self.update_slots(original_img)
-
-            response.success = True
-            response.message = "Located trays"
-        except:
-            response.success = False
-            response.message = "Unable to detect trays properly. Is the robot arm in the way?"
+        #     response.success = True
+        #     response.message = "Located trays"
+        # except Exception as e:
+        #     response.success = False
+        #     response.message = f"Unable to detect trays properly. Exception: ({e})" 
             # cv2.imshow('Error Reason', frame)
             # cv2.waitKey(0)
 
@@ -228,7 +237,6 @@ class VisionTable(Node):
         # Publish trays info
         if self.trays_info is not None:
             self.trays_info_pub.publish(self.trays_info)
-            self.slot_centers_pub.publish(self.slot_pixel_center_pub)
 
         # Update timestamps and send TF transforms
         for t in self.transforms:
@@ -311,193 +319,141 @@ class VisionTable(Node):
             cv2.circle(frame, (cX, cY), detection_params.px_radius + 3, avg_color, -1)
         
         return frame
-            
-    def detect_trays(self, table_image: MatLike) -> dict[int, list[tuple[tuple[int, int], float]]]:
-        # Determine basic tray info for all trays
-        trays_on_table = {
-            Tray.SMALL_GEAR_TRAY: [],
-            Tray.MEDIUM_GEAR_TRAY: [],
-            Tray.LARGE_GEAR_TRAY: [],
-            Tray.M2L1_KIT_TRAY: [],
-            Tray.S2L2_KIT_TRAY:[]
-        }
+
+    def classify_tray(self,contour: MatLike,image: MatLike)-> tuple[int, int, tuple[float, float], float]:
+        """Takes in a contour of a tray and the rectified image of the workspace and returns the tray identifier, as well as the 
+        tray id, center and rotation of the tray based on the aruco marker.
+
+        Args:
+            contour (MatLike): Tray contour
+            image (MatLike): Rectified Image
+
+        Raises:
+            Exception: _description_
+            Exception: _description_
+
+        Returns:
+            tuple[int, int, tuple[float, float], float]: identifier, id, center, rotation(radians)
+        """
+        # Use contours and mask to isolate tray in image
+        canvas = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
+        cv2.drawContours(canvas, [contour], -1, color=255, thickness=-1) # type: ignore
+        just_contour = cv2.bitwise_and(image, image, mask=canvas)
+
+        # Look for fiducial marker and check to make sure one and only one is found
+        corners, marker_ids, _ = self.aruco_detector.detectMarkers(just_contour)
+
+        if marker_ids is None:
+            raise Exception("Detected tray without fiducial")            
+
+        if len(marker_ids) > 1:
+            raise Exception("Detected multiple fiducials on one tray")
         
-        tray_contours, _ = cv2.findContours(
-            cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY),
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_NONE)
+        tray_id = marker_ids[0][0]
         
-        for contour in tray_contours:
-            # Ignore contours under a size threshold
-            if cv2.contourArea(contour) < 200:
-                continue
-            # cv2.drawContours(table_image,contour,-1,(255,255,255),2)
+        corners = np.reshape(corners[0],(4,2))
 
-            # Approximate the contour as a polygon
-            peri = cv2.arcLength(contour, True)
-            poly = cv2.approxPolyDP(contour, 0.01 * peri, True)
+        # Calculate marker center and angle of rotation
+        marker_center = (corners[0][0] + (corners[2][0]-corners[0][0])/2, corners[0][1] + (corners[2][1]-corners[0][1])/2)
+        angle = math.atan2(corners[0][1] - corners[1][1],corners[0][0]-corners[1][0])
 
-            # Fit a rotated rect bounding box to the poly
-            rect = cv2.minAreaRect(poly)
-            (_, _), (width, height), angle = rect
+        # Use area to classify tray identifier
+        tray_area = cv2.contourArea(contour) * self.conversion_factor**2
 
-            if width > height:
-                if angle > 0:
-                    angle = (90 - angle)
-            else:
-                angle *= -1     
+        identifier = min({k: abs(v - tray_area) for (k,v) in self.tray_areas.items()}.items(), key=lambda x: x[1])[0]
 
-            aspect_ratio = min(width, height) / max(width, height)
+        return (identifier, tray_id, marker_center, angle)
 
-            print(f'height:  {height}  width: {width} angle:  {angle} asepct ratio:  {aspect_ratio}') 
-
-            # Calculate center of contour
-            box = cv2.boxPoints(rect)
-            box = box.astype(np.int32)
-
-            M = cv2.moments(box)
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
-
-            # Use aspect ratio to classify tray type
-            if aspect_ratio < 0.6:
-                trays_on_table[Tray.LARGE_GEAR_TRAY].append(((cX,cY), angle))              
-
-            elif aspect_ratio < 0.8:
-                if abs(angle-90) >= 90:
-                    angle = angle + 90
-                else:
-                    angle = angle - 90
-                trays_on_table[Tray.S2L2_KIT_TRAY].append(((cX,cY), angle))
-
-            elif aspect_ratio < 0.9:
-                trays_on_table[Tray.M2L1_KIT_TRAY].append(((cX,cY), angle))
-
-            else:
-                if (height*width > 27000):
-                    trays_on_table[Tray.MEDIUM_GEAR_TRAY].append(((cX,cY), angle))
-                else:
-                    trays_on_table[Tray.SMALL_GEAR_TRAY].append(((cX,cY), angle))
-
-        # Sort trays_on_table lists based on location
-        for identifier, trays in trays_on_table.items():
-            if not len(trays) > 1:
-                continue
-
-            trays_on_table[identifier] = sorted(trays, key=lambda k: [k[0][0] , k[0][1]])
-
-        return trays_on_table
-    
-    def determine_tray_info(self, trays_on_table: dict[int, list[tuple[tuple[int, int], float]]]) -> Trays:       
+    def detect_trays(self, table_image: MatLike) -> Trays:       
         # Clear list of transforms
         self.transforms.clear()
-        
-        # Fill the trays info msg
-        tray_info = Trays()
-        pixel_tray_info = SlotPixel()
+
+        # Publish transform from robot base to image base        
+        image_base_frame = f'image_base_{self.suffix}'
         if self.publish_frames:
-            image_base = f'image_base_{self.suffix}'
-            image_center = Point(
+            image_origin = Point(
                 x=self.table_origin.x/1000,
                 y=self.table_origin.y/1000,
                 z=self.table_origin.z/1000,
             )
-            self.transforms.append(self.generate_transform(self.base_frame, image_base, image_center, 0.0, math.pi, self.angle_offset))
 
-        for identifier, trays in trays_on_table.items():
-            for i, ((x,y), angle) in enumerate(trays):
-                # Gather info for publishing TF frames
-                tray_msg = Tray()
-                tray_msg.identifier = identifier
-                tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}_{self.suffix}'
+            self.transforms.append(
+                self.generate_transform(self.base_frame, image_base_frame, image_origin, 0.0, math.pi, self.angle_offset)
+            )
 
-                pixel_tray_msg = PixelCenter()
-                pixel_tray_msg.identifier = identifier
-                pixel_tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}'
-                pixel_tray_msg.x = x
-                pixel_tray_msg.y = y
-                pixel_tray_msg.angle = angle
+        # Detect contours
+        tray_contours, _ = cv2.findContours(
+            cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY),
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_NONE)
 
-                if self.publish_frames:
-                    tray_center = Point(
-                        x=(x * self.conversion_factor) / 1000,
-                        y=(y * self.conversion_factor) / 1000, 
-                        z=-self.tray_height
-                    )
+        # Build trays_info message
+        trays_info = Trays()  
+        for contour in tray_contours:
+            # Ignore small contours
+            if cv2.contourArea(contour) < 200:
+                continue
 
-                    theta = math.radians(-angle) + math.pi
+            # Classify tray based on contours
+            identifier, tray_id, (x, y), theta = self.classify_tray(contour,table_image)
 
-                    # Publish TF frame
-                    tray_frame_name = f'{tray_msg.name}'
-                    tray_msg.tray_pose = self.generate_pose(image_base, tray_center, 0.0, math.pi, theta)
-                    if self.publish_frames:
-                        self.transforms.append(
-                            self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta)
-                        )
- 
-                for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
-                    # Create slot info for each slot
-                    slot_info = SlotInfo()
-                    pixel_slot_info = PixelSlotInfo()
-                    slot_info.name = f"{tray_msg.name}_{slot_name}"
-                    pixel_slot_info.name = f"{tray_msg.name}_{slot_name}"
+            # Build tray message
+            tray_msg = Tray()
+            tray_msg.identifier = identifier
+            tray_msg.name = f'{self.tray_names[identifier]}_{tray_id:02}'
 
-                    if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
-                        slot_info.size = SlotInfo.SMALL
-                        pixel_slot_info.size = SlotInfo.SMALL
-                    elif "mg" in slot_info.name or identifier == Tray.MEDIUM_GEAR_TRAY:
-                        slot_info.size = SlotInfo.MEDIUM
-                        pixel_slot_info.size = SlotInfo.MEDIUM
-                    elif "lg" in slot_info.name or identifier == Tray.LARGE_GEAR_TRAY:
-                        slot_info.size = SlotInfo.LARGE
-                        pixel_slot_info.size = SlotInfo.LARGE
+            tray_center = Point(
+                x=(x * self.conversion_factor) / 1000,
+                y=(y * self.conversion_factor) / 1000, 
+                z=-self.tray_height
+            )
 
-                    # Generate tf transform for slot
-                    if self.publish_frames:
-                        slot_center_tray = Point(
-                            x= x_off,
-                            y= y_off, 
-                            z= self.gear_height
-                        )
-                        slot_info.slot_pose = self.generate_pose(tray_frame_name,slot_center_tray, 0.0, 0.0, 0.0)
-                        if self.publish_frames:
-                            self.transforms.append(self.generate_transform(tray_frame_name, slot_info.name, slot_center_tray, 0.0, 0.0, 0.0))
+            tray_msg.tray_pose = self.generate_pose(image_base_frame, tray_center, 0.0, math.pi, theta)
 
-                    # Store pixel coordinates for center of slot
-                
-                    x_px = 1000 * (x_off/self.conversion_factor)
-                    y_px = 1000 * (y_off/self.conversion_factor)
+            # Publish TF frame from image base frame to tray fiducial center
+            if self.publish_frames:
+                self.transforms.append(
+                    self.generate_transform(image_base_frame, tray_msg.name, tray_center, 0.0, math.pi, theta)
+                )
+            
+            # Build slot messages
+            for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
+                tray_msg.slots.append(
+                    self.build_slot_info_message(tray_msg.identifier, tray_msg.name, slot_name, x_off, y_off)
+                )
 
-                    length = math.sqrt(x_px **2 + y_px**2)
+        # Adds tray_msg to corresponding list in tray_info    
+        if identifier in VisionTable.part_tray_types:
+            trays_info.part_trays.append(tray_msg)
+        elif identifier in VisionTable.kit_tray_types:
+            trays_info.kit_trays.append(tray_msg)
 
-                    alpha = math.radians(angle)
+        return trays_info
 
-                    beta = math.atan2(y_off, -x_off)
+    def build_slot_info_message(self, identifier: int, tray_name: str, slot_name: str, x_off: float, y_off: float):
+        # Create slot info for each slot
+        slot_info = SlotInfo()
+        slot_info.name = f"{tray_name}_{slot_name}"
 
-                    gamma = beta - alpha
+        if "sg" in slot_info.name or identifier == Tray.SMALL_GEAR_TRAY:
+            slot_info.size = SlotInfo.SMALL
+        elif "mg" in slot_info.name or identifier == Tray.MEDIUM_GEAR_TRAY:
+            slot_info.size = SlotInfo.MEDIUM
+        elif "lg" in slot_info.name or identifier == Tray.LARGE_GEAR_TRAY:
+            slot_info.size = SlotInfo.LARGE
 
-                    # print(f'slot: {slot_info.name} alpha: {math.degrees(alpha)} beta: {math.degrees(beta)} gamma: {math.degrees(gamma)}')
+        # Generate tf transform for slot
+        slot_center = Point(
+            x= x_off,
+            y= y_off, 
+            z= self.gear_height
+        )
+        slot_info.slot_pose = self.generate_pose(tray_name, slot_center, 0.0, 0.0, 0.0)
+        if self.publish_frames:
+            self.transforms.append(self.generate_transform(tray_name, slot_info.name, slot_center, 0.0, 0.0, 0.0))
 
-                    self.slot_pixel_centers[slot_info.name] = (
-                        int(x - length * math.cos(gamma)),
-                        int(y - length * math.sin(gamma))
-                    )
-                    pixel_slot_info.slot_center_x = int(x - length * math.cos(gamma))
-                    pixel_slot_info.slot_center_y = int(y - length * math.sin(gamma))
 
-                    tray_msg.slots.append(slot_info)
-                    pixel_tray_msg.slots.append(pixel_slot_info)
-
-                if identifier in VisionTable.part_tray_types:
-                    tray_info.part_trays.append(tray_msg)
-                    pixel_tray_info.part_trays.append(pixel_tray_msg)
-                elif identifier in VisionTable.kit_tray_types:
-                    tray_info.kit_trays.append(tray_msg)
-                    pixel_tray_info.kit_trays.append(pixel_tray_msg)   
-            self.slot_pixel_center_pub = pixel_tray_info
-        
-        return tray_info
+        return slot_info
     
     def update_slots(self, frame: MatLike) -> bool:
         if self.trays_info is None:
