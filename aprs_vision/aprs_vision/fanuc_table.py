@@ -1,8 +1,15 @@
+import cv2
+import numpy as np
+
 from aprs_vision.vision_table import VisionTable
 from aprs_vision.gear_detection import GearDetection
 from aprs_interfaces.msg import SlotInfo
 from geometry_msgs.msg import Point
-import math
+from scipy.interpolate import griddata
+from rclpy.qos import qos_profile_default
+
+from cv2.typing import MatLike
+from typing import Optional
 
 class FanucTable(VisionTable):
     table_origin = Point(x=228.591, y=228.287, z= -25.4)
@@ -15,19 +22,9 @@ class FanucTable(VisionTable):
     background_image = 'fanuc_table_background.jpg'
     publish_frames = True
 
-    top_left_x = 417
-    top_left_y = 180
-    bottom_left_x = 428
-    bottom_left_y = 944
-    top_right_x = 1043
-    top_right_y = 179
-    bottom_right_x = 1035
-    bottom_right_y = 955
-    grid_hsv_lower = (100, 0, 0)
+    grid_hsv_lower = (0, 0, 1)
     grid_hsv_upper = (255, 255, 120)
-    calibrate_rows = 24
-    calibrate_columns = 19
-    generate_map_area = 10
+    generate_map_area = 5
 
     angle_offset = 0
     suffix = 'fanuc_table'
