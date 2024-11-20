@@ -11,68 +11,51 @@ endif()
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
+  control_msgs
   aprs_interfaces
   example_interfaces
   moveit_ros_planning_interface
   shape_msgs
 )
 
+# Find packages
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_python REQUIRED)
 
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-# Add robot commander library
-add_library(robot_commander SHARED
-  src/robot_commander.cpp
-)
+# Build robot commander library
+add_library(robot_commander_library SHARED src/robot_commander.cpp)
 
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(robot_commander_library PUBLIC 
   include
 )
 
-ament_target_dependencies(${PROJECT_NAME} ${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_target_dependencies(robot_commander_library ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-install(TARGETS robot_commander
+install(TARGETS robot_commander_library
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-# Add competitor executable
-add_executable(fanuc_robot_commander nodes/fanuc_robot_commander.cpp)
-target_include_directories(fanuc_robot_commander PRIVATE include)
-target_link_libraries(fanuc_robot_commander
-    robot_commander
+# Build robot commander executable
+add_executable(robot_commander src/robot_commander.cpp)
+target_link_libraries(robot_commander
+  robot_commander_library
 )
-ament_target_dependencies(fanuc_robot_commander ${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_target_dependencies(robot_commander ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-install(TARGETS fanuc_robot_commander
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
+install(TARGETS
+  robot_commander
+  DESTINATION lib/${PROJECT_NAME}
 )
 
+# Install other directories to the share folder
 install(
-  DIRECTORY include/
-  DESTINATION include
-)
-
-install(
-  DIRECTORY launch meshes
+  DIRECTORY launch meshes config
   DESTINATION share/${PROJECT_NAME}
-)
-
-ament_export_libraries(
-  ${PROJECT_NAME}
-)
-
-ament_export_include_directories(
-  include
-)
-
-ament_export_dependencies(
-  ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
 ament_package()

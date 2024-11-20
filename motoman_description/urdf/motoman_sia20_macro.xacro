@@ -41,6 +41,7 @@
 				<xacro:default_mesh name="link_s"/>
 			</collision>
 		</link>
+		
 		<joint name = "motoman_base_joint" type = "fixed">
 			<origin rpy = "0 0 0" xyz = "0 0 0"/>
 			<parent link = "${parent}"/>
