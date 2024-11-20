@@ -92,6 +92,8 @@ namespace fanuc_hardware {
 
     auto joint_data = current_joint_position_.get_joint_data();
 
+    joint_data[2] += joint_data[1];
+
     for (int i = 0; i < num_robot_joints_; i++)
     {
       hw_positions_[i] = joint_data[i];

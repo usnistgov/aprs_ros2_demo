@@ -24,10 +24,13 @@ def launch_setup(context, *args, **kwargs):
         .to_moveit_configs()
     )
 
+    robot_commander_config = os.path.join(get_package_share_directory('robot_commander'), 'config', 'parameters.yaml')
+
     # Move group node
     move_group_node = Node(
         package="moveit_ros_move_group",
         executable="move_group",
+        namespace="fanuc",
         output="screen",
         parameters=[
             moveit_config.to_dict(),
@@ -37,10 +40,15 @@ def launch_setup(context, *args, **kwargs):
     # Fanuc Robot Commander
     fanuc_robot_commander = Node(
         package="robot_commander",
-        executable="fanuc_robot_commander",
+        executable="robot_commander",
+        name="fanuc_robot_commander",
         output="screen",
         parameters=[
             moveit_config.to_dict(),
+            robot_commander_config
+        ],
+        remappings=[
+            ("joint_states", "/fanuc/joint_states"),
         ],
     )
 

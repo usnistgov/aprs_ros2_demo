@@ -35,8 +35,8 @@ install(PROGRAMS
   nodes/fanuc_vision_node.py
   nodes/teach_table_vision_node.py
   nodes/motoman_vision_node.py
-  nodes/motoman_conveyer_node.py
-  nodes/fanuc_conveyer_node.py
+  nodes/motoman_conveyor_node.py
+  nodes/fanuc_conveyor_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

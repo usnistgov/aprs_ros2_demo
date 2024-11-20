@@ -39,7 +39,30 @@ namespace fanuc_controller {
       received_goal_ = false;
       executing_ = true;
       current_seq_ = 0;
+      goal_point_ = current_goal_->get_goal()->trajectory.points.back();
       ready_for_next_point_ = true;
+
+      // Send all points in trajectory
+      for (auto point: current_goal_->get_goal()->trajectory.points) {
+        std::vector<float> positions;
+
+        for (auto p: point.positions) {
+          positions.push_back(float(p));
+        }
+
+        // Handle J23 Transform
+        positions[2] -= positions[1];
+        
+        simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
+
+        write_to_socket(motion_socket_, traj_point.to_bytes());
+
+        int length = get_packet_length(motion_socket_);
+        
+        read_from_socket(motion_socket_, length);
+
+        current_seq_++;
+      }
     }
 
     if (executing_) {
@@ -51,25 +74,6 @@ namespace fanuc_controller {
         executing_ = false;
       }
 
-      if (ready_for_next_point_){
-        goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_];
-
-        std::vector<float> positions;
-
-        for (auto p: goal_point_.positions) {
-          positions.push_back(float(p));
-        }
-        
-        simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
-
-        write_to_socket(motion_socket_, traj_point.to_bytes());
-
-        int length = get_packet_length(motion_socket_);
-        
-        read_from_socket(motion_socket_, length);
-
-        ready_for_next_point_ = false;
-      }
 
       // Check if goal is reached
       std::vector<double> joint_errors;
@@ -79,21 +83,60 @@ namespace fanuc_controller {
         joint_errors.push_back(abs(goal_point_.positions[i] - position_interface.get_value()));
       }
 
-      if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {
-        ready_for_next_point_ = true;
-        RCLCPP_INFO_STREAM(get_node()->get_logger(), "Finished execution for point " << current_seq_);
-        
-        // Check if all points reached
-        if (current_goal_->get_goal()->trajectory.points.size() - 1 == current_seq_ ) {
-          executing_ = false;
-          RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
-          auto result = std::make_shared<FollowJointTrajectory::Result>();
-          result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
-          current_goal_->succeed(result);
-        } else {
-          current_seq_++;
-        }
+      if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {        
+        executing_ = false;
+        RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
+        auto result = std::make_shared<FollowJointTrajectory::Result>();
+        result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
+        current_goal_->succeed(result);
       }
+
+      // if (ready_for_next_point_){
+      //   goal_point_ = current_goal_->get_goal()->trajectory.points[current_seq_];
+
+      //   std::vector<float> positions;
+
+      //   for (auto p: goal_point_.positions) {
+      //     positions.push_back(float(p));
+      //   }
+
+      //   // Handle J23 Transform
+      //   positions[2] -= positions[1];
+        
+      //   simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
+
+      //   write_to_socket(motion_socket_, traj_point.to_bytes());
+
+      //   int length = get_packet_length(motion_socket_);
+        
+      //   read_from_socket(motion_socket_, length);
+
+      //   ready_for_next_point_ = false;
+      // }
+
+      // // Check if goal is reached
+      // std::vector<double> joint_errors;
+      // for (int i = 0; i < int(state_interfaces_.size()); ++i) {
+      //   const auto& position_interface = state_interfaces_.at(i);
+
+      //   joint_errors.push_back(abs(goal_point_.positions[i] - position_interface.get_value()));
+      // }
+
+      // if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {
+      //   ready_for_next_point_ = true;
+      //   RCLCPP_INFO_STREAM(get_node()->get_logger(), "Finished execution for point " << current_seq_);
+        
+      //   // Check if all points reached
+      //   if (current_goal_->get_goal()->trajectory.points.size() - 1 == current_seq_ ) {
+      //     executing_ = false;
+      //     RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
+      //     auto result = std::make_shared<FollowJointTrajectory::Result>();
+      //     result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
+      //     current_goal_->succeed(result);
+      //   } else {
+      //     current_seq_++;
+      //   }
+      // }
     }
 
     return controller_interface::return_type::OK;
@@ -129,7 +172,7 @@ namespace fanuc_controller {
     action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
       get_node()->get_node_base_interface(), get_node()->get_node_clock_interface(),
       get_node()->get_node_logging_interface(), get_node()->get_node_waitables_interface(),
-      "follow_joint_trajectory",
+      std::string(get_node()->get_name()) + "/follow_joint_trajectory",
       std::bind(&FanucJointTrajectoryController::handle_goal, this, _1, _2),
       std::bind(&FanucJointTrajectoryController::handle_cancel, this, _1),
       std::bind(&FanucJointTrajectoryController::handle_accepted, this, _1));

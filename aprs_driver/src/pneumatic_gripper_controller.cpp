@@ -125,8 +125,10 @@ namespace pneumatic_controller {
       reply.init(read_from_socket(gripper_socket, length));
 
       if(reply.get_value() == 1){
+        RCLCPP_INFO(get_node()->get_logger(), "Gripper starting open");
         gripper_state_ = gripper_strokes_[robot_name_];
       } else {
+        RCLCPP_INFO(get_node()->get_logger(), "Gripper starting closed");
         gripper_state_ = 0.0;
       }
     } else {

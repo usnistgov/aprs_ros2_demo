@@ -44,7 +44,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/base_link.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/base_link.stl" />
         </geometry>
         <material name="">
           <color rgba="0.278431372549 0.278431372549 0.278431372549 1.0" />
@@ -54,7 +54,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/collision/base_link.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/base_link.stl" />
         </geometry>
       </collision>
       
@@ -68,7 +68,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/link_1.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_1.stl" />
         </geometry>
         <material name="">
           <color rgba="0.96 0.76 0.13 1.0" />
@@ -78,7 +78,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-            <mesh filename="file://$(find fanuc_description)/meshes/collision/link_1.stl" />
+            <mesh filename="file://$(find fanuc_description)/meshes/link_1.stl" />
         </geometry>
       </collision>
       
@@ -93,7 +93,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/link_2.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_2.stl" />
         </geometry>
         <material name="">
           <color rgba="0.96 0.76 0.13 1.0" />
@@ -103,7 +103,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/collision/link_2.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_2.stl" />
         </geometry>
       </collision>
 
@@ -118,7 +118,7 @@
         <visual>
           <origin rpy="0 0 0" xyz="0 0 0" />
           <geometry>
-              <mesh filename="file://$(find fanuc_description)/meshes/visual/link_3.stl" />
+              <mesh filename="file://$(find fanuc_description)/meshes/link_3.stl" />
           </geometry>
           <material name="">
               <color rgba="0.96 0.76 0.13 1.0" />
@@ -127,7 +127,7 @@
         <collision>
           <origin rpy="0 0 0" xyz="0 0 0" />
           <geometry>
-              <mesh filename="file://$(find fanuc_description)/meshes/collision/link_3.stl" />
+              <mesh filename="file://$(find fanuc_description)/meshes/link_3.stl" />
           </geometry>
         </collision>
         <inertial>
@@ -141,7 +141,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/link_4.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_4.stl" />
         </geometry>
         <material name="">
           <color rgba="0.96 0.76 0.13 1.0" />
@@ -151,7 +151,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/collision/link_4.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_4.stl" />
         </geometry>
       </collision>
 
@@ -166,7 +166,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/link_5.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_5.stl" />
         </geometry>
         <material name="">
           <color rgba="0.96 0.76 0.13 1.0" />
@@ -176,7 +176,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-            <mesh filename="file://$(find fanuc_description)/meshes/collision/link_5.stl" />
+            <mesh filename="file://$(find fanuc_description)/meshes/link_5.stl" />
         </geometry>
       </collision>
 
@@ -191,7 +191,7 @@
       <visual>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/visual/link_6.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_6.stl" />
         </geometry>
         <material name="">
             <color rgba="0.15 0.15 0.15 1.0" />
@@ -201,7 +201,7 @@
       <collision>
         <origin rpy="0 0 0" xyz="0 0 0" />
         <geometry>
-          <mesh filename="file://$(find fanuc_description)/meshes/collision/link_6.stl" />
+          <mesh filename="file://$(find fanuc_description)/meshes/link_6.stl" />
         </geometry>
       </collision>
 
@@ -225,7 +225,7 @@
     </link> -->
 
     <!-- joints --> 
-    <joint name = "base_joint_" type = "fixed">
+    <joint name = "fanuc_base_joint" type = "fixed">
       <origin rpy = "0 0 0" xyz = "0 0 0"/>
       <parent link = "${parent}"/>
       <child link = "fanuc_base_link"/>

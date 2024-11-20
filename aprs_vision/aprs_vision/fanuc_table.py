@@ -5,9 +5,9 @@ from geometry_msgs.msg import Point
 import math
 
 class FanucTable(VisionTable):
-    table_origin = Point(x=228.591, y=228.287, z=-0.01)
-    tray_height = 0.017
-    gear_height = 0.02
+    table_origin = Point(x=228.591, y=228.287, z= -25.4)
+    tray_height = 0.0015
+    gear_height = 0.005
 
     video_stream = "http://192.168.1.104/mjpg/video.mjpg"
     map_x_image = 'fanuc_table_map_x.npy'
@@ -30,7 +30,7 @@ class FanucTable(VisionTable):
     generate_map_area = 10
 
     angle_offset = 0
-    suffix = 'fanuc'
+    suffix = 'fanuc_table'
     vision_location = "table_vision"
 
     conversion_factor = 0.8466 # 30 pixels is 25.4 mm so 1 pixel is .8466 mm

@@ -25,7 +25,7 @@ from example_interfaces.srv import Trigger
 from sensor_msgs.msg import Image
 from aprs_interfaces.msg import Trays, Tray, SlotInfo, PixelCenter, SlotPixel, PixelSlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
-from geometry_msgs.msg import TransformStamped, Point, Quaternion
+from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped
     
 class VisionTable(Node):    
     tray_names = {
@@ -158,8 +158,8 @@ class VisionTable(Node):
         except:
             response.success = False
             response.message = "Unable to detect trays properly. Is the robot arm in the way?"
-            cv2.imshow('Error Reason', frame)
-            cv2.waitKey(0)
+            # cv2.imshow('Error Reason', frame)
+            # cv2.waitKey(0)
 
         return response
     
@@ -183,7 +183,7 @@ class VisionTable(Node):
     def calibrate_maps_cb(self, request: GenerateGridMaps.Request, response: GenerateGridMaps.Response) -> GenerateGridMaps.Response:
         # TODO: Generate and save new maps for calibration
 
-        if self.current_frame is None:
+        if self.full_frame is None:
             response.message = "Unable to connect to camera"
             response.success = False
             return response
@@ -192,14 +192,14 @@ class VisionTable(Node):
             response.success = False
             return response
 
-        if self.generate_grid_maps(self.current_frame,request.filepath) is False:
+        if self.generate_grid_maps(self.full_frame,request.filepath) is False:
             response.success = False
             response.message = "Unable to Calibrate Map"
         else:
             response.success = True
             response.message = "Map Calibrated"
             if request.save_background_image:
-                cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.current_frame))
+                cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.full_frame))
 
         return response
 
@@ -227,6 +227,7 @@ class VisionTable(Node):
         ret, self.current_frame = self.capture.read()
 
         if ret:
+            self.full_frame = self.current_frame.copy()
             self.current_frame = self.rectify_frame(self.current_frame)
         # Save current frame as ROS message for publishing
             self.current_image_msg = self.build_img_msg_from_mat(self.current_frame)
@@ -313,7 +314,7 @@ class VisionTable(Node):
             # Ignore contours under a size threshold
             if cv2.contourArea(contour) < 200:
                 continue
-            cv2.drawContours(table_image,contour,-1,(255,255,255),2)
+            # cv2.drawContours(table_image,contour,-1,(255,255,255),2)
 
             # Approximate the contour as a polygon
             peri = cv2.arcLength(contour, True)
@@ -392,7 +393,7 @@ class VisionTable(Node):
                 # Gather info for publishing TF frames
                 tray_msg = Tray()
                 tray_msg.identifier = identifier
-                tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}'
+                tray_msg.name = f'{VisionTable.tray_names[identifier]}_{i}_{self.suffix}'
 
                 pixel_tray_msg = PixelCenter()
                 pixel_tray_msg.identifier = identifier
@@ -405,17 +406,18 @@ class VisionTable(Node):
                     tray_center = Point(
                         x=(x * self.conversion_factor) / 1000,
                         y=(y * self.conversion_factor) / 1000, 
-                        z=self.tray_height
+                        z=-self.tray_height
                     )
 
                     theta = math.radians(-angle) + math.pi
 
                     # Publish TF frame
-                    tray_frame_name = f'{tray_msg.name}_{self.suffix}'
-                    transform_placehold = self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta)
-                    tray_msg.transform_stamped = transform_placehold
+                    tray_frame_name = f'{tray_msg.name}'
+                    tray_msg.tray_pose = self.generate_pose(image_base, tray_center, 0.0, math.pi, theta)
                     if self.publish_frames:
-                        self.transforms.append(transform_placehold)
+                        self.transforms.append(
+                            self.generate_transform(image_base, tray_frame_name, tray_center, 0.0, math.pi, theta)
+                        )
  
                 for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                     # Create slot info for each slot
@@ -441,9 +443,9 @@ class VisionTable(Node):
                             y= y_off, 
                             z= self.gear_height
                         )
-                        slot_frame_name = f'{slot_info.name}_{self.suffix}'
+                        slot_info.slot_pose = self.generate_pose(tray_frame_name,slot_center_tray, 0.0, 0.0, 0.0)
                         if self.publish_frames:
-                            self.transforms.append(self.generate_transform(tray_frame_name, slot_frame_name, slot_center_tray, 0.0, 0.0, 0.0))
+                            self.transforms.append(self.generate_transform(tray_frame_name, slot_info.name, slot_center_tray, 0.0, 0.0, 0.0))
 
                     # Store pixel coordinates for center of slot
                 
@@ -644,6 +646,19 @@ class VisionTable(Node):
         t.transform.rotation = self.quaternion_from_euler(roll, pitch, yaw)
 
         return t
+    
+    def generate_pose(self, parent_frame: str, pt: Point, roll: float, pitch: float, yaw: float) -> PoseStamped:
+        p = PoseStamped()
+
+        p.header.stamp = self.get_clock().now().to_msg()
+        p.header.frame_id = parent_frame
+
+        p.pose.position.x = pt.x
+        p.pose.position.y = pt.y
+        p.pose.position.z = pt.z
+        p.pose.orientation = self.quaternion_from_euler(roll, pitch, yaw)
+
+        return p
             
     def build_img_msg_from_mat(self, mat: MatLike) -> Image:
         img_msg = Image()

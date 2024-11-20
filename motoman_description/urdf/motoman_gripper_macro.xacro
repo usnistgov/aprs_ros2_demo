@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="motoman_gripper" params="
+    parent
+  ">
+    <!-- Gripper Link -->
+    <link name="motoman_gripper_link">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_gripper_link_simplified.stl"/>
+        </geometry>
+        <material name="">
+          <color rgba="0.15 0.15 0.15 1.0" />
+      </material>
+      </visual>
+
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_gripper_link_simplified.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+     <link name="motoman_left_finger">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_left_finger.stl" />
+        </geometry>
+        <material name="">
+          <color rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+      </visual>
+
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_left_finger.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="motoman_right_finger">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_right_finger.stl" />
+        </geometry>
+        <material name="">
+          <color rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+      </visual>
+
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0" />
+        <geometry>
+          <mesh filename="file://$(find motoman_description)/meshes/motoman_right_finger.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="motoman_tool0"/>
+
+    <!-- Gripper Joint -->
+    <joint name="motoman_gripper_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="motoman_gripper_link"/>
+      <origin xyz="0 0.2588 0" rpy="-1.571 0 1.571"/>
+    </joint>
+
+    <!-- Finger 1 Joint -->
+    <joint name="motoman_left_finger_joint" type="prismatic">
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+      <parent link="motoman_gripper_link" />
+      <child link="motoman_left_finger" />
+      <axis xyz="0 -1 0" />
+      <limit lower="0.0" upper="0.02" effort="1000" velocity="1000"/>
+    </joint>
+
+    <!-- Finger 2 Joint -->
+    <joint name="motoman_right_finger_joint" type="prismatic">
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+      <parent link="motoman_gripper_link" />
+      <child link="motoman_right_finger" />
+      <axis xyz="0 1 0" />
+      <limit lower="0.0" upper="0.02" effort="1000" velocity="1000"/>
+    </joint>
+
+    <joint name="motoman_tool0_joint" type="fixed">
+      <origin xyz=" 0.059 0.0 0.0" rpy="0.0 1.57 0.0" />
+      <parent link="motoman_gripper_link"/>
+      <child link="motoman_tool0"/>
+    </joint>
+
+  </xacro:macro>
+  
+</robot>
