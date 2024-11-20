@@ -51,14 +51,6 @@ class VisionTable(Node):
     conversion_factor: float
     publish_frames: bool
 
-    top_left_x: int
-    top_left_y: int
-    bottom_left_x: int
-    bottom_left_y: int
-    top_right_x: int
-    top_right_y: int
-    bottom_right_x: int
-    bottom_right_y: int
     grid_hsv_lower: tuple[int,int,int]
     grid_hsv_upper: tuple[int,int,int]
     calibrate_rows: int
@@ -68,11 +60,30 @@ class VisionTable(Node):
     suffix: str
     vision_location: str
 
+    # Variables Consistent For All Locations
+    top_left_x = 0
+    top_left_y = 0
+    bottom_left_x = 0
+    bottom_left_y = 0
+    top_right_x = 0
+    top_right_y = 0
+    bottom_right_x = 0
+    bottom_right_y = 0
+
+    clicked = 0
     refpt = []
     rows = []
     columns = []
-    clicked = 0
     pixels_in_one_inch = 30
+
+    counter = 0
+    erase_counter = 0
+    input_mode = 0
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_origin = (20,30)
+    font_scale = 1
+    font_color = (255,255,255)
+    font_thickness = 2
 
 
     gear_detection_values: dict[int, GearDetection]
@@ -528,7 +539,7 @@ class VisionTable(Node):
         # Create Copy for Calibrating and then Create Black Box for Displaying Instructions
         self.calibration_image = frame.copy()
         self.original_copy = frame.copy()
-        self.calibration_image[0:40,0:800] = (0,0,0)
+        self.calibration_image[0:40,0:1000] = (0,0,0)
 
         # Provide First Step Instruction
         self.text_over_image('Select Top Left Point', self.calibration_image)
@@ -536,18 +547,18 @@ class VisionTable(Node):
         # Create Window and allow mouse callback for selecting four corners
         while True:
             cv2.namedWindow('window', cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('window', 800, 800)
+            cv2.resizeWindow('window', 1000, 1000)
             cv2.imshow('window',self.calibration_image)
             cv2.setMouseCallback('window',self.click_input_on_image)
             key = cv2.waitKey(0) & 0xFF
             if key == ord('r'):
                 self.refpt.clear()
                 self.calibration_image = self.original_copy
-                self.calibration_image[0:40,0:800] = (0,0,0)
+                self.calibration_image[0:40,0:1000] = (0,0,0)
                 self.text_over_image('Select Top Left Point', self.calibration_image)
                 cv2.imshow('window', self.calibration_image)
                 self.counter = 0
-            elif  key != ord('r'):
+            elif  key == ord('c'):
                 break
 
         # Assign output from mouse callback to easily callable variables
@@ -562,11 +573,13 @@ class VisionTable(Node):
 
         self.refpt.clear()
 
+        offset = 5
+
         # Create corners points using previous values
-        top_left = (top_left_x, top_left_y)
-        top_right = (top_right_x, top_right_y)
-        bottom_right = (bottom_right_x, bottom_right_y)
-        bottom_left = (bottom_left_x, bottom_left_y)
+        top_left = (top_left_x + offset, top_left_y + offset)
+        top_right = (top_right_x - offset, top_right_y + offset)
+        bottom_right = (bottom_right_x - offset, bottom_right_y - offset)
+        bottom_left = (bottom_left_x + offset, bottom_left_y - offset)
 
         # Black out everything from image that is not the active region
         fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
@@ -581,6 +594,8 @@ class VisionTable(Node):
 
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
+        cv2.imwrite('hsv.jpg', hsv)
+
         threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
         corners = np.array([top_right, bottom_right, bottom_left, top_left])
@@ -593,36 +608,35 @@ class VisionTable(Node):
         cv2.drawContours(just_holes,[corners],-1,0,2) # type: ignore
 
         self.just_holes_calibration = just_holes.copy()
-        self.text_over_image('Select Points to Erase',self.just_holes_calibration)
+        self.text_over_image('Select Points to Erase using middle mouse button',self.just_holes_calibration)
+        self.just_holes_original = self.just_holes_calibration
 
         # Mouse callback on window to allow for a right-click drag to remove any excess points
-        cv2.namedWindow('window', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('window', 800, 800)
-        cv2.createTrackbar('Minimum Size of Contours', 'window', 0, 30, self.slider_change)
-        cv2.imshow('window', self.just_holes_calibration)
+        cv2.namedWindow('window', cv2.WINDOW_GUI_NORMAL)
         cv2.setMouseCallback('window',self.draw_box_on_image)
+        cv2.createTrackbar('Minimum Size of Contours', 'window', round(self.generate_map_area), 30, self.slider_change)
+        cv2.imshow('window', self.just_holes_calibration)
         cv2.waitKey(0)
 
         # Save adjusted image into just_holes and remove any lingering instructions. Add new instruction for next callback
 
-        just_holes = self.just_holes_calibration
-        just_holes[0:40,0:800] = 0
+        just_holes = self.just_holes_original
+        just_holes[0:40,0:1000] = 0
         self.text_over_image('Please Select a Single Column',just_holes)
 
         # Mouse callback for selecting a single column
         while True:
             cv2.setMouseCallback('window', self.select_column)
             cv2.imshow('window', just_holes)
-            cv2.resizeWindow('window', 800, 800)
             key = cv2.waitKey(0) & 0xFF
             if key == ord('r'):
                 self.rows.clear()
-                self.text_over_image('Please Select a Single Column', self.just_holes_calibration)
-                cv2.imshow('window', self.just_holes_calibration)
-            elif key != ord('r'):
+                self.text_over_image('Please Select a Single Column', just_holes)
+                cv2.imshow('window', just_holes)
+            elif key == ord('c'):
                 break
 
-        just_holes[0:40,0:800] = 0
+        just_holes[0:40,0:1000] = 0
         self.text_over_image('Please Select a Single Row', just_holes)
 
         # Mouse callback for selecting a single row
@@ -634,11 +648,11 @@ class VisionTable(Node):
                 self.columns.clear()
                 self.text_over_image('Please Select a Single Row', self.just_holes_calibration)
                 cv2.imshow('window', self.just_holes_calibration)
-            elif key != ord('r'):
+            elif key == ord('c'):
                 break
             
         cv2.destroyAllWindows()
-        just_holes[0:40,0:800] = 0
+        just_holes[0:40,0:1000] = 0
 
         # Find all contours, all contours within the selected column, and all contours within the selected row
         self.contours, _ = cv2.findContours(just_holes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -653,8 +667,21 @@ class VisionTable(Node):
             if area >= self.generate_map_area:
                 filtered_contours.append(contour)
                 total_contours = total_contours+1
-        center_points = []
 
+        filtered_row_contours = []
+        for contour in rows_contours:
+            area = cv2.contourArea(contour)
+            if area >= self.generate_map_area:
+                filtered_row_contours.append(contour)
+
+        filtered_column_contours = []
+        for contour in columns_contours:
+            area = cv2.contourArea(contour)
+            if area >= self.generate_map_area:
+                filtered_column_contours.append(contour)
+
+
+        center_points = []
         # Calculate centerpoints for every detected contour
         for contour in filtered_contours:
             # Calculate moments for each contour
@@ -669,7 +696,7 @@ class VisionTable(Node):
 
         # Calculate centerpoints for the detected contours in the first column
         row_points = []
-        for row in rows_contours:
+        for row in filtered_row_contours:
             # Calculate moments for each contour
             M = cv2.moments(row)
 
@@ -682,10 +709,10 @@ class VisionTable(Node):
         row_points.sort(key=lambda point: (point[1]))
 
         # Count the total number of rows and columns based on detected contours
-        rows = len(rows_contours)
-        columns = len(columns_contours)
+        rows = len(filtered_row_contours)
+        columns = len(filtered_column_contours)
 
-        # print(f"Found: {total_contours}  Rows: {rows} Columns: {columns}")
+        print(f"Found: {total_contours}  Rows: {rows} Columns: {columns}")
 
         # Check to see if the found number of contours matches the expected number of contours
         if not len(filtered_contours) == rows * columns:
@@ -803,16 +830,16 @@ class VisionTable(Node):
         if event == cv2.EVENT_LBUTTONDOWN:
             # print(f"The point selected is x: {x}, y: {y}")
             self.refpt.append((x,y))
-            self.calibration_image[0:40,0:800] = (0,0,0)
+            self.calibration_image[0:40,0:1000] = (0,0,0)
             if self.erase_counter == 0:
                 pass
             elif self.erase_counter % 2 == 0:
-                self.just_holes_calibration[0:40,0:800] = 0
+                self.just_holes_calibration[0:40,0:1000] = 0
                 self.text_over_image('Select Top Left of Point to Erase', self.just_holes_calibration)
                 cv2.imshow('window', self.just_holes_calibration)
                 self.erase_counter = self.erase_counter + 1
             else:
-                self.just_holes_calibration[0:40,0:800] = 0
+                self.just_holes_calibration[0:40,0:1000] = 0
                 self.text_over_image('Select Bottom Right of Point to Erase', self.just_holes_calibration)
                 cv2.imshow('window', self.just_holes_calibration)
                 self.erase_counter = self.erase_counter + 1
@@ -832,69 +859,73 @@ class VisionTable(Node):
             self.counter = self.counter + 1
             if self.counter == 4:
                 cv2.circle(self.calibration_image, (x,y), 10, (255,255,255), -1)
-                self.text_over_image("Select any key to progress or press r to reset", self.calibration_image)
+                self.text_over_image("Press c to progress or press r to reset", self.calibration_image)
                 cv2.imshow('window', self.calibration_image)
 
     def draw_box_on_image(self,event,x,y,flags,param):
         rectangle_image = self.just_holes_calibration.copy()
         if self.refpt:
             rectangle_image = self.just_holes_calibration.copy()
-            cv2.rectangle(rectangle_image, (self.refpt[0][0],self.refpt[0][1]), (x,y), 120, 1)
+            cv2.rectangle(rectangle_image, (self.refpt[0][0],self.refpt[0][1]), (x,y), (120,120,120), 1)
             cv2.imshow('window', rectangle_image)
-        if event == cv2.EVENT_LBUTTONDOWN:
+        if event == cv2.EVENT_MBUTTONDOWN:
             self.refpt.append((x,y))
-        if event == cv2.EVENT_LBUTTONUP:
+        if event == cv2.EVENT_MBUTTONUP:
             cv2.rectangle(self.just_holes_calibration, (self.refpt[0][0],self.refpt[0][1]), (x,y), 0, -1) #type: ignore
+            cv2.rectangle(self.just_holes_original, (self.refpt[0][0],self.refpt[0][1]), (x,y), 0, -1) #type: ignore
             cv2.imshow('window', self.just_holes_calibration)
             self.refpt.clear()
 
     def select_column(self,event,x,y,flags,param):
-        rectangle_image = self.just_holes_calibration.copy()
-        rectangle_image[0:40,0:800] = 0
-        if event == cv2.EVENT_LBUTTONDOWN:
+        rectangle_image = self.just_holes_original.copy()
+        rectangle_image[0:40,0:1000] = 0
+        if event == cv2.EVENT_MBUTTONDOWN:
             self.rows.append((x,y))
             self.clicked = 1
-        if event == cv2.EVENT_LBUTTONUP:
+        if event == cv2.EVENT_MBUTTONUP:
             self.rows.append((x,y))
             self.clicked = 0
-            rectangle_image[0:40,0:800] = 0
+            rectangle_image[0:40,0:1000] = 0
             cv2.rectangle(rectangle_image, (self.rows[0][0], self.rows[0][1]), (self.rows[1][0], self.rows[1][1]), 120, 2)
-            self.text_over_image('Press any key to continue or press r to place rectangle again.',rectangle_image)
+            self.text_over_image('Press c to continue or press r to place rectangle again.',rectangle_image)
             cv2.imshow('window', rectangle_image)
         if self.clicked == 1:
-            rectangle_image = self.just_holes_calibration.copy()
+            rectangle_image = self.just_holes_original.copy()
             cv2.rectangle(rectangle_image, (self.rows[0][0],self.rows[0][1]), (x,y), 120, 2)
             cv2.imshow('window', rectangle_image)
 
     def select_row(self,event,x,y,flags,param):
-        rectangle_image = self.just_holes_calibration.copy()
-        rectangle_image[0:40,0:800] = 0
-        if event == cv2.EVENT_LBUTTONDOWN:
+        rectangle_image = self.just_holes_original.copy()
+        rectangle_image[0:40,0:1000] = 0
+        if event == cv2.EVENT_MBUTTONDOWN:
             self.columns.append((x,y))
             self.clicked = 1
-        if event == cv2.EVENT_LBUTTONUP:
+        if event == cv2.EVENT_MBUTTONUP:
             self.columns.append((x,y))
             self.clicked = 0
-            rectangle_image[0:40,0:800] = 0
+            rectangle_image[0:40,0:1000] = 0
             cv2.rectangle(rectangle_image, (self.columns[0][0], self.columns[0][1]), (self.columns[1][0], self.columns[1][1]), 120, 2)
-            self.text_over_image('Press any key to continue or press r to place rectangle again',rectangle_image)
+            self.text_over_image('Press c to continue or press r to place rectangle again',rectangle_image)
             cv2.imshow('window', rectangle_image)                
         if self.clicked == 1:
-            rectangle_image = self.just_holes_calibration.copy()
+            rectangle_image = self.just_holes_original.copy()
             cv2.rectangle(rectangle_image, (self.columns[0][0],self.columns[0][1]), (x,y), 120, 2)
             cv2.imshow('window', rectangle_image)
     
     def slider_change(self, val):
-        contour_image = self.just_holes_calibration.copy()
+        contour_image = self.just_holes_original.copy()
         contours, _ = cv2.findContours(contour_image[50:,:], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         filtered_contours = []
         for contour in contours:
             area = cv2.contourArea(contour)
             if area >= val:
                 filtered_contours.append(contour)
+        self.generate_map_area = val
 
-        cv2.drawContours(contour_image[50:,:],filtered_contours,-1,120,-1) #type: ignore
-        cv2.imshow('window', contour_image)
+        colored_image = cv2.cvtColor(contour_image,cv2.COLOR_GRAY2BGR)
+        cv2.drawContours(colored_image[50:,:],filtered_contours,-1,(0,255,0),-1) #type: ignore
+        cv2.imshow('window', colored_image)
+        self.just_holes_calibration = colored_image.copy()
 
     def text_over_image(self, text, image):
         image = cv2.putText(
