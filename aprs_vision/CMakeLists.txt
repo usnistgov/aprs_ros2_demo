@@ -37,6 +37,7 @@ install(PROGRAMS
   nodes/motoman_vision_node.py
   nodes/motoman_conveyor_node.py
   nodes/fanuc_conveyor_node.py
+  nodes/calibration_tool_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
