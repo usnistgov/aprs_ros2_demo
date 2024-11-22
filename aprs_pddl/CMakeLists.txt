@@ -63,10 +63,16 @@ add_executable(place_part_action_node src/place_part_action.cpp)
 target_include_directories(place_part_action_node PRIVATE include)
 ament_target_dependencies(place_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+# move_conveyor_action
+add_executable(move_conveyor_action_node src/move_conveyor_action.cpp)
+target_include_directories(move_conveyor_action_node PRIVATE include)
+ament_target_dependencies(move_conveyor_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 install(TARGETS
     task_planner_node
     pick_part_action_node
     place_part_action_node
+    move_conveyor_action_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

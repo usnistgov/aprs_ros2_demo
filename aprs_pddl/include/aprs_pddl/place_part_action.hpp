@@ -4,7 +4,6 @@
 #include "plansys2_executor/ActionExecutorClient.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include <aprs_interfaces/srv/place.hpp>
-#include <aprs_pddl/place_part_action.hpp>
 
 class PlacePartAction : public plansys2::ActionExecutorClient
 {
@@ -13,7 +12,6 @@ public:
 
 protected:
   void do_work() override;
-  void reset_action();
 
 private:
 
