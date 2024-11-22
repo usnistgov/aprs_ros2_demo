@@ -12,6 +12,10 @@ from cv2.typing import MatLike
 
 class CameraException(Exception):
     pass
+
+class CalibrationException(Exception):
+    pass
+
 class CalibrationTool(Node):       
     camera_ip_address = {
         'fanuc_table': '192.168.1.104',
@@ -39,12 +43,21 @@ class CalibrationTool(Node):
             'upper': (255, 255, 125)
         },
         'teach_table': {
-            'lower': (0, 0, 130), 
-            'upper': (255, 50, 255)
+            'lower': (0, 0, 110), 
+            'upper': (255, 255, 255)
         },
     }
     
-    pixels_per_inch = 30 
+    pixels_per_inch = 30
+    crop_offset = -10
+    max_value = 255
+    max_value_H = 360//2   
+    low_H_name = 'Low H'
+    low_S_name = 'Low S'
+    low_V_name = 'Low V'
+    high_H_name = 'High H'
+    high_S_name = 'High S'
+    high_V_name = 'High V' 
     
     def __init__(self):
         super().__init__('calibration_tool')
@@ -69,40 +82,229 @@ class CalibrationTool(Node):
         
         # Variables
         self.rotation_angle = 0
+        self.start_corner: Optional[tuple[int, int]] = None
+        self.end_corner: Optional[tuple[int, int]] = None
+        self.low_H = self.background_hsv_bounds[self.camera_name]['lower'][0]
+        self.low_S = self.background_hsv_bounds[self.camera_name]['lower'][1]
+        self.low_V = self.background_hsv_bounds[self.camera_name]['lower'][2]
+        self.high_H = self.background_hsv_bounds[self.camera_name]['upper'][0]
+        self.high_S = self.background_hsv_bounds[self.camera_name]['upper'][1]
+        self.high_V = self.background_hsv_bounds[self.camera_name]['upper'][2]
+        self.minimum_contour_area = 10
         
-    def rotation_trackbar_cb(self, val):
-        self.rotation_angle = val
-        
-    def set_rotation(self) -> Optional[MatLike]:
+    def rotation_trackbar_cb_(self, val):
+        self.rotation_angle = val/5
+    
+    def rectangle_corners_mouse_cb_(self, event,x,y,flags,param):
+        self.rectangle_x = x
+        self.rectangle_y = y
+        if event == cv2.EVENT_MBUTTONDOWN:
+            self.start_corner = (x,y)
+        if event == cv2.EVENT_MBUTTONUP:
+            self.end_corner = (x,y)
+
+    def low_H_cb_(self,val):
+        self.low_H = val
+        self.low_H = min(self.high_H - 1, self.low_H)
+        cv2.setTrackbarPos(self.low_H_name, self.hsv_window, self.low_H)
+
+    def high_H_cb_(self,val):
+        self.high_H = val
+        self.high_H = max(self.high_H, self.low_H + 1)
+        cv2.setTrackbarPos(self.high_H_name, self.hsv_window, self.high_H)
+
+    def low_S_cb_(self,val):
+        self.low_S = val
+        self.low_S = min(self.high_S - 1, self.low_S)
+        cv2.setTrackbarPos(self.low_S_name, self.hsv_window, self.low_S)
+
+    def high_S_cb_(self,val):
+        self.high_S = val
+        self.high_S = max(self.high_S, self.low_S + 1)
+        cv2.setTrackbarPos(self.high_S_name, self.hsv_window, self.high_S)
+
+    def low_V_cb_(self,val):
+        self.low_V = val
+        self.low_V = min(self.high_V - 1, self.low_V)
+        cv2.setTrackbarPos(self.low_V_name, self.hsv_window, self.low_V)
+
+    def high_V_cb_(self,val):
+        self.high_V = val
+        self.high_V = max(self.high_V, self.low_V + 1)
+        cv2.setTrackbarPos(self.high_V_name, self.hsv_window, self.high_V)
+
+    def contour_area_slider_cb_(self, val):
+        self.minimum_contour_area = val
+
+    def set_rotation(self, frame: MatLike) -> MatLike:
         rotation_window = "Use slider to set rotation for the image. Press \'c\' to continue, Press \'q\' to quit"
                 
         cv2.namedWindow(rotation_window, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(rotation_window , 800, 800)
         
         angle_trackbar = 'Rotation angle'
-        cv2.createTrackbar(angle_trackbar, rotation_window, 0, 50, self.rotation_trackbar_cb)
+        cv2.createTrackbar(angle_trackbar, rotation_window, 0, 50, self.rotation_trackbar_cb_)
         cv2.setTrackbarMin(angle_trackbar, rotation_window, -50)
         
         while True:
-            rotation_matrix = cv2.getRotationMatrix2D((self.frame.shape[1]/2, self.frame.shape[0]/2), self.rotation_angle, 1)
-            rotated_img = cv2.warpAffine(self.frame, rotation_matrix, (self.frame.shape[1], self.frame.shape[0]))
+            rotation_matrix = cv2.getRotationMatrix2D((frame.shape[1]/2, frame.shape[0]/2), self.rotation_angle, 1)
+            rotated_img = cv2.warpAffine(frame, rotation_matrix, (frame.shape[1], frame.shape[0]))
+
+            # TODO: add grid to rotation image
             
             cv2.imshow(rotation_window, rotated_img)
             
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
+                cv2.destroyWindow(rotation_window)
                 return rotated_img
             if key == ord('q'):
-                return None
+                raise CalibrationException('User quit')
+            
+    def select_region(self, frame: MatLike, type: str)-> tuple[tuple[int, int], tuple[int, int]]:
+        self.start_corner = None
+        self.end_corner = None
+        box_window = f'Use the middle mouse button to draw a rectangle over a single {type}'
+        cv2.namedWindow(box_window, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(box_window , 800, 800)
+        
+        cv2.setMouseCallback(box_window, self.rectangle_corners_mouse_cb_)
+        
+        while True:
+            if self.start_corner is not None:
+                rectangle_image = frame.copy()
+                if self.end_corner is None:
+                    rectangle_end_point = (self.rectangle_x, self.rectangle_y)
+                else:
+                    rectangle_end_point = self.end_corner
+                
+                cv2.rectangle(rectangle_image, self.start_corner, rectangle_end_point, 120, 3)
+                cv2.imshow(box_window, rectangle_image) 
+            else:
+                cv2.imshow(box_window, frame)
+            
+            
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                if self.end_corner is None or self.start_corner is None:
+                    raise CalibrationException('Both corners were not selected for region!')
+                cv2.destroyWindow(box_window)
+                break
+            if key == ord('r'):
+                self.start_corner = None
+                self.end_corner = None
+            if key == ord('q'):
+                raise CalibrationException('User quit')
+        
+        return (self.start_corner, self.end_corner)
     
-    def set_corners(self):
-        pass
+    # def set_crop_region(self, frame: MatLike)-> MatLike:
+    #     corner_window = 'Use the middle mouse button to draw a rectangle over the desired calibration region'
+    #     cv2.namedWindow(corner_window, cv2.WINDOW_NORMAL)
+    #     cv2.resizeWindow(corner_window , 800, 800)
+        
+    #     cv2.setMouseCallback(corner_window, self.rectangle_corners_mouse_cb_)
+        
+    #     while True:
+    #         if self.start_corner is not None:
+    #             rectangle_image = frame.copy()
+    #             if self.end_corner is None:
+    #                 rectangle_end_point = (self.rectangle_x, self.rectangle_y)
+    #             else:
+    #                 rectangle_end_point = self.end_corner
+                
+    #             cv2.rectangle(rectangle_image, self.start_corner, rectangle_end_point, (0, 0, 255), 3)
+    #             cv2.imshow(corner_window, rectangle_image) 
+    #         else:
+    #             cv2.imshow(corner_window, frame)
+            
+            
+    #         key = cv2.waitKey(1) & 0xFF
+    #         if key == ord('c'):
+    #             if self.end_corner is None or self.start_corner is None:
+    #                 raise CalibrationException('No corners were selected for cropping region!')
+    #             cv2.destroyWindow(corner_window)
+    #             break
+    #         if key == ord('r'):
+    #             self.start_corner = None
+    #             self.end_corner = None
+    #         if key == ord('q'):
+    #             raise CalibrationException('User quit')
+        
+    #     # Crop image        
+    #     cropped_img = frame[
+    #         self.start_corner[1] - self.crop_offset:self.end_corner[1] + self.crop_offset,
+    #         self.start_corner[0] - self.crop_offset:self.end_corner[0] + self.crop_offset
+    #     ]
+
+    #     return cropped_img
     
-    def set_hsv_threshold(self):
-        pass
+    def set_hsv_threshold(self, frame) -> MatLike:
+        frame = cv2.GaussianBlur(frame, (5,5), 0)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+        self.hsv_window = 'Use sliders to set HSV thresholding values to that only holes are visible in white'
+        cv2.namedWindow(self.hsv_window, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self.hsv_window , 800, 800)
+        
+        cv2.createTrackbar(self.low_H_name, self.hsv_window, self.low_H, self.max_value_H, self.low_H_cb_)
+        cv2.createTrackbar(self.high_H_name, self.hsv_window, self.high_H, self.max_value_H, self.high_H_cb_)
+        cv2.createTrackbar(self.low_S_name, self.hsv_window, self.low_S, self.max_value, self.low_S_cb_)
+        cv2.createTrackbar(self.high_S_name, self.hsv_window, self.high_S, self.max_value, self.high_S_cb_)
+        cv2.createTrackbar(self.low_V_name, self.hsv_window, self.low_V, self.max_value, self.low_V_cb_)
+        cv2.createTrackbar(self.high_V_name, self.hsv_window, self.high_V, self.max_value, self.high_V_cb_)
+
+        while True:
     
-    def set_hole_contours(self):
-        pass
+            frame_threshold_image = cv2.inRange(frame, (self.low_H, self.low_S, self.low_V), (self.high_H, self.high_S, self.high_V)) #type: ignore
+            cv2.imshow(self.hsv_window, frame_threshold_image)
+            
+            key = cv2.waitKey(30) & 0xFF
+            if key == ord('c'):
+                cv2.destroyWindow(self.hsv_window)
+                return frame_threshold_image
+            if key == ord('q'):
+                raise CalibrationException('User quit')
+    
+    def remove_excess_detected_points(self, frame: MatLike)-> MatLike:
+        self.start_corner = None
+        self.end_corner = None
+        remove_window = 'Use the middle mouse button to draw rectanlges over points that need to be removed'
+        cv2.namedWindow(remove_window, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(remove_window, 800, 800)
+
+        cv2.createTrackbar('Minimum Contour Area', remove_window, self.minimum_contour_area, 30, self.contour_area_slider_cb_)
+        cv2.setMouseCallback(remove_window, self.rectangle_corners_mouse_cb_)
+
+        while True:
+            remove_img = frame.copy()
+            if self.start_corner is not None:
+                if self.end_corner is None:
+                    cv2.rectangle(remove_img, self.start_corner, (self.rectangle_x, self.rectangle_y), 120, 2)
+                else:
+                    cv2.rectangle(frame, self.start_corner, self.end_corner, 0, -1)
+                    self.start_corner = None
+                    self.end_corner = None
+
+            contours, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            filtered_contours = []
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                if area >= self.minimum_contour_area:
+                    filtered_contours.append(contour)
+            colored_image = cv2.cvtColor(remove_img,cv2.COLOR_GRAY2BGR)
+            cv2.drawContours(colored_image,filtered_contours,-1,(0,255,0),-1) #type: ignore
+            cv2.imshow(remove_window, colored_image)
+
+            key = cv2.waitKey(30) & 0xFF
+            if key == ord('c'):
+                cv2.destroyWindow(remove_window)
+                return frame
+            if key == ord('q'):
+                raise CalibrationException('User quit')
+
+    def get_frame(self):
+        return self.frame
         
         
         
@@ -122,17 +324,6 @@ class CalibrationTool(Node):
     #     self.draw_grid(grid_image, 15, 20, (100, 100, 100), 1)
     #     cv2.imshow('Image Rotation', grid_image)
 
-    # def mouse_callback(self, event,x,y,flags,param):
-    #     if event == cv2.EVENT_MBUTTONDOWN:
-    #         self.start_corner = (x,y)
-    #         self.drawing_rectangle = True
-    #     if self.drawing_rectangle:
-    #         rectangle_image = self.current_frame.copy()
-    #         cv2.rectangle(rectangle_image, self.start_corner, (x,y), (0, 0, 255), 3)
-    #         cv2.imshow('Corner Selection', rectangle_image)
-    #     if event == cv2.EVENT_MBUTTONUP:
-    #         self.end_corner = (x,y)
-    #         self.drawing_rectangle = False
 
     # def draw_grid(self, img, rows, cols, color=(0, 255, 0), thickness=1):
     #     """Draws a grid over the image."""
