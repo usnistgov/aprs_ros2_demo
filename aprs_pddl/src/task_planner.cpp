@@ -7,10 +7,7 @@ TaskPlanner::TaskPlanner() : Node("task_planner")
   motoman_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/table_vision/trays_info", 10, bind(&TaskPlanner::MotomanTableTraysInfoCallback, this, std::placeholders::_1));
   motoman_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/conveyor_vision/trays_info", 10, bind(&TaskPlanner::MotomanConveyorTraysInfoCallback, this, std::placeholders::_1));
   teach_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach_table_vision/trays_info", 10, bind(&TaskPlanner::TeachTableTraysInfoCallback, this, std::placeholders::_1));
-
-  generate_init_state_server_ = this->create_service<aprs_interfaces::srv::GenerateInitState>(
-    "/generate_pddl_init_state",
-    std::bind(&TaskPlanner::GenerateInitStateCallback, this, std::placeholders::_1, std::placeholders::_2));
+  robot_status_subscriber_ = this->create_subscription<aprs_interfaces::msg::RobotStatus>("/robot_status", 10, bind(&TaskPlanner::RobotStatusCallback, this, std::placeholders::_1));
 
   generate_plan_server_ = this->create_service<aprs_interfaces::srv::GeneratePlan>(
     "/generate_pddl_plan",
@@ -84,14 +81,10 @@ void TaskPlanner::TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays:
   recieved_teach_table_info = true;
 }
 
-void TaskPlanner::GenerateInitStateCallback(const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Request>,
-                                            const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Response> response)
+void TaskPlanner::RobotStatusCallback(const aprs_interfaces::msg::RobotStatus::SharedPtr msg)
 {
-  init_world_state();
-  // init_goal_state();
-
-  response->success = true;
-  response->status = "Successfully Created Plansys2 Problem File";
+  fanuc_operational = msg->fanuc;
+  motoman_operational = msg->motoman;
 }
 
 void TaskPlanner::ClearCurrentStateCallback(const std::shared_ptr<aprs_interfaces::srv::ClearCurrentState::Request> request,
@@ -108,6 +101,25 @@ void TaskPlanner::ClearCurrentStateCallback(const std::shared_ptr<aprs_interface
 void TaskPlanner::GeneratePlanCallback(const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request,
                                         const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response){
   (void)request;
+
+  if (!recieved_fanuc_table_info || !recieved_fanuc_conveyor_info || !recieved_motoman_table_info || !recieved_motoman_conveyor_info || !recieved_teach_table_info){
+    RCLCPP_ERROR(this->get_logger(), "Could not generate plan, missing tray information");
+    response->success = false;
+    response->status = "Could not generate plan, missing tray information";
+    return;
+  }
+
+  if (goal_str_ == "(and"){
+    init_world_state();
+    init_goal_state();
+  }
+  else if (!fanuc_operational){
+    update_world_state("fanuc");
+  }
+  else if (!motoman_operational){
+    update_world_state("motoman");
+  }
+
   auto domain = domain_expert_->getDomain();
   auto problem = problem_expert_->getProblem();
   auto plan = planner_client_->getPlan(domain, problem);
@@ -362,8 +374,29 @@ void TaskPlanner::init_goal_state(){
     }
   }
 
-  goal_str_ += "(gripper_empty fanuc)(gripper_empty motoman))";
+  goal_str_ += ")";
 
   RCLCPP_INFO_STREAM(get_logger(), "Goal is: " << goal_str_);
   problem_expert_->setGoal(plansys2::Goal(goal_str_));
+}
+
+void TaskPlanner::update_world_state(std::string robot){
+  if (robot == "fanuc"){
+    problem_expert_->removePredicate(plansys2::Predicate("(robot_operational fanuc)"));
+    problem_expert_->removePredicate(plansys2::Predicate("(robot_on_standby fanuc)"));
+    problem_expert_->removePredicate(plansys2::Predicate("(in_reach fanuc_table fanuc)"));
+    problem_expert_->removePredicate(plansys2::Predicate("(in_reach fanuc_conveyor fanuc)"));
+
+    problem_expert_->addPredicate(plansys2::Predicate("(robot_faulty fanuc)"));
+    problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor motoman)"));
+  }
+  else if (robot == "motoman"){
+    problem_expert_->removePredicate(plansys2::Predicate("(robot_operational motoman)"));
+    problem_expert_->removePredicate(plansys2::Predicate("(robot_on_standby motoman)"));
+    problem_expert_->removePredicate(plansys2::Predicate("(in_reach motoman_table motoman)"));
+    problem_expert_->removePredicate(plansys2::Predicate("(in_reach motoman_conveyor motoman)"));
+
+    problem_expert_->addPredicate(plansys2::Predicate("(robot_faulty motoman)"));
+    problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_table fanuc)"));
+  }
 }

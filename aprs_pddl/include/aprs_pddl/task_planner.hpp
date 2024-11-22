@@ -14,13 +14,13 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include "aprs_interfaces/srv/generate_init_state.hpp"
 #include "aprs_interfaces/srv/generate_plan.hpp"
 #include "aprs_interfaces/srv/clear_current_state.hpp"
 #include "aprs_interfaces/action/execute_plan.hpp"
 #include "aprs_interfaces/msg/trays.hpp"
 #include "aprs_interfaces/msg/slot_info.hpp"
 #include "aprs_interfaces/msg/tray.hpp"
+#include "aprs_interfaces/msg/robot_status.hpp"
 
 class TaskPlanner : public rclcpp::Node
 {
@@ -32,6 +32,7 @@ public:
 
   void init_world_state();
   void init_goal_state();
+  void update_world_state(std::string robot);
 
  private:
 
@@ -41,7 +42,6 @@ public:
   std::shared_ptr<plansys2::ProblemExpertClient> problem_expert_;
   std::shared_ptr<plansys2::ExecutorClient> executor_client_; 
 
-  rclcpp::Service<aprs_interfaces::srv::GenerateInitState>::SharedPtr generate_init_state_server_;
   rclcpp::Service<aprs_interfaces::srv::ClearCurrentState>::SharedPtr clear_current_state_server_;
   rclcpp::Service<aprs_interfaces::srv::GeneratePlan>::SharedPtr generate_plan_server_;
   rclcpp_action::Server<aprs_interfaces::action::ExecutePlan>::SharedPtr execute_plan_action_;
@@ -51,6 +51,7 @@ public:
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr motoman_table_subscriber_;
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr motoman_conveyor_subscriber_;
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr teach_table_subscriber_;
+  rclcpp::Subscription<aprs_interfaces::msg::RobotStatus>::SharedPtr robot_status_subscriber_;
 
   rclcpp::CallbackGroup::SharedPtr cb_group_;
   rclcpp::CallbackGroup::SharedPtr topic_cb_group_;
@@ -69,13 +70,18 @@ public:
   std::vector<aprs_interfaces::msg::Tray> teach_table_kit_trays_;
   std::vector<aprs_interfaces::msg::Tray> teach_table_part_trays_;
 
-  //bool
+  // Flags
   bool recieved_fanuc_table_info = false;
   bool recieved_fanuc_conveyor_info = false;
   bool recieved_motoman_table_info = false;
   bool recieved_motoman_conveyor_info = false;
   bool recieved_teach_table_info = false;
 
+  // Robot Status
+  bool fanuc_operational;
+  bool motoman_operational;
+
+  // PDDL
   std::string goal_str_ = "(and";
 
   // Callbacks
@@ -84,11 +90,8 @@ public:
   void MotomanTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
   void MotomanConveyorTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
   void TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
+  void RobotStatusCallback(const aprs_interfaces::msg::RobotStatus::SharedPtr msg);
 
-  void GenerateInitStateCallback(
-    const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Request> request,
-    const std::shared_ptr<aprs_interfaces::srv::GenerateInitState::Response> response
-  ); 
   void GeneratePlanCallback(
     const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request,
     const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response
