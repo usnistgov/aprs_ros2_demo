@@ -27,7 +27,7 @@ class MotomanConveyor(VisionTable):
     publish_frames = True
 
     grid_hsv_lower = (0, 0, 10)
-    grid_hsv_upper = (255, 255, 140)
+    grid_hsv_upper = (255, 255, 125)
     generate_map_area = 5
 
     angle_offset = math.pi

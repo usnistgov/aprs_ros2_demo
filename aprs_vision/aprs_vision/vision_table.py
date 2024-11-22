@@ -4,6 +4,7 @@ import os
 import cv2
 import math
 import numpy as np
+from numpy.lib.npyio import NpzFile
 from scipy.interpolate import griddata
 
 from cv2.typing import MatLike
@@ -17,9 +18,8 @@ from ament_index_python.packages import get_package_share_directory
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 
 from aprs_vision.gear_detection import GearDetection
+from aprs_vision.calibration_tool import CalibrationTool
 from aprs_interfaces.srv import GenerateGridMaps, LocateTrays
-
-from pathlib import Path
 
 from example_interfaces.srv import Trigger
 from sensor_msgs.msg import Image
@@ -106,8 +106,13 @@ class VisionTable(Node):
 
         share_path = get_package_share_directory('aprs_vision')
 
-        self.map_x = np.load(os.path.join(share_path, 'config', self.map_x_image))
-        self.map_y = np.load(os.path.join(share_path, 'config', self.map_y_image))
+        # self.map_x = np.load(os.path.join(share_path, 'config', self.map_x_image))
+        # self.map_y = np.load(os.path.join(share_path, 'config', self.map_y_image))
+        calibration_filepath = os.path.join(share_path, 'config', f'{self.suffix}_calibration.npz')
+        if os.path.exists(calibration_filepath):
+            calibration_file_load:NpzFile = np.load(calibration_filepath)
+        else:
+            self.calibration_necessary = True
         self.base_background = cv2.imread(os.path.join(share_path, 'config', self.background_image))
 
         self.slot_pixel_centers: dict[str, tuple[int, int]] = {}
@@ -217,15 +222,31 @@ class VisionTable(Node):
             response.message = "Provided filepath does not exist"
             response.success = False
             return response
-
-        if self.generate_grid_maps(self.full_frame,request.filepath) is False:
+        
+        tool = CalibrationTool(self.full_frame)
+        ret = tool.run_calibration()
+        if ret is None:
             response.success = False
             response.message = "Unable to Calibrate Map"
-        else:
-            response.success = True
-            response.message = "Map Calibrated"
-            if request.save_background_image:
-                cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.full_frame))
+            return response
+
+        self.rotation, self.start_corner, self.end_corner, self.map_x, self.map_y = ret
+
+        calibration_file_name = os.path.join(request.filepath, f'{self.suffix}_calibration')
+
+        np.savez(
+            calibration_file_name, 
+            rotation=np.array(self.rotation), 
+            start_corner=self.start_corner, 
+            end_corner=self.end_corner,
+            map_x=self.map_x,
+            map_y=self.map_y
+        )
+
+        response.success = True
+        response.message = "Map Calibrated"
+        if request.save_background_image:
+            cv2.imwrite(f'{request.filepath}{self.background_image}',self.rectify_frame(self.full_frame))
 
         return response
 
@@ -253,14 +274,26 @@ class VisionTable(Node):
 
         if ret:
             self.full_frame = self.current_frame.copy()
-            self.current_frame = self.rectify_frame(self.current_frame)
+            # self.current_frame = self.rectify_frame(self.current_frame)
         # Save current frame as ROS message for publishing
             self.current_image_msg = self.build_img_msg_from_mat(self.current_frame)
         else:
             self.current_frame = None
 
     def rectify_frame(self, frame: MatLike) -> MatLike:
-        return cv2.remap(frame, self.map_x, self.map_y, cv2.INTER_CUBIC)[:-30,:-30]
+        if not self.rotation == 0:
+            rotation_matrix = cv2.getRotationMatrix2D((frame.shape[1] / 2, frame.shape[0] / 2), self.rotation, 1)
+            frame = cv2.warpAffine(frame, rotation_matrix, (frame.shape[1], frame.shape[0]))
+        offset = -10
+        
+        frame = frame[
+            self.start_corner[1] - offset:self.end_corner[1] + offset,
+            self.start_corner[0] - offset:self.end_corner[0] + offset
+        ]
+
+        frame = cv2.remap(frame, self.map_x, self.map_y, cv2.INTER_CUBIC)
+
+        return frame
     
     def remove_background(self, frame: MatLike) -> MatLike:
         delta = cv2.subtract(self.base_background, frame)
@@ -505,6 +538,8 @@ class VisionTable(Node):
             cv2.namedWindow('window', cv2.WINDOW_NORMAL)
             cv2.resizeWindow('window', 1000, 1000)
             cv2.imshow('window',self.calibration_image)
+            cv2.createTrackbar("Angle", "window", 0, 30, self.slider_rotation)
+            cv2.setTrackbarMin('Angle','window', -30)
             cv2.setMouseCallback('window',self.click_input_on_image)
             key = cv2.waitKey(0) & 0xFF
             if key == ord('r'):
@@ -520,12 +555,21 @@ class VisionTable(Node):
         # Assign output from mouse callback to easily callable variables
         top_left_x = self.refpt[0][0]
         top_left_y = self.refpt[0][1]
-        bottom_left_x = self.refpt[1][0]
-        bottom_left_y = self.refpt[1][1]
-        top_right_x = self.refpt[2][0]
-        top_right_y = self.refpt[2][1]
-        bottom_right_x = self.refpt[3][0]
-        bottom_right_y = self.refpt[3][1]
+        top_right_x = self.refpt[1][0]
+        top_right_y = self.refpt[1][1]
+        bottom_right_x = self.refpt[2][0]
+        bottom_right_y = self.refpt[2][1]
+
+        angle = math.atan2(top_right_y-top_left_y,top_right_x - top_left_x)
+        (h,w) = frame.shape[:2]
+        (cX, cY) = (w // 2, h // 2)
+        M_rot = cv2.getRotationMatrix2D((cX,cY), math.degrees(angle), 1.0)
+        rotated = cv2.warpAffine(frame, M_rot, (w,h))
+
+        print(angle)
+
+        cv2.imshow('window', rotated)
+        cv2.waitKey(0)
 
         self.refpt.clear()
 
@@ -535,10 +579,9 @@ class VisionTable(Node):
         top_left = (top_left_x + offset, top_left_y + offset)
         top_right = (top_right_x - offset, top_right_y + offset)
         bottom_right = (bottom_right_x - offset, bottom_right_y - offset)
-        bottom_left = (bottom_left_x + offset, bottom_left_y - offset)
 
         # Black out everything from image that is not the active region
-        fanuc_table_corners = np.array([top_right, bottom_right, bottom_left, top_left])
+        fanuc_table_corners = np.array([top_right, bottom_right, (top_left_x, bottom_right_y), top_left])
 
         maskImage = np.zeros(frame.shape, dtype=np.uint8)
         cv2.drawContours(maskImage, [fanuc_table_corners], 0, (255, 255, 255), -1)
@@ -554,7 +597,7 @@ class VisionTable(Node):
 
         threshold = cv2.inRange(hsv, self.grid_hsv_lower, self.grid_hsv_upper) # type: ignore
 
-        corners = np.array([top_right, bottom_right, bottom_left, top_left])
+        corners = np.array([top_right, bottom_right, (top_left_x, bottom_right_y), top_left])
 
         mask2 = np.zeros(threshold.shape, dtype=np.uint8)
         
@@ -801,19 +844,15 @@ class VisionTable(Node):
                 self.erase_counter = self.erase_counter + 1
             if self.counter == 0:
                 cv2.circle(self.calibration_image, (x,y), 10, (255,255,255), -1)
-                self.text_over_image('Select Bottom Left Point or press r to reset', self.calibration_image)
-                cv2.imshow('window', self.calibration_image)
-            elif self.counter == 1:
-                cv2.circle(self.calibration_image, (x,y), 10, (255,255,255), -1)
                 self.text_over_image('Select Top Right Point or press r to reset', self.calibration_image)
                 cv2.imshow('window', self.calibration_image)
-            elif self.counter == 2:
+            elif self.counter == 1:
                 cv2.circle(self.calibration_image, (x,y), 10, (255,255,255), -1)
                 self.text_over_image('Select Bottom Right Point or press r to reset', self.calibration_image)
                 cv2.imshow('window', self.calibration_image)
 
             self.counter = self.counter + 1
-            if self.counter == 4:
+            if self.counter == 3:
                 cv2.circle(self.calibration_image, (x,y), 10, (255,255,255), -1)
                 self.text_over_image("Press c to progress or press r to reset", self.calibration_image)
                 cv2.imshow('window', self.calibration_image)
@@ -868,6 +907,14 @@ class VisionTable(Node):
             cv2.rectangle(rectangle_image, (self.columns[0][0],self.columns[0][1]), (x,y), 120, 2)
             cv2.imshow('window', rectangle_image)
     
+    def slider_rotation(self, val):
+        self.rotate_image(val, self.calibration_image)
+
+    def rotate_image(self, angle, image):
+        rotation_matrix = cv2.getRotationMatrix2D((image.shape[1] / 2, image.shape[0] / 2), angle, 1)
+        rotated_image = cv2.warpAffine(image, rotation_matrix, (image.shape[1], image.shape[0]))
+        cv2.imshow("window", rotated_image)
+
     def slider_change(self, val):
         contour_image = self.just_holes_original.copy()
         contours, _ = cv2.findContours(contour_image[50:,:], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
