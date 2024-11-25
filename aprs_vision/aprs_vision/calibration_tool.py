@@ -49,7 +49,6 @@ class CalibrationTool(Node):
     }
     
     pixels_per_inch = 30
-    crop_offset = -10
     max_value = 255
     max_value_H = 360//2   
     low_H_name = 'Low H'

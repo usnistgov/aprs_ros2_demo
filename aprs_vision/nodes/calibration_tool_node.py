@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import rclpy
-import cv2
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
@@ -22,10 +21,7 @@ def main(args=None):
 
         crop_start, crop_end = calibration_tool.select_region(rotated_img, 'cropped region')
 
-        cropped_img = rotated_img[
-            crop_start[1] - calibration_tool.crop_offset:crop_end[1] + calibration_tool.crop_offset,
-            crop_start[0] - calibration_tool.crop_offset:crop_end[0] + calibration_tool.crop_offset
-        ]
+        cropped_img = rotated_img[crop_start[1]:crop_end[1],crop_start[0]:crop_end[0]]
 
         threshold_img = calibration_tool.set_hsv_threshold(cropped_img)
 

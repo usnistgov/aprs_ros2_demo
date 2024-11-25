@@ -1,0 +1,60 @@
+fanuc:
+  table_detection_area:
+    ros__parameters:
+      robot_name: fanuc
+      location: table
+      base_frame: fanuc_base_link
+      video_stream: http://192.168.1.104/mjpg/video.mjpg
+      publish_frames: True
+      rotation_from_base_frame: 0.0
+      table_origin:
+        x: 0.278
+        y: 0.203
+        z: -0.0254
+
+  conveyor_detection_area:
+    ros__parameters:
+      robot_name: fanuc
+      location: conveyor
+      base_frame: fanuc_base_link
+      video_stream: http://192.168.1.108/mjpg/video.mjpg
+      publish_frames: True
+      rotation_from_base_frame: 0.0
+      table_origin:
+        x: 0.279
+        y: 0.759
+        z: 0.0381
+
+motoman:
+  table_detection_area:
+    ros__parameters:
+      robot_name: motoman
+      location: table
+      base_frame: motoman_base_link
+      video_stream: http://192.168.1.110/mjpg/video.mjpg
+      publish_frames: True
+      rotation_from_base_frame: 0.0
+      table_origin:
+        x: 0.278
+        y: 0.203
+        z: -0.0254
+
+  conveyor_detection_area:
+    ros__parameters:
+      robot_name: motoman
+      location: conveyor
+      base_frame: motoman_base_link
+      video_stream: http://192.168.1.107/mjpg/video.mjpg
+      publish_frames: True
+      rotation_from_base_frame: 0.0
+      table_origin:
+        x: 0.278
+        y: 0.203
+        z: -0.0254
+
+teach_detection_area:
+  ros__parameters: 
+    robot_name: teach
+    location: table
+    video_stream: http://192.168.1.104/mjpg/video.mjpg
+    publish_frames: False
