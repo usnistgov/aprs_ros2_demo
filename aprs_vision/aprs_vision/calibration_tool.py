@@ -95,6 +95,24 @@ class CalibrationTool(Node):
     def rotation_trackbar_cb_(self, val):
         self.rotation_angle = val/5
     
+    def draw_grid(self, img, spacing, color=(0, 255, 0), thickness=1):
+        """Draws a grid over the image."""
+
+        h, w, _ = img.shape
+
+        rows = int(h/spacing)
+        cols = int(w/spacing)
+
+        for i in range(0, rows + 1):
+            y = int(i * h / rows)
+            cv2.line(img, (0, y), (w, y), color, thickness)
+
+        for j in range(0, cols + 1):
+            x = int(j * w / cols)
+            cv2.line(img, (x, 0), (x, h), color, thickness)
+
+        return img
+    
     def rectangle_corners_mouse_cb_(self, event,x,y,flags,param):
         self.rectangle_x = x
         self.rectangle_y = y
@@ -136,7 +154,7 @@ class CalibrationTool(Node):
     def contour_area_slider_cb_(self, val):
         self.minimum_contour_area = val
 
-    def set_rotation(self, frame: MatLike) -> MatLike:
+    def set_rotation(self, frame: MatLike) -> tuple[MatLike, float]:
         rotation_window = "Use slider to set rotation for the image. Press \'c\' to continue, Press \'q\' to quit"
                 
         cv2.namedWindow(rotation_window, cv2.WINDOW_NORMAL)
@@ -149,19 +167,19 @@ class CalibrationTool(Node):
         while True:
             rotation_matrix = cv2.getRotationMatrix2D((frame.shape[1]/2, frame.shape[0]/2), self.rotation_angle, 1)
             rotated_img = cv2.warpAffine(frame, rotation_matrix, (frame.shape[1], frame.shape[0]))
-
-            # TODO: add grid to rotation image
+            grid_img = rotated_img.copy()
+            self.draw_grid(grid_img, 30, (0, 153, 254), 1)
             
-            cv2.imshow(rotation_window, rotated_img)
+            cv2.imshow(rotation_window, grid_img)
             
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
                 cv2.destroyWindow(rotation_window)
-                return rotated_img
+                return (rotated_img, self.rotation_angle)
             if key == ord('q'):
                 raise CalibrationException('User quit')
             
-    def select_region(self, frame: MatLike, type: str)-> tuple[tuple[int, int], tuple[int, int]]:
+    def select_region(self, frame: MatLike, type: str, color:tuple[int, int, int]=(0,255,0))-> tuple[tuple[int, int], tuple[int, int]]:
         self.start_corner = None
         self.end_corner = None
         box_window = f'Use the middle mouse button to draw a rectangle over a single {type}'
@@ -173,18 +191,22 @@ class CalibrationTool(Node):
         while True:
             if self.start_corner is not None:
                 rectangle_image = frame.copy()
+
+                if len(rectangle_image.shape) < 3:
+                    rectangle_image = cv2.cvtColor(rectangle_image, cv2.COLOR_GRAY2BGR)
+
                 if self.end_corner is None:
                     rectangle_end_point = (self.rectangle_x, self.rectangle_y)
                 else:
                     rectangle_end_point = self.end_corner
-                
-                cv2.rectangle(rectangle_image, self.start_corner, rectangle_end_point, 120, 3)
+                    
+                cv2.rectangle(rectangle_image, self.start_corner, rectangle_end_point, color, 3)
                 cv2.imshow(box_window, rectangle_image) 
             else:
                 cv2.imshow(box_window, frame)
             
             
-            key = cv2.waitKey(1) & 0xFF
+            key = cv2.waitKey(30) & 0xFF
             if key == ord('c'):
                 if self.end_corner is None or self.start_corner is None:
                     raise CalibrationException('Both corners were not selected for region!')
@@ -197,47 +219,6 @@ class CalibrationTool(Node):
                 raise CalibrationException('User quit')
         
         return (self.start_corner, self.end_corner)
-    
-    # def set_crop_region(self, frame: MatLike)-> MatLike:
-    #     corner_window = 'Use the middle mouse button to draw a rectangle over the desired calibration region'
-    #     cv2.namedWindow(corner_window, cv2.WINDOW_NORMAL)
-    #     cv2.resizeWindow(corner_window , 800, 800)
-        
-    #     cv2.setMouseCallback(corner_window, self.rectangle_corners_mouse_cb_)
-        
-    #     while True:
-    #         if self.start_corner is not None:
-    #             rectangle_image = frame.copy()
-    #             if self.end_corner is None:
-    #                 rectangle_end_point = (self.rectangle_x, self.rectangle_y)
-    #             else:
-    #                 rectangle_end_point = self.end_corner
-                
-    #             cv2.rectangle(rectangle_image, self.start_corner, rectangle_end_point, (0, 0, 255), 3)
-    #             cv2.imshow(corner_window, rectangle_image) 
-    #         else:
-    #             cv2.imshow(corner_window, frame)
-            
-            
-    #         key = cv2.waitKey(1) & 0xFF
-    #         if key == ord('c'):
-    #             if self.end_corner is None or self.start_corner is None:
-    #                 raise CalibrationException('No corners were selected for cropping region!')
-    #             cv2.destroyWindow(corner_window)
-    #             break
-    #         if key == ord('r'):
-    #             self.start_corner = None
-    #             self.end_corner = None
-    #         if key == ord('q'):
-    #             raise CalibrationException('User quit')
-        
-    #     # Crop image        
-    #     cropped_img = frame[
-    #         self.start_corner[1] - self.crop_offset:self.end_corner[1] + self.crop_offset,
-    #         self.start_corner[0] - self.crop_offset:self.end_corner[0] + self.crop_offset
-    #     ]
-
-    #     return cropped_img
     
     def set_hsv_threshold(self, frame) -> MatLike:
         frame = cv2.GaussianBlur(frame, (5,5), 0)
@@ -278,9 +259,13 @@ class CalibrationTool(Node):
 
         while True:
             remove_img = frame.copy()
+            if len(remove_img.shape) < 3:
+                remove_img = cv2.cvtColor(remove_img, cv2.COLOR_GRAY2BGR)
             if self.start_corner is not None:
+           
                 if self.end_corner is None:
-                    cv2.rectangle(remove_img, self.start_corner, (self.rectangle_x, self.rectangle_y), 120, 2)
+                    cv2.rectangle(remove_img, self.start_corner, (self.rectangle_x, self.rectangle_y), (0, 255, 0), 2)
+                    # TODO: incorporate select region
                 else:
                     cv2.rectangle(frame, self.start_corner, self.end_corner, 0, -1)
                     self.start_corner = None
@@ -292,9 +277,8 @@ class CalibrationTool(Node):
                 area = cv2.contourArea(contour)
                 if area >= self.minimum_contour_area:
                     filtered_contours.append(contour)
-            colored_image = cv2.cvtColor(remove_img,cv2.COLOR_GRAY2BGR)
-            cv2.drawContours(colored_image,filtered_contours,-1,(0,255,0),-1) #type: ignore
-            cv2.imshow(remove_window, colored_image)
+            cv2.drawContours(remove_img, filtered_contours, -1, (0, 0, 255), -1) #type: ignore
+            cv2.imshow(remove_window, remove_img)
 
             key = cv2.waitKey(30) & 0xFF
             if key == ord('c'):
@@ -302,7 +286,104 @@ class CalibrationTool(Node):
                 return frame
             if key == ord('q'):
                 raise CalibrationException('User quit')
+            
+    def detect_contours(self, frame: MatLike, column_start: tuple[int, int], column_end: tuple[int, int], row_start: tuple[int, int], row_end: tuple[int, int])-> tuple[list[MatLike], list[MatLike], list[MatLike]]:
+        # Returns filtered contours in row, and column, and all found filtered contours in image
+        all_contours, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
+        selected_column_region = frame[column_start[1]:column_end[1], column_start[0]:column_end[0]]
+        contours_in_selected_column, _ = cv2.findContours(selected_column_region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        selected_row_region = frame[row_start[1]:row_end[1], row_start[0]:row_end[0]]
+        contours_in_selected_row, _ = cv2.findContours(selected_row_region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        all_contours = [c for c in all_contours if cv2.contourArea(c) >= self.minimum_contour_area]
+        contours_in_selected_column = [c for c in contours_in_selected_column if cv2.contourArea(c) >= self.minimum_contour_area]
+        contours_in_selected_row = [c for c in contours_in_selected_row if cv2.contourArea(c) >= self.minimum_contour_area]
+
+        num_holes = len(all_contours)
+        num_rows = len(contours_in_selected_column)
+        num_columns = len(contours_in_selected_row)
+
+        if num_holes < num_rows * num_columns:
+            raise CalibrationException(f'Not enough holes detected! Minimum Contour Area: {self.minimum_contour_area}')
+        elif num_holes > num_rows * num_columns:
+            raise CalibrationException(f'Too many holes detected. Minimum Contour Area: {self.minimum_contour_area}')
+        
+        return (all_contours, contours_in_selected_column, contours_in_selected_row)
+    
+    def sort_all_holes(self, frame, column_start_y, all_holes: list[MatLike], holes_in_column: list[MatLike])-> list[MatLike]:
+        # Find center of contours and sort
+        center_points = []
+        for hole in all_holes:
+            # Calculate moments for each contour
+            M = cv2.moments(hole)
+
+            # Calculate center of contour
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+
+                center_points.append((cX, cY))
+        
+        row_y = []
+        for contour in holes_in_column:
+            # Calculate moments for each contour
+            M = cv2.moments(contour)
+
+            # Calculate center of contour
+            if M["m00"] != 0:
+                row_y.append( int(M["m01"] / M["m00"]))
+
+        row_y.sort()
+
+        # Loop through each detected row and sort points in each row from left to right
+        sorted_points = []
+
+        for i in range(len(holes_in_column)):
+            working_points = []
+
+            if i == 0:
+                lower_bound = 0
+                upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2 
+            elif i == len(holes_in_column) - 1:
+                lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2 
+                upper_bound = frame.shape[1]
+            else:
+                lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2 
+                upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2 
+
+            for x, y in center_points:
+                if lower_bound <= y <= upper_bound:
+                    working_points.append((x, y))
+                     
+            sorted_points += sorted(working_points, key=lambda k: [k[0]])
+
+            # Check to see if all points were sorted
+        if not len(sorted_points) == len(center_points):
+            raise CalibrationException('Not able to properly sort holes!')
+        
+        return sorted_points
+
+    def create_mappings(self, sorted_holes: list[MatLike], num_rows: int, num_columns: int)-> tuple[MatLike, MatLike]:
+        actual_points = []
+        # Create grid, assigning each hole distance a certain number of pixels
+        for i in range(num_rows):
+            x = (i * self.pixels_per_inch)
+            for j in range(num_columns):
+                y = (j * self.pixels_per_inch)
+                actual_points.append([x, y])
+
+        grid_x, grid_y = np.mgrid[0:(num_rows-1)*self.pixels_per_inch, 0:(num_columns-1)*self.pixels_per_inch]
+
+        destination = np.array(actual_points)
+        source = np.array(sorted_holes)
+
+        grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
+        map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape((num_rows-1)*self.pixels_per_inch,(num_columns-1)*self.pixels_per_inch).astype('float32')
+        map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape((num_rows-1)*self.pixels_per_inch,(num_columns-1)*self.pixels_per_inch).astype('float32')
+
+        return (map_x, map_y)
     def get_frame(self):
         return self.frame
         
