@@ -144,9 +144,9 @@ class RobotCommander : public rclcpp::Node
     std::map<int, std::string> tray_stl_names = {
       {aprs_interfaces::msg::Tray::S2L2_KIT_TRAY, "s2l2_kit_tray.stl"},
       {aprs_interfaces::msg::Tray::M2L1_KIT_TRAY, "m2l1_kit_tray.stl"},
-      {aprs_interfaces::msg::Tray::SMALL_GEAR_TRAY, "small_gear_tray.stl"},
-      {aprs_interfaces::msg::Tray::MEDIUM_GEAR_TRAY, "medium_gear_tray.stl"},
-      {aprs_interfaces::msg::Tray::LARGE_GEAR_TRAY, "large_gear_tray.stl"}
+      {aprs_interfaces::msg::Tray::SMALL_GEAR_TRAY, "small_gear_part_tray.stl"},
+      {aprs_interfaces::msg::Tray::MEDIUM_GEAR_TRAY, "medium_gear_part_tray.stl"},
+      {aprs_interfaces::msg::Tray::LARGE_GEAR_TRAY, "large_gear_part_tray.stl"}
     };
 
     std::map<int, std::string> gear_stl_names = {

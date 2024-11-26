@@ -45,8 +45,8 @@ class DetectionArea(Node):
     kit_tray_types = [Tray.S2L2_KIT_TRAY, Tray.M2L1_KIT_TRAY]
     part_tray_types = [Tray.SMALL_GEAR_TRAY, Tray.MEDIUM_GEAR_TRAY, Tray.LARGE_GEAR_TRAY]
     
-    tray_height = 0.0015
-    gear_height = 0.005
+    tray_height = 0.015
+    gear_height = 0.016
     conversion_factor = 0.8466 # (px/mm)
 
     def __init__(self):
