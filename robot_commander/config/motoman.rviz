@@ -1,0 +1,399 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 70
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Status1
+        - /TF1
+        - /RobotModel1
+        - /RobotModel1/Description Topic1
+        - /PlanningScene1
+      Splitter Ratio: 0.4204152226448059
+    Tree Height: 615
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        fanuc_base_link:
+          Value: false
+        fanuc_base_plate:
+          Value: false
+        fanuc_gripper_link:
+          Value: false
+        fanuc_left_finger:
+          Value: false
+        fanuc_right_finger:
+          Value: false
+        fanuc_tool0:
+          Value: true
+        large_gear_tray_03:
+          Value: true
+        large_gear_tray_03_slot_1:
+          Value: true
+        large_gear_tray_03_slot_2:
+          Value: true
+        link_1:
+          Value: false
+        link_2:
+          Value: false
+        link_3:
+          Value: false
+        link_4:
+          Value: false
+        link_5:
+          Value: false
+        link_6:
+          Value: false
+        link_b:
+          Value: true
+        link_e:
+          Value: true
+        link_l:
+          Value: true
+        link_r:
+          Value: true
+        link_s:
+          Value: true
+        link_t:
+          Value: true
+        link_u:
+          Value: true
+        motoman_base_link:
+          Value: true
+        motoman_base_plate:
+          Value: true
+        motoman_gripper_link:
+          Value: true
+        motoman_left_finger:
+          Value: true
+        motoman_right_finger:
+          Value: true
+        motoman_table_image_base_frame:
+          Value: true
+        motoman_tool0:
+          Value: true
+        s2l2_kit_tray_05:
+          Value: true
+        s2l2_kit_tray_05_lg_1:
+          Value: true
+        s2l2_kit_tray_05_lg_2:
+          Value: true
+        s2l2_kit_tray_05_sg_1:
+          Value: true
+        s2l2_kit_tray_05_sg_2:
+          Value: true
+        small_gear_tray_01:
+          Value: true
+        small_gear_tray_01_slot_1:
+          Value: true
+        small_gear_tray_01_slot_2:
+          Value: true
+        small_gear_tray_01_slot_3:
+          Value: true
+        small_gear_tray_01_slot_4:
+          Value: true
+        world:
+          Value: true
+      Marker Scale: 0.10000000149011612
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: false
+      Tree:
+        world:
+          fanuc_base_plate:
+            fanuc_base_link:
+              link_1:
+                link_2:
+                  link_3:
+                    link_4:
+                      link_5:
+                        link_6:
+                          fanuc_gripper_link:
+                            fanuc_left_finger:
+                              {}
+                            fanuc_right_finger:
+                              {}
+                            fanuc_tool0:
+                              {}
+          motoman_base_plate:
+            motoman_base_link:
+              link_s:
+                link_l:
+                  link_e:
+                    link_u:
+                      link_r:
+                        link_b:
+                          link_t:
+                            motoman_gripper_link:
+                              motoman_left_finger:
+                                {}
+                              motoman_right_finger:
+                                {}
+                              motoman_tool0:
+                                {}
+              motoman_table_image_base_frame:
+                large_gear_tray_03:
+                  large_gear_tray_03_slot_1:
+                    {}
+                  large_gear_tray_03_slot_2:
+                    {}
+                s2l2_kit_tray_05:
+                  s2l2_kit_tray_05_lg_1:
+                    {}
+                  s2l2_kit_tray_05_lg_2:
+                    {}
+                  s2l2_kit_tray_05_sg_1:
+                    {}
+                  s2l2_kit_tray_05_sg_2:
+                    {}
+                small_gear_tray_01:
+                  small_gear_tray_01_slot_1:
+                    {}
+                  small_gear_tray_01_slot_2:
+                    {}
+                  small_gear_tray_01_slot_3:
+                    {}
+                  small_gear_tray_01_slot_4:
+                    {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /motoman/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        link_b:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_e:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_l:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_r:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_s:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_t:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_u:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        motoman_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        motoman_base_plate:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        motoman_gripper_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        motoman_left_finger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        motoman_right_finger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        motoman_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Class: moveit_rviz_plugin/PlanningScene
+      Enabled: true
+      Move Group Namespace: /motoman
+      Name: PlanningScene
+      Planning Scene Topic: /motoman/monitored_planning_scene
+      Robot Description: robot_description
+      Scene Geometry:
+        Scene Alpha: 0.8999999761581421
+        Scene Color: 50; 230; 50
+        Scene Display Time: 0.009999999776482582
+        Show Scene Geometry: true
+        Voxel Coloring: Z-Axis
+        Voxel Rendering: Occupied Voxels
+      Scene Robot:
+        Attached Body Color: 150; 50; 150
+        Links:
+          All Links Enabled: true
+          Expand Joint Details: false
+          Expand Link Details: false
+          Expand Tree: false
+          Link Tree Style: Links in Alphabetic Order
+          link_b:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          link_e:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          link_l:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          link_r:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          link_s:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          link_t:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          link_u:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          motoman_base_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          motoman_base_plate:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          motoman_gripper_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          motoman_left_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          motoman_right_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          motoman_tool0:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          world:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+        Robot Alpha: 1
+        Show Robot Collision: false
+        Show Robot Visual: false
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 1.8826243877410889
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0.2951105237007141
+        Y: 0.3584294021129608
+        Z: 0.29224470257759094
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.5853979587554932
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 3.4103989601135254
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 836
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd0000000100000000000001ef000002eafc0200000001fb000000100044006900730070006c006100790073010000003d000002ea000000c900ffffff00000405000002ea00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 1530
+  X: 70
+  Y: 27

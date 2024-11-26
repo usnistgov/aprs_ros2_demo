@@ -118,6 +118,7 @@ class DetectionArea(Node):
         
         try:
             no_background = self.remove_background(self.current_frame)
+
             self.trays_info = self.detect_trays(no_background)
 
         except DetectionException as e:
@@ -153,7 +154,7 @@ class DetectionArea(Node):
     def remove_background(self, frame: MatLike) -> MatLike:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, 190)) #type: ignore
+        thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, 150)) #type: ignore
 
         canvas = np.zeros((frame.shape[0], frame.shape[1]), dtype=np.uint8)
 
