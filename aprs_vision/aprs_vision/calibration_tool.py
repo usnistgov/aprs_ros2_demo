@@ -94,7 +94,7 @@ class CalibrationTool(Node):
     def rotation_trackbar_cb_(self, val):
         self.rotation_angle = val/5
     
-    def draw_grid(self, img, spacing, color=(0, 255, 0), thickness=1):
+    def draw_grid(self, img, spacing, color=(0, 255, 0), thickness=2):
         """Draws a grid over the image."""
 
         h, w, _ = img.shape
@@ -167,7 +167,7 @@ class CalibrationTool(Node):
             rotation_matrix = cv2.getRotationMatrix2D((frame.shape[1]/2, frame.shape[0]/2), self.rotation_angle, 1)
             rotated_img = cv2.warpAffine(frame, rotation_matrix, (frame.shape[1], frame.shape[0]))
             grid_img = rotated_img.copy()
-            self.draw_grid(grid_img, 30, (0, 153, 254), 1)
+            self.draw_grid(grid_img, 30, (0, 153, 254), 2)
             
             cv2.imshow(rotation_window, grid_img)
             
@@ -347,7 +347,7 @@ class CalibrationTool(Node):
                 upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2 
             elif i == len(holes_in_column) - 1:
                 lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2 
-                upper_bound = frame.shape[1]
+                upper_bound = frame.shape[0]
             else:
                 lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2 
                 upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2 
