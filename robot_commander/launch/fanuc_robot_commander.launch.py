@@ -2,12 +2,12 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 
-from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
-from launch.actions import (
-    OpaqueFunction,
-)
+from launch import LaunchDescription
+from launch.substitutions import PathJoinSubstitution
+from launch.actions import OpaqueFunction
 
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -52,9 +52,26 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
+    # RVIZ 
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("robot_commander"), "config", "fanuc.rviz"]
+    )
+
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        output="log",
+        namespace="fanuc",
+        arguments=["-d", rviz_config_file],
+        parameters=[
+            moveit_config.to_dict(),
+        ],
+    )
+
     nodes_to_start = [
         move_group_node,
         fanuc_robot_commander,
+        rviz_node
     ]
 
     return nodes_to_start

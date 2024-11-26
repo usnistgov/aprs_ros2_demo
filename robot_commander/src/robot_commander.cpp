@@ -475,12 +475,6 @@ void RobotCommander::initialize_planning_scene_cb(
   const std::shared_ptr<example_interfaces::srv::Trigger::Request>,
   std::shared_ptr<example_interfaces::srv::Trigger::Response> response)
 {
-  if (!received_table_tray_info && !received_conveyor_tray_info){
-    response->success = false;
-    response->message = "Tray info not yet received";
-    return;
-  }
-
   // Clear Planning Scene
   std::vector<std::string> object_ids;
   for(const auto& [object_id,_] : planning_scene_->getObjects()){
@@ -498,6 +492,12 @@ void RobotCommander::initialize_planning_scene_cb(
   planning_scene_->applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
   planning_scene_->applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
   
+  if (!received_table_tray_info && !received_conveyor_tray_info){
+    response->success = true;
+    response->message = "Tray info not yet received";
+    return;
+  }
+
   // Create vector of all trays and gears
   std::vector<aprs_interfaces::msg::Tray> all_trays;
   if (received_table_tray_info){
