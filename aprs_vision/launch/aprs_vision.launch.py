@@ -21,6 +21,7 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+
     nodes_to_start = [
         fanuc_table_detection_area,
     ]
