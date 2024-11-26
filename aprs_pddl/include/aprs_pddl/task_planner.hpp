@@ -33,6 +33,7 @@ public:
   void init_world_state();
   void init_goal_state();
   void update_world_state(std::string robot);
+  void process_trays(const std::vector<aprs_interfaces::msg::Tray>& trays, const std::string& location);
 
  private:
 
@@ -82,7 +83,7 @@ public:
   bool motoman_operational;
 
   // PDDL
-  std::string goal_str_ = "(and";
+  std::string goal_str_;
 
   // Callbacks
   void FanucTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
