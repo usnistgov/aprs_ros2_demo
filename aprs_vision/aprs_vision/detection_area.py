@@ -4,8 +4,6 @@ import os
 import cv2
 import math
 import numpy as np
-from numpy.lib.npyio import NpzFile
-from scipy.interpolate import griddata
 
 from cv2.typing import MatLike
 from typing import Optional
@@ -19,14 +17,14 @@ from tf2_ros.transform_broadcaster import TransformBroadcaster
 
 from aprs_interfaces.srv import LocateTrays
 
-from sensor_msgs.msg import Image
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
+from aprs_vision.stream_handler import StreamHandler
 from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped
 
-class VisionException(Exception):
+class DetectionException(Exception):
     pass
-    
+
 class DetectionArea(Node):    
     tray_names = {
         Tray.SMALL_GEAR_TRAY: 'small_gear_tray',
@@ -71,7 +69,7 @@ class DetectionArea(Node):
         self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
         self.location = self.get_parameter('location').get_parameter_value().string_value
         self.base_frame = self.get_parameter('base_frame').get_parameter_value().string_value
-        self.video_stream = self.get_parameter('video_stream').get_parameter_value().string_value
+        video_stream = self.get_parameter('video_stream').get_parameter_value().string_value
 
         self.publish_frames = self.get_parameter('publish_frames').get_parameter_value().bool_value
 
@@ -83,42 +81,13 @@ class DetectionArea(Node):
             z=self.get_parameter('table_origin.z').get_parameter_value().double_value
         )
 
-        # Connect to video stream
-        self.capture = cv2.VideoCapture(self.video_stream)
-
-        ret, frame = self.capture.read()
-
-        if not ret:
-            raise VisionException("Unable to connect to camera stream")
-
-        # Load calibration
+        # Stream Handler
         share_path = get_package_share_directory('aprs_vision')
         calibration_filepath = os.path.join(share_path, 'config', f'{self.robot_name}_{self.location}_calibration.npz')
-        if not os.path.exists(calibration_filepath):
-            raise VisionException(f"Calibration file not found at [{calibration_filepath}]")
-        
-        calibration_file_load:NpzFile = np.load(calibration_filepath)
-        try:
-            self.map_x = calibration_file_load['map_x']
-            self.map_y = calibration_file_load['map_y']
-            
-            self.rotation_matrix: Optional[MatLike]
-            angle = int(calibration_file_load['angle'])
-            if not angle == 0:
-                self.rotation_matrix = cv2.getRotationMatrix2D((frame.shape[1] / 2, frame.shape[0] / 2), angle, 1)
-            else:
-                self.rotation_matrix = None
-            
-            crop_start = calibration_file_load['crop_start']
-            self.crop_start_x = int(crop_start[0])
-            self.crop_start_y = int(crop_start[1])
-            
-            crop_end = calibration_file_load['crop_end']
-            self.crop_end_x = int(crop_end[0])
-            self.crop_end_y = int(crop_end[1])
-        except KeyError as e:
-            raise VisionException(e)
-        
+
+        self.stream_handler = StreamHandler(video_stream, calibration_filepath)
+        self.current_frame: Optional[MatLike] = None
+  
         # ArUco
         self.aruco_detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50))
         
@@ -137,39 +106,40 @@ class DetectionArea(Node):
 
         # ROS Timers
         self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
-        self.read_frame_timer = self.create_timer(timer_period_sec=0.1, callback=self.read_frame)
+        self.read_frame_timer = self.create_timer(timer_period_sec=0.1, callback=self.get_frame)
 
-        self.get_logger().info("Connected to camera")
+        self.get_logger().info('Connected to camera')
 
-    def locate_trays_cb(self, request: LocateTrays.Request, response: LocateTrays.Response) -> LocateTrays.Response:
-        if self.trays_info is not None:
-            if request.overwrite:
-                self.trays_info = None
-            else: 
-                response.message = "Trays Already Found. Unable to perform without overwriting current data!"
-                response.success = False
-                return response
-        
+    def locate_trays_cb(self, _, response: LocateTrays.Response) -> LocateTrays.Response:
         if self.current_frame is None:
-            response.message = "Unable to connect to camera"
+            response.message = 'Unable to connect to camera'
             response.success = False
             return response
         
+        cv2.imshow("Frame", self.current_frame)
+        cv2.waitKey(0)
+        
         try:
-            frame = self.current_frame.copy()
+            no_background = self.remove_background(self.current_frame)
+            self.trays_info = self.detect_trays(no_background)
 
-            frame = self.remove_background(frame)
-
-            self.trays_info = self.detect_trays(frame)
-
-        except Exception as e:
+        except DetectionException as e:
             response.success = False
-            response.message = f"Unable to detect trays properly. Exception: ({e})" 
+            response.message = str(e)
+            return response
 
         response.success = True
-        response.message = "Located trays"
+
+        if len(self.trays_info.kit_trays) == 0 and len(self.trays_info.part_trays) == 0:
+            response.message = 'No trays found'
+            return response
+        
+        response.message = 'Located trays'
 
         return response
+
+    def get_frame(self):
+        self.current_frame = self.stream_handler.read_frame()
 
     def publish(self):
         # Publish trays info
@@ -182,24 +152,6 @@ class DetectionArea(Node):
         
         if self.transforms:
             self.tf_broadcaster.sendTransform(self.transforms)
-
-    def read_frame(self):
-        ret, frame = self.capture.read()
-
-        if ret:
-            self.current_frame = self.rectify_frame(frame)
-        else:
-            raise VisionException("Not connected to camera")
-
-    def rectify_frame(self, frame: MatLike) -> MatLike:
-        if self.rotation_matrix is not None:
-            frame = cv2.warpAffine(frame, self.rotation_matrix, (frame.shape[1], frame.shape[0]))
-        
-        frame = frame[self.crop_start_y:self.crop_end_y, self.crop_start_x:self.crop_end_x]
-
-        frame = cv2.remap(frame, self.map_x, self.map_y, cv2.INTER_CUBIC)
-
-        return frame
     
     def remove_background(self, frame: MatLike) -> MatLike:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -225,8 +177,7 @@ class DetectionArea(Node):
             image (MatLike): Rectified Image
 
         Raises:
-            Exception: _description_
-            Exception: _description_
+            DetectionException: issue with detection
 
         Returns:
             tuple[int, int, tuple[float, float], float]: identifier, id, center, rotation(radians)
@@ -240,10 +191,10 @@ class DetectionArea(Node):
         corners, marker_ids, _ = self.aruco_detector.detectMarkers(just_contour)
 
         if marker_ids is None:
-            raise Exception("Detected tray without fiducial")            
+            raise DetectionException("Detected object without fiducial")            
 
         if len(marker_ids) > 1:
-            raise Exception("Detected multiple fiducials on one tray")
+            raise DetectionException("Detected multiple fiducials on one tray")
         
         tray_id = marker_ids[0][0]
         
@@ -255,6 +206,9 @@ class DetectionArea(Node):
 
         # Use area to classify tray identifier
         tray_area = cv2.contourArea(contour) * self.conversion_factor**2
+
+        if tray_area < 20000:
+            raise DetectionException('Detected a partial tray')
 
         identifier = min({k: abs(v - tray_area) for (k,v) in self.tray_areas.items()}.items(), key=lambda x: x[1])[0]
 
@@ -368,9 +322,14 @@ class DetectionArea(Node):
         gear_hsv_lower = (0, 83, 0)
         gear_hsv_upper = (147, 255, 255)
 
-        square = image[slot_center[1]-offset:slot_center[1]+offset, slot_center[0]-offset:slot_center[0]+offset]
+        try:
+            square = image[slot_center[1]-offset:slot_center[1]+offset, slot_center[0]-offset:slot_center[0]+offset]
+        
+            gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), gear_hsv_lower, gear_hsv_upper) # type: ignore
 
-        gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), gear_hsv_lower, gear_hsv_upper) # type: ignore
+        except cv2.error:
+            raise DetectionException("Slot outside of detection area")
+
         if cv2.countNonZero(gear) > ((offset**2) * 0.5):
             return True
 

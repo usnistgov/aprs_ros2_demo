@@ -52,9 +52,10 @@ motoman:
         y: 0.203
         z: -0.0254
 
-teach_detection_area:
-  ros__parameters: 
-    robot_name: teach
-    location: table
-    video_stream: http://192.168.1.104/mjpg/video.mjpg
-    publish_frames: False
+teach:
+  teach_detection_area:
+    ros__parameters: 
+      robot_name: teach
+      location: table
+      video_stream: http://192.168.1.104/mjpg/video.mjpg
+      publish_frames: False
