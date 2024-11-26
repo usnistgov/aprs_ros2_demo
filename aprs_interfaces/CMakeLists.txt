@@ -10,19 +10,9 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 set(msg_files
-  "msg/Object.msg"
-  "msg/Objects.msg"
   "msg/Tray.msg"
   "msg/Trays.msg"
   "msg/SlotInfo.msg"
-  "msg/PixelCenter.msg"
-  "msg/SlotPixel.msg"
-  "msg/PixelSlotInfo.msg"
-)
-set(srv_files
-  "srv/MoveToNamedPose.srv"
-  "srv/Pick.srv"
-  "srv/Place.srv"
 )
 
 set(srv_files
@@ -31,7 +21,6 @@ set(srv_files
   "srv/Place.srv"
   "srv/GenerateInitState.srv"
   "srv/GeneratePlan.srv"
-  "srv/GenerateGridMaps.srv"
   "srv/LocateTrays.srv"
   "srv/PneumaticGripperControl.srv"
 )
