@@ -41,6 +41,9 @@ private:
   bool service_called_locate_trays_;
   bool service_called_move_to_named_pose_;
 
+  // Conveyor Start Time
+  rclcpp::Time conveyor_start_time_;
+
   //progress
   double progress_;
 };

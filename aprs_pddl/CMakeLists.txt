@@ -19,6 +19,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   plansys2_planner
   plansys2_problem_expert
   plansys2_pddl_parser
+  conveyor_interfaces
 )
 
 find_package(ament_cmake REQUIRED)

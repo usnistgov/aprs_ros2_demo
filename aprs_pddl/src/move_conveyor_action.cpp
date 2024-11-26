@@ -45,17 +45,16 @@ void MoveConveyorAction::do_work() {
         client_set_conveyor_state_->async_send_request(request_set_state, std::bind(&MoveConveyorAction::set_conveyor_state_response_callback, this, std::placeholders::_1));
         waiting_for_set_conveyor_state_response_ = true;
         service_called_set_conveyor_state_ = true;
-
-        //sleep for 5 seconds
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
+        conveyor_start_time_ = now();
+    }
+    else if(!waiting_for_enable_conveyor_response_ && service_called_set_conveyor_state_ && (now() - conveyor_start_time_).seconds() > 5){
         // Disable Conveyor
         auto request_enable = std::make_shared<conveyor_interfaces::srv::EnableConveyor::Request>();
         request_enable->enable = false;
         client_enable_conveyor_->async_send_request(request_enable, std::bind(&MoveConveyorAction::enable_conveyor_response_callback, this, std::placeholders::_1));
         waiting_for_enable_conveyor_response_ = true;
     }
-    else if(!waiting_for_set_conveyor_state_response_ && !waiting_for_enable_conveyor_response_ && !service_called_locate_trays_){
+    else if(!waiting_for_enable_conveyor_response_ && service_called_set_conveyor_state_ && !service_called_locate_trays_){
         // Locate Trays
         auto request_locate_trays = std::make_shared<aprs_interfaces::srv::LocateTrays::Request>();
         client_locate_trays_->async_send_request(request_locate_trays, std::bind(&MoveConveyorAction::locate_trays_response_callback, this, std::placeholders::_1));
@@ -78,7 +77,7 @@ void MoveConveyorAction::enable_conveyor_response_callback(rclcpp::Client<convey
         finish(false, progress_, "Unable to Enable Conveyor");
     }
     waiting_for_enable_conveyor_response_ = false;
-    progress_ += 0.25;
+    progress_ += 0.125;
 }
 
 void MoveConveyorAction::set_conveyor_state_response_callback(rclcpp::Client<conveyor_interfaces::srv::SetConveyorState>::SharedFuture future){
