@@ -124,6 +124,7 @@ class RobotCommander : public rclcpp::Node
     aprs_interfaces::msg::Trays conveyor_trays_info;
     std::string attached_part_name;
     int attached_part_type;
+    std::vector<std::string> touch_links = {"fanuc_left_finger", "fanuc_right_finger"};
 
     // Maps
     std::map<int, int> gear_counter = {

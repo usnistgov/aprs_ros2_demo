@@ -225,7 +225,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   attached_part_name = slot_objects[slot_name];
   attached_part_type = slot_types[slot_name];
 
-  planning_interface_->attachObject(slot_objects[slot_name],"fanuc_tool0");
+  planning_interface_->attachObject(slot_objects[slot_name],"fanuc_tool0", touch_links);
   slot_objects[slot_name] = "";
   slot_types[slot_name] = -1;
 

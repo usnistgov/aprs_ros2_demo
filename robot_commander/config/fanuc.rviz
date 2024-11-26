@@ -6,11 +6,11 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /RobotModel1/Description Topic1
         - /PlanningScene1
-        - /PlanningScene1/Status1
       Splitter Ratio: 0.4204152226448059
-    Tree Height: 499
+    Tree Height: 615
 Visualization Manager:
   Class: ""
   Displays:
@@ -29,7 +29,15 @@ Visualization Manager:
           Value: false
         fanuc_right_finger:
           Value: false
+        fanuc_table_image_base_frame:
+          Value: true
         fanuc_tool0:
+          Value: true
+        large_gear_tray_03:
+          Value: true
+        large_gear_tray_03_slot_1:
+          Value: true
+        large_gear_tray_03_slot_2:
           Value: true
         link_1:
           Value: false
@@ -43,17 +51,95 @@ Visualization Manager:
           Value: false
         link_6:
           Value: false
+        m2l1_kit_tray_02:
+          Value: true
+        m2l1_kit_tray_02_lg_1:
+          Value: true
+        m2l1_kit_tray_02_mg_1:
+          Value: true
+        m2l1_kit_tray_02_mg_2:
+          Value: true
+        medium_gear_tray_04:
+          Value: true
+        medium_gear_tray_04_slot_1:
+          Value: true
+        medium_gear_tray_04_slot_2:
+          Value: true
+        medium_gear_tray_04_slot_3:
+          Value: true
+        medium_gear_tray_04_slot_4:
+          Value: true
+        s2l2_kit_tray_05:
+          Value: true
+        s2l2_kit_tray_05_lg_1:
+          Value: true
+        s2l2_kit_tray_05_lg_2:
+          Value: true
+        s2l2_kit_tray_05_sg_1:
+          Value: true
+        s2l2_kit_tray_05_sg_2:
+          Value: true
+        small_gear_tray_01:
+          Value: true
+        small_gear_tray_01_slot_1:
+          Value: true
+        small_gear_tray_01_slot_2:
+          Value: true
+        small_gear_tray_01_slot_3:
+          Value: true
+        small_gear_tray_01_slot_4:
+          Value: true
         world:
           Value: true
-      Marker Scale: 1
+      Marker Scale: 0.10000000149011612
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: false
       Tree:
         world:
           fanuc_base_plate:
             fanuc_base_link:
+              fanuc_table_image_base_frame:
+                large_gear_tray_03:
+                  large_gear_tray_03_slot_1:
+                    {}
+                  large_gear_tray_03_slot_2:
+                    {}
+                m2l1_kit_tray_02:
+                  m2l1_kit_tray_02_lg_1:
+                    {}
+                  m2l1_kit_tray_02_mg_1:
+                    {}
+                  m2l1_kit_tray_02_mg_2:
+                    {}
+                medium_gear_tray_04:
+                  medium_gear_tray_04_slot_1:
+                    {}
+                  medium_gear_tray_04_slot_2:
+                    {}
+                  medium_gear_tray_04_slot_3:
+                    {}
+                  medium_gear_tray_04_slot_4:
+                    {}
+                s2l2_kit_tray_05:
+                  s2l2_kit_tray_05_lg_1:
+                    {}
+                  s2l2_kit_tray_05_lg_2:
+                    {}
+                  s2l2_kit_tray_05_sg_1:
+                    {}
+                  s2l2_kit_tray_05_sg_2:
+                    {}
+                small_gear_tray_01:
+                  small_gear_tray_01_slot_1:
+                    {}
+                  small_gear_tray_01_slot_2:
+                    {}
+                  small_gear_tray_01_slot_3:
+                    {}
+                  small_gear_tray_01_slot_4:
+                    {}
               link_1:
                 link_2:
                   link_3:
@@ -162,7 +248,7 @@ Visualization Manager:
       Enabled: true
       Move Group Namespace: /fanuc
       Name: PlanningScene
-      Planning Scene Topic: monitored_planning_scene
+      Planning Scene Topic: /fanuc/monitored_planning_scene
       Robot Description: robot_description
       Scene Geometry:
         Scene Alpha: 0.8999999761581421
@@ -262,7 +348,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 3.0659780502319336
+      Distance: 1.5889304876327515
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -285,10 +371,10 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 714
+  Height: 836
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001ef00000274fc0200000001fb000000100044006900730070006c006100790073010000003b00000274000000c700ffffff0000027b0000027400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-  Width: 1136
-  X: 297
-  Y: 183
+  QMainWindow State: 000000ff00000000fd0000000100000000000001ef000002eafc0200000001fb000000100044006900730070006c006100790073010000003d000002ea000000c900ffffff00000405000002ea00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 1530
+  X: 70
+  Y: 27

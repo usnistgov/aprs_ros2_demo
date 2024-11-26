@@ -21,8 +21,18 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    motoman_table_detection_area = Node(
+        package='aprs_vision',
+        executable='detection_area_node.py',
+        name='table_detection_area',
+        namespace='motoman',
+        parameters=[parameters],
+        output='screen',
+    )
+
     nodes_to_start = [
         fanuc_table_detection_area,
+        motoman_table_detection_area
     ]
 
     return nodes_to_start
