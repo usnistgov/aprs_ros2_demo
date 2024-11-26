@@ -109,11 +109,11 @@ RobotCommander::RobotCommander()
 
   // Create Subscriber
   trays_info_table_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/" + robot_name_ + "/table_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/" + robot_name_ + "/table_trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::table_trays_info_cb, this, std::placeholders::_1));
 
   trays_info_conveyor_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/" + robot_name_ + "/conveyor_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/" + robot_name_ + "/conveyor_trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::conveyor_trays_info_cb, this, std::placeholders::_1));
 
   // Create clients
@@ -492,7 +492,13 @@ void RobotCommander::initialize_planning_scene_cb(
   planning_scene_->applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
   planning_scene_->applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
   
-  if (!received_table_tray_info && !received_conveyor_tray_info){
+  // if (!received_table_tray_info && !received_conveyor_tray_info){
+  //   response->success = true;
+  //   response->message = "Tray info not yet received";
+  //   return;
+  // }
+
+  if (!received_table_tray_info){
     response->success = true;
     response->message = "Tray info not yet received";
     return;

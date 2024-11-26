@@ -116,9 +116,6 @@ class DetectionArea(Node):
             response.success = False
             return response
         
-        cv2.imshow("Frame", self.current_frame)
-        cv2.waitKey(0)
-        
         try:
             no_background = self.remove_background(self.current_frame)
             self.trays_info = self.detect_trays(no_background)
