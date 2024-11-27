@@ -11,7 +11,7 @@ Panels:
         - /RobotModel1/Description Topic1
         - /PlanningScene1
       Splitter Ratio: 0.4204152226448059
-    Tree Height: 615
+    Tree Height: 621
 Visualization Manager:
   Class: ""
   Displays:
@@ -30,6 +30,8 @@ Visualization Manager:
           Value: false
         fanuc_right_finger:
           Value: false
+        fanuc_table_image:
+          Value: true
         fanuc_tool0:
           Value: true
         large_gear_tray_03:
@@ -64,6 +66,24 @@ Visualization Manager:
           Value: true
         link_u:
           Value: true
+        m2l1_kit_tray_02:
+          Value: true
+        m2l1_kit_tray_02_lg_1:
+          Value: true
+        m2l1_kit_tray_02_mg_1:
+          Value: true
+        m2l1_kit_tray_02_mg_2:
+          Value: true
+        medium_gear_tray_04:
+          Value: true
+        medium_gear_tray_04_slot_1:
+          Value: true
+        medium_gear_tray_04_slot_2:
+          Value: true
+        medium_gear_tray_04_slot_3:
+          Value: true
+        medium_gear_tray_04_slot_4:
+          Value: true
         motoman_base_link:
           Value: true
         motoman_base_plate:
@@ -74,7 +94,7 @@ Visualization Manager:
           Value: true
         motoman_right_finger:
           Value: true
-        motoman_table_image_base_frame:
+        motoman_table_image:
           Value: true
         motoman_tool0:
           Value: true
@@ -122,6 +142,23 @@ Visualization Manager:
                               {}
                             fanuc_tool0:
                               {}
+          fanuc_table_image:
+            m2l1_kit_tray_02:
+              m2l1_kit_tray_02_lg_1:
+                {}
+              m2l1_kit_tray_02_mg_1:
+                {}
+              m2l1_kit_tray_02_mg_2:
+                {}
+            medium_gear_tray_04:
+              medium_gear_tray_04_slot_1:
+                {}
+              medium_gear_tray_04_slot_2:
+                {}
+              medium_gear_tray_04_slot_3:
+                {}
+              medium_gear_tray_04_slot_4:
+                {}
           motoman_base_plate:
             motoman_base_link:
               link_s:
@@ -138,30 +175,30 @@ Visualization Manager:
                                 {}
                               motoman_tool0:
                                 {}
-              motoman_table_image_base_frame:
-                large_gear_tray_03:
-                  large_gear_tray_03_slot_1:
-                    {}
-                  large_gear_tray_03_slot_2:
-                    {}
-                s2l2_kit_tray_05:
-                  s2l2_kit_tray_05_lg_1:
-                    {}
-                  s2l2_kit_tray_05_lg_2:
-                    {}
-                  s2l2_kit_tray_05_sg_1:
-                    {}
-                  s2l2_kit_tray_05_sg_2:
-                    {}
-                small_gear_tray_01:
-                  small_gear_tray_01_slot_1:
-                    {}
-                  small_gear_tray_01_slot_2:
-                    {}
-                  small_gear_tray_01_slot_3:
-                    {}
-                  small_gear_tray_01_slot_4:
-                    {}
+          motoman_table_image:
+            large_gear_tray_03:
+              large_gear_tray_03_slot_1:
+                {}
+              large_gear_tray_03_slot_2:
+                {}
+            s2l2_kit_tray_05:
+              s2l2_kit_tray_05_lg_1:
+                {}
+              s2l2_kit_tray_05_lg_2:
+                {}
+              s2l2_kit_tray_05_sg_1:
+                {}
+              s2l2_kit_tray_05_sg_2:
+                {}
+            small_gear_tray_01:
+              small_gear_tray_01_slot_1:
+                {}
+              small_gear_tray_01_slot_2:
+                {}
+              small_gear_tray_01_slot_3:
+                {}
+              small_gear_tray_01_slot_4:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -367,33 +404,33 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.8826243877410889
+      Distance: 2.2588210105895996
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.2951105237007141
-        Y: 0.3584294021129608
-        Z: 0.29224470257759094
+        X: 1.3645437955856323
+        Y: 0.5497216582298279
+        Z: 0.4183177351951599
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5853979587554932
+      Pitch: 0.61039799451828
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.4103989601135254
+      Yaw: 1.7453986406326294
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
+    collapsed: true
   Height: 836
-  Hide Left Dock: false
+  Hide Left Dock: true
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001ef000002eafc0200000001fb000000100044006900730070006c006100790073010000003d000002ea000000c900ffffff00000405000002ea00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-  Width: 1530
-  X: 70
-  Y: 27
+  QMainWindow State: 000000ff00000000fd0000000100000000000001ef000002eefc0200000001fb000000100044006900730070006c006100790073000000003b000002ee000000c700ffffff00000416000002ee00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 1046
+  X: 537
+  Y: 133

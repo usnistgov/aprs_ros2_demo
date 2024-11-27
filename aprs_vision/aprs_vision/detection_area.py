@@ -14,13 +14,14 @@ from rclpy.qos import qos_profile_default
 from ament_index_python.packages import get_package_share_directory
 
 from tf2_ros.transform_broadcaster import TransformBroadcaster
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 from aprs_interfaces.srv import LocateTrays
 
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
 from aprs_vision.stream_handler import StreamHandler
-from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped
+from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped, Transform
 
 class DetectionException(Exception):
     pass
@@ -55,30 +56,40 @@ class DetectionArea(Node):
         # Declare and get parameters
         self.declare_parameter('robot_name', '')
         self.declare_parameter('location', '')
-        self.declare_parameter('base_frame', '')
         self.declare_parameter('video_stream', '')
         self.declare_parameter('publish_frames', False)
         self.declare_parameter('background_value_threshold', 255)
-        self.declare_parameter('rotation_from_base_frame', 0.0)
-        self.declare_parameter('table_origin.x', 0.0)
-        self.declare_parameter('table_origin.y', 0.0)
-        self.declare_parameter('table_origin.z', 0.0)
+
+        self.declare_parameter('transform.parent_frame', '')
+        self.declare_parameter('transform.child_frame', '')
+        self.declare_parameter('transform.rotation.roll', 0.0)
+        self.declare_parameter('transform.rotation.pitch', 0.0)
+        self.declare_parameter('transform.rotation.yaw', 0.0)
+        self.declare_parameter('transform.translation.x', 0.0)
+        self.declare_parameter('transform.translation.y', 0.0)
+        self.declare_parameter('transform.translation.z', 0.0)
 
         self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
         self.location = self.get_parameter('location').get_parameter_value().string_value
-        self.base_frame = self.get_parameter('base_frame').get_parameter_value().string_value
         video_stream = self.get_parameter('video_stream').get_parameter_value().string_value
 
         self.publish_frames = self.get_parameter('publish_frames').get_parameter_value().bool_value
 
         self.background_v_upper = self.get_parameter('background_value_threshold').get_parameter_value().integer_value
 
-        self.angle_offset = self.get_parameter('rotation_from_base_frame').get_parameter_value().double_value
+        self.image_frame = self.get_parameter('transform.child_frame').get_parameter_value().string_value
 
-        self.table_origin = Point(
-            x=self.get_parameter('table_origin.x').get_parameter_value().double_value,
-            y=self.get_parameter('table_origin.y').get_parameter_value().double_value,
-            z=self.get_parameter('table_origin.z').get_parameter_value().double_value
+        image_frame_transform = self.generate_transform(
+            self.get_parameter('transform.parent_frame').get_parameter_value().string_value,
+            self.get_parameter('transform.child_frame').get_parameter_value().string_value,
+            Point(
+                x=self.get_parameter('transform.translation.x').get_parameter_value().double_value,
+                y=self.get_parameter('transform.translation.y').get_parameter_value().double_value,
+                z=self.get_parameter('transform.translation.z').get_parameter_value().double_value
+            ),
+            self.get_parameter('transform.rotation.roll').get_parameter_value().double_value,
+            self.get_parameter('transform.rotation.pitch').get_parameter_value().double_value,
+            self.get_parameter('transform.rotation.yaw').get_parameter_value().double_value
         )
 
         # Stream Handler
@@ -100,9 +111,12 @@ class DetectionArea(Node):
         # ROS Topics
         self.trays_info_pub = self.create_publisher(Trays, f'{self.location}_trays_info', qos_profile_default)
     
-        # TF Broadcaster
+        # TF
         self.tf_broadcaster = TransformBroadcaster(self)
         self.transforms: list[TransformStamped] = []
+
+        self.static_tf_broadcaster = StaticTransformBroadcaster(self)
+        self.static_tf_broadcaster.sendTransform(image_frame_transform)
 
         # ROS Timers
         self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
@@ -216,20 +230,6 @@ class DetectionArea(Node):
         # Clear list of transforms
         self.transforms.clear()
 
-        # Publish transform from robot base to image base        
-        image_base_frame = f'{self.robot_name}_{self.location}_image_base_frame'
-        
-        if self.publish_frames:
-            image_origin = Point(
-                x=self.table_origin.x,
-                y=self.table_origin.y,
-                z=self.table_origin.z,
-            )
-
-            self.transforms.append(
-                self.generate_transform(self.base_frame, image_base_frame, image_origin, 0.0, math.pi, self.angle_offset)
-            )
-
         # Detect contours
         tray_contours, _ = cv2.findContours(
             cv2.cvtColor(table_image, cv2.COLOR_BGR2GRAY),
@@ -257,12 +257,12 @@ class DetectionArea(Node):
                 z=-self.tray_height
             )
 
-            tray_msg.tray_pose = self.generate_pose(image_base_frame, tray_center, 0.0, math.pi, theta)
+            tray_msg.tray_pose = self.generate_pose(self.image_frame, tray_center, 0.0, math.pi, theta)
 
             # Publish TF frame from image base frame to tray fiducial center
             if self.publish_frames:
                 self.transforms.append(
-                    self.generate_transform(image_base_frame, tray_msg.name, tray_center, 0.0, math.pi, theta)
+                    self.generate_transform(self.image_frame, tray_msg.name, tray_center, 0.0, math.pi, theta)
                 )
             
             beta = theta + math.pi

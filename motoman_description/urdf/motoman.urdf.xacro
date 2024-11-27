@@ -24,7 +24,7 @@
     </link>
 
     <joint name = "motoman_base_plate_joint" type = "fixed">
-      <origin rpy = "0 0 3.14159" xyz = "1.9685 0.1651 .0381"/>
+      <origin rpy = "0 0 3.14159" xyz = "1.9685 0.15 .0381"/>
       <parent link = "world"/>
       <child link = "motoman_base_plate"/>
     </joint>

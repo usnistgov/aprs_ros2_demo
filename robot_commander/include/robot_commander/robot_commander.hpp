@@ -103,11 +103,12 @@ class RobotCommander : public rclcpp::Node
 
     // ROS Parameters
     std::string planning_group_name_;
-    
     std::string robot_name_;
     std::string end_effector_link_;
+    std::vector<std::string> touch_links_;
     double vsf_;
     double asf_;
+    double motion_pause_;
     double pick_offset_;
     double place_offset_;
     double above_slot_offset_;
@@ -124,7 +125,6 @@ class RobotCommander : public rclcpp::Node
     aprs_interfaces::msg::Trays conveyor_trays_info;
     std::string attached_part_name;
     int attached_part_type;
-    std::vector<std::string> touch_links = {"fanuc_left_finger", "fanuc_right_finger"};
 
     // Maps
     std::map<int, int> gear_counter = {
