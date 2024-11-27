@@ -10,8 +10,11 @@ RobotCommander::RobotCommander()
   declare_parameter("planning_group_name", "");
   declare_parameter("end_effector_link", "");
 
+  declare_parameter("touch_links", std::vector<std::string>());
+
   declare_parameter("velocity_scaling_factor", -1.0);
   declare_parameter("acceleration_scaling_factor", -1.0);
+  declare_parameter("motion_pause", 1.0);
 
   declare_parameter("gripper_rotation.roll", -1.0);
   declare_parameter("gripper_rotation.pitch", -1.0);
@@ -25,8 +28,11 @@ RobotCommander::RobotCommander()
   robot_name_ = get_parameter("robot_name").as_string();
   end_effector_link_ = get_parameter("end_effector_link").as_string();
 
+  touch_links_ = get_parameter("touch_links").as_string_array();
+
   vsf_ = get_parameter("velocity_scaling_factor").as_double();
-  asf_ = get_parameter("velocity_scaling_factor").as_double();
+  asf_ = get_parameter("acceleration_scaling_factor").as_double();
+  motion_pause_ = get_parameter("motion_pause").as_double();
 
   gripper_roll_ = get_parameter("gripper_rotation.roll").as_double();
   gripper_pitch_ = get_parameter("gripper_rotation.pitch").as_double();
@@ -109,11 +115,11 @@ RobotCommander::RobotCommander()
 
   // Create Subscriber
   trays_info_table_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/" + robot_name_ + "/table_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/" + robot_name_ + "/table_trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::table_trays_info_cb, this, std::placeholders::_1));
 
   trays_info_conveyor_vision_sub_ = this->create_subscription<aprs_interfaces::msg::Trays>(
-      "/" + robot_name_ + "/conveyor_vision/trays_info", rclcpp::SensorDataQoS(),
+      "/" + robot_name_ + "/conveyor_trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::conveyor_trays_info_cb, this, std::placeholders::_1));
 
   // Create clients
@@ -201,11 +207,13 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_->execute(plan.second);
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to above slot");
+  }
 
   actuate_gripper(false);
 
-  sleep(0.5);
+  sleep(motion_pause_);
 
   // Move to pick pose
   geometry_msgs::msg::Pose pick_pose;
@@ -216,20 +224,22 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to pick pose");
 
-  planning_interface_->execute(plan.second);
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to pick pose");
+  }
 
-  sleep(0.5);
+  sleep(motion_pause_);
 
   actuate_gripper(true);
 
   attached_part_name = slot_objects[slot_name];
   attached_part_type = slot_types[slot_name];
 
-  planning_interface_->attachObject(slot_objects[slot_name],"fanuc_tool0");
+  planning_interface_->attachObject(slot_objects[slot_name], end_effector_link_, touch_links_);
   slot_objects[slot_name] = "";
   slot_types[slot_name] = -1;
 
-  sleep(0.5);
+  sleep(motion_pause_);
 
   holding_part = true;
 
@@ -239,7 +249,9 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_->execute(plan.second);
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to above slot");
+  }
 
   return std::make_pair(true, "Successfully picked part");
 }
@@ -275,7 +287,11 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_->execute(plan.second);
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to above slot");
+  }
+
+  sleep(motion_pause_);
 
   // Move to place pose
   geometry_msgs::msg::Pose place_pose;
@@ -286,13 +302,15 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to place pose");
 
-  planning_interface_->execute(plan.second);
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to place pose");
+  }
 
   actuate_gripper(false);
 
   planning_interface_->detachObject(attached_part_name);
 
-  sleep(0.5);
+  sleep(motion_pause_);
 
   moveit_msgs::msg::CollisionObject gear;
   gear.header.frame_id = "world";
@@ -315,7 +333,11 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   if (!plan.first)
     return std::make_pair(false, "Unable to plan to above slot");
 
-  planning_interface_->execute(plan.second);
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to above slot");
+  }
+
+  sleep(motion_pause_);
 
   return std::make_pair(true, "Successfully placed part");
 }
@@ -492,7 +514,13 @@ void RobotCommander::initialize_planning_scene_cb(
   planning_scene_->applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
   planning_scene_->applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
   
-  if (!received_table_tray_info && !received_conveyor_tray_info){
+  // if (!received_table_tray_info && !received_conveyor_tray_info){
+  //   response->success = true;
+  //   response->message = "Tray info not yet received";
+  //   return;
+  // }
+
+  if (!received_table_tray_info){
     response->success = true;
     response->message = "Tray info not yet received";
     return;
