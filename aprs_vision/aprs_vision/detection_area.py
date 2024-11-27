@@ -57,11 +57,9 @@ class DetectionArea(Node):
         self.declare_parameter('location', '')
         self.declare_parameter('base_frame', '')
         self.declare_parameter('video_stream', '')
-
         self.declare_parameter('publish_frames', False)
-
+        self.declare_parameter('background_value_threshold', 255)
         self.declare_parameter('rotation_from_base_frame', 0.0)
-
         self.declare_parameter('table_origin.x', 0.0)
         self.declare_parameter('table_origin.y', 0.0)
         self.declare_parameter('table_origin.z', 0.0)
@@ -72,6 +70,8 @@ class DetectionArea(Node):
         video_stream = self.get_parameter('video_stream').get_parameter_value().string_value
 
         self.publish_frames = self.get_parameter('publish_frames').get_parameter_value().bool_value
+
+        self.background_v_upper = self.get_parameter('background_value_threshold').get_parameter_value().integer_value
 
         self.angle_offset = self.get_parameter('rotation_from_base_frame').get_parameter_value().double_value
 
@@ -154,7 +154,7 @@ class DetectionArea(Node):
     def remove_background(self, frame: MatLike) -> MatLike:
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, 150)) #type: ignore
+        thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, self.background_v_upper)) #type: ignore
 
         canvas = np.zeros((frame.shape[0], frame.shape[1]), dtype=np.uint8)
 
