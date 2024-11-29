@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 
-import rclpy
-import numpy as np
 import tkinter as tk
 from tkinter import filedialog
-from aprs_vision.calibration_tool import CalibrationTool, CameraException, CalibrationException
+
+import rclpy
+import numpy as np
+
+from aprs_vision.calibration_tool import (
+    CalibrationTool,
+    CameraException,
+    CalibrationException
+)
 
 def main(args=None):
     rclpy.init(args=args)
     root = tk.Tk()
     root.withdraw()
 
-    try: 
+    try:
         calibration_tool = CalibrationTool()
     except CameraException as e:
         print(e)
@@ -32,10 +38,10 @@ def main(args=None):
         row_start, row_end = calibration_tool.select_region(remove_excess_img, 'row')
 
         all_holes, contours_in_selected_column, contours_in_selected_row = calibration_tool.detect_contours(
-            remove_excess_img, 
-            column_start, 
-            column_end, 
-            row_start, 
+            remove_excess_img,
+            column_start,
+            column_end,
+            row_start,
             row_end
         )
 
@@ -44,7 +50,7 @@ def main(args=None):
         map_x, map_y = calibration_tool.create_mappings(sorted_holes, len(contours_in_selected_column), len(contours_in_selected_row))
 
         filepath = filedialog.asksaveasfilename(defaultextension='.npz')
-        
+
         np.savez(filepath, map_x=map_x, map_y=map_y, angle=angle, crop_start=crop_start, crop_end=crop_end)
 
         print('Mapping Created')
