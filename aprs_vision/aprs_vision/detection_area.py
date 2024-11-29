@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-import cv2
 import math
-import numpy as np
-
-from cv2.typing import MatLike
 from typing import Optional
+
+import cv2
+from cv2.typing import MatLike
+
+import numpy as np
 
 from rclpy.node import Node
 from rclpy.qos import qos_profile_default
@@ -16,17 +17,18 @@ from ament_index_python.packages import get_package_share_directory
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
+from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped
+
 from aprs_interfaces.srv import LocateTrays
 
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
 from aprs_vision.stream_handler import StreamHandler
-from geometry_msgs.msg import TransformStamped, Point, Quaternion, PoseStamped, Transform
 
 class DetectionException(Exception):
     pass
 
-class DetectionArea(Node):    
+class DetectionArea(Node):
     tray_names = {
         Tray.SMALL_GEAR_TRAY: 'small_gear_tray',
         Tray.MEDIUM_GEAR_TRAY: 'medium_gear_tray',
@@ -45,7 +47,7 @@ class DetectionArea(Node):
 
     kit_tray_types = [Tray.S2L2_KIT_TRAY, Tray.M2L1_KIT_TRAY]
     part_tray_types = [Tray.SMALL_GEAR_TRAY, Tray.MEDIUM_GEAR_TRAY, Tray.LARGE_GEAR_TRAY]
-    
+
     tray_height = 0.015
     gear_height = 0.016
     conversion_factor = 0.8466 # (px/mm)
@@ -98,10 +100,10 @@ class DetectionArea(Node):
 
         self.stream_handler = StreamHandler(video_stream, calibration_filepath)
         self.current_frame: Optional[MatLike] = None
-  
+
         # ArUco
         self.aruco_detector = cv2.aruco.ArucoDetector(cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50))
-        
+
         # ROS Messages
         self.trays_info: Optional[Trays] = None
 
@@ -110,7 +112,7 @@ class DetectionArea(Node):
 
         # ROS Topics
         self.trays_info_pub = self.create_publisher(Trays, f'{self.location}_trays_info', qos_profile_default)
-    
+
         # TF
         self.tf_broadcaster = TransformBroadcaster(self)
         self.transforms: list[TransformStamped] = []
@@ -129,7 +131,7 @@ class DetectionArea(Node):
             response.message = 'Unable to connect to camera'
             response.success = False
             return response
-        
+
         try:
             no_background = self.remove_background(self.current_frame)
 
@@ -145,7 +147,7 @@ class DetectionArea(Node):
         if len(self.trays_info.kit_trays) == 0 and len(self.trays_info.part_trays) == 0:
             response.message = 'No trays found'
             return response
-        
+
         response.message = 'Located trays'
 
         return response
@@ -161,11 +163,20 @@ class DetectionArea(Node):
         # Update timestamps and send TF transforms
         for t in self.transforms:
             t.header.stamp = self.get_clock().now().to_msg()
-        
+
         if self.transforms:
             self.tf_broadcaster.sendTransform(self.transforms)
-    
+
     def remove_background(self, frame: MatLike) -> MatLike:
+        """ Takes in image from camera and returns the image with the white background removed
+        
+        Args:
+            frame (MatLike): Input image
+        
+        Returns:
+            MatLike: Image with white background removed
+        """
+        
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, self.background_v_upper)) #type: ignore
@@ -181,7 +192,7 @@ class DetectionArea(Node):
         return cv2.bitwise_and(frame, frame, mask=canvas)
 
     def classify_tray(self,contour: MatLike,image: MatLike)-> tuple[int, int, tuple[float, float], float]:
-        """Takes in a contour of a tray and the rectified image of the workspace and returns the tray identifier, as well as the 
+        """Takes in a contour of a tray and the rectified image of the workspace and returns the tray identifier, as well as the
         tray id, center and rotation of the tray based on the aruco marker.
 
         Args:
@@ -194,6 +205,7 @@ class DetectionArea(Node):
         Returns:
             tuple[int, int, tuple[float, float], float]: identifier, id, center, rotation(radians)
         """
+        
         # Use contours and mask to isolate tray in image
         canvas = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
         cv2.drawContours(canvas, [contour], -1, color=255, thickness=-1) # type: ignore
@@ -203,13 +215,13 @@ class DetectionArea(Node):
         corners, marker_ids, _ = self.aruco_detector.detectMarkers(just_contour)
 
         if marker_ids is None:
-            raise DetectionException("Detected object without fiducial")            
+            raise DetectionException("Detected object without fiducial")
 
         if len(marker_ids) > 1:
             raise DetectionException("Detected multiple fiducials on one tray")
-        
+
         tray_id = marker_ids[0][0]
-        
+
         corners = np.reshape(corners[0],(4,2))
 
         # Calculate marker center and angle of rotation
@@ -226,7 +238,16 @@ class DetectionArea(Node):
 
         return (identifier, tray_id, marker_center, angle)
 
-    def detect_trays(self, table_image: MatLike) -> Trays:       
+    def detect_trays(self, table_image: MatLike) -> Trays:
+        """ Takes in image with background removed, then builds and returns the Trays() message to be published.
+        
+        Args:
+            table_image (MatLike): Background removed image
+        
+        Returns:
+            Trays: Trays info topic
+        """
+        
         # Clear list of transforms
         self.transforms.clear()
 
@@ -237,7 +258,7 @@ class DetectionArea(Node):
             cv2.CHAIN_APPROX_NONE)
 
         # Build trays_info message
-        trays_info = Trays()  
+        trays_info = Trays()
         for contour in tray_contours:
             # Ignore small contours
             if cv2.contourArea(contour) < 200:
@@ -253,7 +274,7 @@ class DetectionArea(Node):
 
             tray_center = Point(
                 x=(tray_x * self.conversion_factor) / 1000,
-                y=(tray_y * self.conversion_factor) / 1000, 
+                y=(tray_y * self.conversion_factor) / 1000,
                 z=-self.tray_height
             )
 
@@ -264,13 +285,13 @@ class DetectionArea(Node):
                 self.transforms.append(
                     self.generate_transform(self.image_frame, tray_msg.name, tray_center, 0.0, math.pi, theta)
                 )
-            
+
             beta = theta + math.pi
-        
+
             # Build slot messages
             for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                 slot_info = self.build_slot_info_message(tray_msg.identifier, tray_msg.name, slot_name, x_off, y_off)
-                
+
                 x_off_px = (x_off*1000) / self.conversion_factor
                 y_off_px = (y_off*1000) / self.conversion_factor
 
@@ -281,7 +302,7 @@ class DetectionArea(Node):
 
                 tray_msg.slots.append(slot_info)
 
-            # Adds tray_msg to corresponding list in tray_info    
+            # Adds tray_msg to corresponding list in tray_info
             if identifier in DetectionArea.part_tray_types:
                 trays_info.part_trays.append(tray_msg)
             elif identifier in DetectionArea.kit_tray_types:
@@ -290,6 +311,20 @@ class DetectionArea(Node):
         return trays_info
 
     def build_slot_info_message(self, identifier: int, tray_name: str, slot_name: str, x_off: float, y_off: float) -> SlotInfo:
+        """ Takes in tray identifier, tray name, slot name, the x_offset of the slot and the y_offset of the slot and returns the 
+        built SlotInfo message
+        
+        Args:
+            identifier (int): numerical identifier for the tray found in the Tray message
+            tray_name (str): name of the tray
+            slot_name (str): name of the slot
+            x_off (float): x offset in meters from center of fiducial
+            y_off (float): y offset in meters from center of fiducial
+        
+        Returns:
+            SlotInfo: fully built SlotInfo message
+        """
+        
         # Create slot info for each slot
         slot_info = SlotInfo()
         slot_info.name = f"{tray_name}_{slot_name}"
@@ -304,12 +339,12 @@ class DetectionArea(Node):
         # Generate tf transform for slot
         slot_center = Point(
             x= x_off,
-            y= y_off, 
+            y= y_off,
             z= self.gear_height
         )
-        
+
         slot_info.slot_pose = self.generate_pose(tray_name, slot_center, 0.0, 0.0, 0.0)
-        
+
         if self.publish_frames:
             self.transforms.append(self.generate_transform(tray_name, slot_info.name, slot_center, 0.0, 0.0, 0.0))
 
@@ -322,17 +357,17 @@ class DetectionArea(Node):
 
         try:
             square = image[slot_center[1]-offset:slot_center[1]+offset, slot_center[0]-offset:slot_center[0]+offset]
-        
+
             gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), gear_hsv_lower, gear_hsv_upper) # type: ignore
 
-        except cv2.error:
-            raise DetectionException("Slot outside of detection area")
+        except cv2.error as e:
+            raise DetectionException("Slot outside of detection area") from e
 
         if cv2.countNonZero(gear) > ((offset**2) * 0.5):
             return True
 
-        return False   
-         
+        return False
+
     def generate_transform(self, parent_frame: str, child_frame: str, pt: Point, roll: float, pitch: float, yaw: float) -> TransformStamped:
         t = TransformStamped()
 
@@ -346,7 +381,7 @@ class DetectionArea(Node):
         t.transform.rotation = self.quaternion_from_euler(roll, pitch, yaw)
 
         return t
-    
+
     def generate_pose(self, parent_frame: str, pt: Point, roll: float, pitch: float, yaw: float) -> PoseStamped:
         p = PoseStamped()
 
@@ -359,7 +394,7 @@ class DetectionArea(Node):
         p.pose.orientation = self.quaternion_from_euler(roll, pitch, yaw)
 
         return p
-    
+
     def quaternion_from_euler(self, roll: float, pitch: float, yaw: float) -> Quaternion:
         cy = math.cos(yaw * 0.5)
         sy = math.sin(yaw * 0.5)
@@ -369,7 +404,7 @@ class DetectionArea(Node):
         sr = math.sin(roll * 0.5)
 
         q = Quaternion()
-       
+
         q.x = cy * cp * sr - sy * sp * cr
         q.y = sy * cp * sr + cy * sp * cr
         q.z = sy * cp * cr - cy * sp * sr

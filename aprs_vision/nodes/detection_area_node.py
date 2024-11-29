@@ -7,10 +7,10 @@ from aprs_vision.stream_handler import StreamException
 def main(args=None):
     rclpy.init(args=args)
 
-    try: 
+    try:
         detection_area = DetectionArea()
         rclpy.spin(detection_area)
-    
+
     except KeyboardInterrupt:
         return
     except StreamException as e:
