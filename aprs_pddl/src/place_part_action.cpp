@@ -5,7 +5,8 @@ PlacePartAction::PlacePartAction()
     waiting_for_response_{false},
     service_called_{false}
 {
-    place_part_client = this->create_client<aprs_interfaces::srv::Place>("/place_in_slot");
+    place_part_client_fanuc_ = this->create_client<aprs_interfaces::srv::Place>("/fanuc/place_in_slot");
+    place_part_client_motoman_ = this->create_client<aprs_interfaces::srv::Place>("/motoman/place_in_slot");
 }
 
 void PlacePartAction::do_work() {
@@ -14,10 +15,16 @@ void PlacePartAction::do_work() {
 
     auto request = std::make_shared<aprs_interfaces::srv::Place::Request>();
 
-    request->frame_name = current_arguments_[1];
+    request->frame_name = current_arguments_[0];
 
-    place_part_client->async_send_request(request,
-    std::bind(&PlacePartAction::place_response_cb, this, std::placeholders::_1));
+    if(current_arguments_[2] == "fanuc")
+      place_part_client_fanuc_->async_send_request(request,
+      std::bind(&PlacePartAction::place_response_cb_fanuc, this, std::placeholders::_1));
+    else if (current_arguments_[2] == "motoman")
+      place_part_client_motoman_->async_send_request(request,
+      std::bind(&PlacePartAction::place_response_cb_motoman, this, std::placeholders::_1));
+    else
+      RCLCPP_ERROR(get_logger(),"Invalid Robot Name");
 
     waiting_for_response_=true;
     service_called_ = true;
@@ -33,10 +40,18 @@ void PlacePartAction::do_work() {
   send_feedback(progress_);
 }
 
-void PlacePartAction::place_response_cb(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future){
+void PlacePartAction::place_response_cb_fanuc(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future){
   auto result = future.get();
   if (!result->success) {
-    finish(false, progress_, "Unable to Place Part");
+    finish(false, progress_, "Fanuc Unable to Place Part");
+  }
+  waiting_for_response_ = false;
+}
+
+void PlacePartAction::place_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future){
+  auto result = future.get();
+  if (!result->success) {
+    finish(false, progress_, "Motoman Unable to Place Part");
   }
   waiting_for_response_ = false;
 }

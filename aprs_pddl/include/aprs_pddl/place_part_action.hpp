@@ -4,7 +4,6 @@
 #include "plansys2_executor/ActionExecutorClient.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include <aprs_interfaces/srv/place.hpp>
-#include <aprs_pddl/place_part_action.hpp>
 
 class PlacePartAction : public plansys2::ActionExecutorClient
 {
@@ -13,14 +12,15 @@ public:
 
 protected:
   void do_work() override;
-  void reset_action();
 
 private:
 
-  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client;
+  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client_fanuc_;
+  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client_motoman_;
   
   // Service response callbacks
-  void place_response_cb(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
+  void place_response_cb_fanuc(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
+  void place_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
 
   // Flags
   bool waiting_for_response_;

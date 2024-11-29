@@ -9,18 +9,21 @@ find_package(builtin_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(plansys2_msgs REQUIRED)
+
 set(msg_files
   "msg/Tray.msg"
   "msg/Trays.msg"
   "msg/SlotInfo.msg"
+  "msg/RobotStatus.msg"
 )
 
 set(srv_files
   "srv/MoveToNamedPose.srv"
   "srv/Pick.srv"
   "srv/Place.srv"
-  "srv/GenerateInitState.srv"
   "srv/GeneratePlan.srv"
+  "srv/ClearCurrentState.srv"
   "srv/LocateTrays.srv"
   "srv/PneumaticGripperControl.srv"
 )
@@ -38,6 +41,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   builtin_interfaces
   std_msgs
   geometry_msgs
+  plansys2_msgs
+  
   ADD_LINTER_TESTS
 )
 ament_export_dependencies(rosidl_default_runtime)

@@ -1,4 +1,6 @@
-
+plansys2_msgs/Plan plan
 ---
-
+bool success
+string status
 ---
+string current_action
