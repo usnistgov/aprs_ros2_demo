@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
+from typing import Optional
+
 import cv2
 import numpy as np
-
 from scipy.interpolate import griddata
-
 from rclpy.node import Node
-
-from typing import Optional
 from cv2.typing import MatLike
 
 class CameraException(Exception):
@@ -16,7 +14,7 @@ class CameraException(Exception):
 class CalibrationException(Exception):
     pass
 
-class CalibrationTool(Node):       
+class CalibrationTool(Node):
     camera_ip_address = {
         'fanuc_table': '192.168.1.104',
         'fanuc_conveyor': '192.168.1.108',
@@ -24,78 +22,97 @@ class CalibrationTool(Node):
         'motoman_conveyor': '192.168.1.107',
         'teach_table': '192.168.1.105',
     }
-    
+
     background_hsv_bounds = {
         'fanuc_table': {
-            'lower': (0, 0, 1), 
+            'lower': (0, 0, 1),
             'upper': (255, 255, 120)
         },
         'fanuc_conveyor': {
-            'lower': (0, 0, 10), 
+            'lower': (0, 0, 10),
             'upper': (255, 255, 140)
         },
         'motoman_table': {
-            'lower': (0, 0, 1), 
+            'lower': (0, 0, 1),
             'upper': (255, 255, 61)
         },
         'motoman_conveyor': {
-            'lower': (0, 0, 10), 
+            'lower': (0, 0, 10),
             'upper': (255, 255, 125)
         },
         'teach_table': {
-            'lower': (0, 0, 110), 
+            'lower': (0, 0, 110),
             'upper': (255, 255, 255)
         },
     }
-    
+
     pixels_per_inch = 30
     max_value = 255
-    max_value_H = 360//2   
+    max_value_H = 360//2
     low_H_name = 'Low H'
     low_S_name = 'Low S'
     low_V_name = 'Low V'
     high_H_name = 'High H'
     high_S_name = 'High S'
-    high_V_name = 'High V' 
-    
+    high_V_name = 'High V'
+
     def __init__(self):
         super().__init__('calibration_tool')
-        
+
         # Connect to camera stream
         self.declare_parameter('camera_name', "")
-        
+
         self.camera_name = self.get_parameter('camera_name').get_parameter_value().string_value
-        
+
         if self.camera_name == '':
             raise CameraException('Camera name parameter not set')
-        
+
         if self.camera_name not in self.camera_ip_address.keys():
             raise CameraException(f'[{self.camera_name}] not a valid option')
-        
+
         stream = f'http://{self.camera_ip_address[self.camera_name]}/mjpg/video.mjpg'
-        
+
         ret, self.frame = cv2.VideoCapture(stream).read()
-        
+
         if not ret:
-            raise CameraException(f'Unable to connect to camera stream')
-        
+            raise CameraException('Unable to connect to camera stream')
+
         # Variables
         self.rotation_angle = 0
         self.start_corner: Optional[tuple[int, int]] = None
         self.end_corner: Optional[tuple[int, int]] = None
-        self.low_H = self.background_hsv_bounds[self.camera_name]['lower'][0]
-        self.low_S = self.background_hsv_bounds[self.camera_name]['lower'][1]
-        self.low_V = self.background_hsv_bounds[self.camera_name]['lower'][2]
-        self.high_H = self.background_hsv_bounds[self.camera_name]['upper'][0]
-        self.high_S = self.background_hsv_bounds[self.camera_name]['upper'][1]
-        self.high_V = self.background_hsv_bounds[self.camera_name]['upper'][2]
+        self.low_h = self.background_hsv_bounds[self.camera_name]['lower'][0]
+        self.low_s = self.background_hsv_bounds[self.camera_name]['lower'][1]
+        self.low_v = self.background_hsv_bounds[self.camera_name]['lower'][2]
+        self.high_h = self.background_hsv_bounds[self.camera_name]['upper'][0]
+        self.high_s = self.background_hsv_bounds[self.camera_name]['upper'][1]
+        self.high_v = self.background_hsv_bounds[self.camera_name]['upper'][2]
         self.minimum_contour_area = 10
-        
-    def rotation_trackbar_cb_(self, val):
+        self.rectangle_x: Optional[int] = None
+        self.rectangle_y: Optional[int] = None
+
+        self.hsv_window = ""
+
+    def rotation_trackbar_cb_(self, val: int):
+        """ Callback for rotation trackbar
+
+        Args:
+            val (int): Trackbar value
+        """
         self.rotation_angle = val/5
-    
-    def draw_grid(self, img, spacing, color=(0, 255, 0), thickness=2):
-        """Draws a grid over the image."""
+
+    def draw_grid(self, img: MatLike, spacing: int, color: tuple[int, int, int]=(0, 255, 0), thickness: int=2) -> MatLike:
+        """ Draws grid onto an image
+
+        Args:
+            img (MatLike): Image to draw grid on.
+            spacing (int): Distance between gridlines in px.
+            color (tuple[int, int, int], optional): BGR color for gridlines.
+            thickness (int, optional): Gridline thickness. Defaults to 2.
+
+        Returns:
+            MatLike: Image with gridlines
+        """
 
         h, w, _ = img.shape
 
@@ -111,82 +128,151 @@ class CalibrationTool(Node):
             cv2.line(img, (x, 0), (x, h), color, thickness)
 
         return img
-    
-    def rectangle_corners_mouse_cb_(self, event,x,y,flags,param):
+
+    def rectangle_corners_mouse_cb_(self, event: int, x: int, y: int, _, __):
+        """ Callback for mouse events and location when drawing rectangles 
+
+        Args:
+            event (int): cv2 mouse event.
+            x (int): x position of cursor
+            y (int): y position of cursor
+        """
         self.rectangle_x = x
         self.rectangle_y = y
+
         if event == cv2.EVENT_MBUTTONDOWN:
-            self.start_corner = (x,y)
+            self.start_corner = (x, y)
         if event == cv2.EVENT_MBUTTONUP:
-            self.end_corner = (x,y)
+            self.end_corner = (x, y)
 
-    def low_H_cb_(self,val):
-        self.low_H = val
-        self.low_H = min(self.high_H - 1, self.low_H)
-        cv2.setTrackbarPos(self.low_H_name, self.hsv_window, self.low_H)
+    def low_h_cb_(self, val: int):
+        """ Callback for low hue slider
 
-    def high_H_cb_(self,val):
-        self.high_H = val
-        self.high_H = max(self.high_H, self.low_H + 1)
-        cv2.setTrackbarPos(self.high_H_name, self.hsv_window, self.high_H)
+        Args:
+            val (int): Value of the trackbar
+        """
+        self.low_h = val
+        self.low_h = min(self.high_h - 1, self.low_h)
+        cv2.setTrackbarPos(self.low_H_name, self.hsv_window, self.low_h)
 
-    def low_S_cb_(self,val):
-        self.low_S = val
-        self.low_S = min(self.high_S - 1, self.low_S)
-        cv2.setTrackbarPos(self.low_S_name, self.hsv_window, self.low_S)
+    def high_h_cb_(self, val: int):
+        """ Callback for high hue slider
 
-    def high_S_cb_(self,val):
-        self.high_S = val
-        self.high_S = max(self.high_S, self.low_S + 1)
-        cv2.setTrackbarPos(self.high_S_name, self.hsv_window, self.high_S)
+        Args:
+            val (int): Value of the trackbar
+        """
+        self.high_h = val
+        self.high_h = max(self.high_h, self.low_h + 1)
+        cv2.setTrackbarPos(self.high_H_name, self.hsv_window, self.high_h)
 
-    def low_V_cb_(self,val):
-        self.low_V = val
-        self.low_V = min(self.high_V - 1, self.low_V)
-        cv2.setTrackbarPos(self.low_V_name, self.hsv_window, self.low_V)
+    def low_s_cb_(self, val: int):
+        """ Callback for low saturation slider
 
-    def high_V_cb_(self,val):
-        self.high_V = val
-        self.high_V = max(self.high_V, self.low_V + 1)
-        cv2.setTrackbarPos(self.high_V_name, self.hsv_window, self.high_V)
+        Args:
+            val (int): Value of the trackbar
+        """
+        self.low_s = val
+        self.low_s = min(self.high_s - 1, self.low_s)
+        cv2.setTrackbarPos(self.low_S_name, self.hsv_window, self.low_s)
 
-    def contour_area_slider_cb_(self, val):
+    def high_s_cb_(self, val: int):
+        """ Callback for high saturation slider
+
+        Args:
+            val (int): Value of the trackbar
+        """
+        self.high_s = val
+        self.high_s = max(self.high_s, self.low_s + 1)
+        cv2.setTrackbarPos(self.high_S_name, self.hsv_window, self.high_s)
+
+    def low_v_cb_(self, val: int):
+        """ Callback for low value slider
+
+        Args:
+            val (int): Value of the trackbar
+        """
+        self.low_v = val
+        self.low_v = min(self.high_v - 1, self.low_v)
+        cv2.setTrackbarPos(self.low_V_name, self.hsv_window, self.low_v)
+
+    def high_v_cb_(self, val: int):
+        """ Callback for high value slider
+
+        Args:
+            val (int): Value of the trackbar
+        """
+        self.high_v = val
+        self.high_v = max(self.high_v, self.low_v + 1)
+        cv2.setTrackbarPos(self.high_V_name, self.hsv_window, self.high_v)
+
+    def contour_area_slider_cb_(self, val: int):
+        """ Callback for the minimum contour area slider
+
+        Args:
+            val (int): Value of the slider
+        """
         self.minimum_contour_area = val
 
     def set_rotation(self, frame: MatLike) -> tuple[MatLike, float]:
+        """ Allow user to rotate image to align holes on table with perpendicular grid
+        
+        Args:
+            frame (MatLike): Input image
+        
+        Raises:
+            CalibrationException: Upon user quit
+        
+        Returns:
+            tuple[MatLike, float]: Rotated image, angle
+        """
         rotation_window = "Use slider to set rotation for the image. Press \'c\' to continue, Press \'q\' to quit"
-                
+
         cv2.namedWindow(rotation_window, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(rotation_window , 800, 800)
-        
+
         angle_trackbar = 'Rotation angle'
         cv2.createTrackbar(angle_trackbar, rotation_window, 0, 50, self.rotation_trackbar_cb_)
         cv2.setTrackbarMin(angle_trackbar, rotation_window, -50)
-        
+
         while True:
             rotation_matrix = cv2.getRotationMatrix2D((frame.shape[1]/2, frame.shape[0]/2), self.rotation_angle, 1)
             rotated_img = cv2.warpAffine(frame, rotation_matrix, (frame.shape[1], frame.shape[0]))
             grid_img = rotated_img.copy()
             self.draw_grid(grid_img, 30, (0, 153, 254), 2)
-            
+
             cv2.imshow(rotation_window, grid_img)
-            
+
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
                 cv2.destroyWindow(rotation_window)
                 return (rotated_img, self.rotation_angle)
             if key == ord('q'):
                 raise CalibrationException('User quit')
-            
-    def select_region(self, frame: MatLike, type: str, color:tuple[int, int, int]=(0,255,0))-> tuple[tuple[int, int], tuple[int, int]]:
+
+    def select_region(self, frame: MatLike, selection_type: str, color:tuple[int, int, int]=(0,255,0))-> tuple[tuple[int, int], tuple[int, int]]:
+        """ Function to select rectangular region on image.
+        
+        Args:
+            frame (MatLike): Input Image
+            type (str): descriptor only truly used for naming window. Expected to be "row", or "column"
+            color (tuple[int, int, int], optional): Color of rectangle drawn on image. Defaults to (0,255,0) [Green].
+        
+        Raises:
+            CalibrationException: Attempting to continue without both corners of rectangle selected
+            CalibrationException: User quit
+        
+        Returns:
+            tuple[tuple[int, int], tuple[int, int]]: Start Corner of Rectangle, End Corner of Rectangle
+        """
+        
         self.start_corner = None
         self.end_corner = None
-        box_window = f'Use the middle mouse button to draw a rectangle over a single {type}'
+        box_window = f'Use the middle mouse button to draw a rectangle over a single {selection_type}'
         cv2.namedWindow(box_window, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(box_window , 800, 800)
-        
+
         cv2.setMouseCallback(box_window, self.rectangle_corners_mouse_cb_)
-        
+
         while True:
             if self.start_corner is not None:
                 rectangle_image = frame.copy()
@@ -195,16 +281,19 @@ class CalibrationTool(Node):
                     rectangle_image = cv2.cvtColor(rectangle_image, cv2.COLOR_GRAY2BGR)
 
                 if self.end_corner is None:
-                    rectangle_end_point = (self.rectangle_x, self.rectangle_y)
+                    if self.rectangle_x is not None and self.rectangle_y is not None:
+                        rectangle_end_point = (self.rectangle_x, self.rectangle_y)
+                    else:
+                        rectangle_end_point = self.start_corner
                 else:
                     rectangle_end_point = self.end_corner
-                    
+
                 cv2.rectangle(rectangle_image, self.start_corner, rectangle_end_point, color, 3)
-                cv2.imshow(box_window, rectangle_image) 
+                cv2.imshow(box_window, rectangle_image)
             else:
                 cv2.imshow(box_window, frame)
-            
-            
+
+
             key = cv2.waitKey(30) & 0xFF
             if key == ord('c'):
                 if self.end_corner is None or self.start_corner is None:
@@ -216,37 +305,61 @@ class CalibrationTool(Node):
                 self.end_corner = None
             if key == ord('q'):
                 raise CalibrationException('User quit')
-        
+
         return (self.start_corner, self.end_corner)
-    
-    def set_hsv_threshold(self, frame) -> MatLike:
+
+    def set_hsv_threshold(self, frame: MatLike) -> MatLike:
+        """ Allow user to adjust hsv thresholding so that all holes properly appear in the threshold.
+        
+        Args:
+            frame (Matlike): Input cropped image
+        
+        Raises:
+            CalibrationException: User quit
+        
+        Returns:
+            MatLike: thresholded image
+        """
         frame = cv2.GaussianBlur(frame, (5,5), 0)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         self.hsv_window = 'Use sliders to set HSV thresholding values to that only holes are visible in white'
         cv2.namedWindow(self.hsv_window, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.hsv_window , 800, 800)
-        
-        cv2.createTrackbar(self.low_H_name, self.hsv_window, self.low_H, self.max_value_H, self.low_H_cb_)
-        cv2.createTrackbar(self.high_H_name, self.hsv_window, self.high_H, self.max_value_H, self.high_H_cb_)
-        cv2.createTrackbar(self.low_S_name, self.hsv_window, self.low_S, self.max_value, self.low_S_cb_)
-        cv2.createTrackbar(self.high_S_name, self.hsv_window, self.high_S, self.max_value, self.high_S_cb_)
-        cv2.createTrackbar(self.low_V_name, self.hsv_window, self.low_V, self.max_value, self.low_V_cb_)
-        cv2.createTrackbar(self.high_V_name, self.hsv_window, self.high_V, self.max_value, self.high_V_cb_)
+
+        cv2.createTrackbar(self.low_H_name, self.hsv_window, self.low_h, self.max_value_H, self.low_h_cb_)
+        cv2.createTrackbar(self.high_H_name, self.hsv_window, self.high_h, self.max_value_H, self.high_h_cb_)
+        cv2.createTrackbar(self.low_S_name, self.hsv_window, self.low_s, self.max_value, self.low_s_cb_)
+        cv2.createTrackbar(self.high_S_name, self.hsv_window, self.high_s, self.max_value, self.high_s_cb_)
+        cv2.createTrackbar(self.low_V_name, self.hsv_window, self.low_v, self.max_value, self.low_v_cb_)
+        cv2.createTrackbar(self.high_V_name, self.hsv_window, self.high_v, self.max_value, self.high_v_cb_)
 
         while True:
-    
-            frame_threshold_image = cv2.inRange(frame, (self.low_H, self.low_S, self.low_V), (self.high_H, self.high_S, self.high_V)) #type: ignore
+
+            frame_threshold_image = cv2.inRange(frame, (self.low_h, self.low_s, self.low_v), (self.high_h, self.high_s, self.high_v)) #type: ignore
             cv2.imshow(self.hsv_window, frame_threshold_image)
-            
+
             key = cv2.waitKey(30) & 0xFF
             if key == ord('c'):
                 cv2.destroyWindow(self.hsv_window)
                 return frame_threshold_image
             if key == ord('q'):
                 raise CalibrationException('User quit')
-    
+
     def remove_excess_detected_points(self, frame: MatLike)-> MatLike:
+        """ Allow user to draw rectangles over unwanted points to remove them. Also includes a slider that allows the user to 
+        adjust the minimum contour size to ensure all points are included and any unnecessary points are not.
+        
+        Args:
+            frame (MatLike): HSV thresholded image
+        
+        Raises:
+            CalibrationException: User quit
+        
+        Returns:
+            MatLike: Input image, but with selected points removed
+        """
+
         self.start_corner = None
         self.end_corner = None
         remove_window = 'Use the middle mouse button to draw rectanlges over points that need to be removed'
@@ -261,9 +374,14 @@ class CalibrationTool(Node):
             if len(remove_img.shape) < 3:
                 remove_img = cv2.cvtColor(remove_img, cv2.COLOR_GRAY2BGR)
             if self.start_corner is not None:
-           
+
                 if self.end_corner is None:
-                    cv2.rectangle(remove_img, self.start_corner, (self.rectangle_x, self.rectangle_y), (0, 255, 0), 2)
+                    if self.rectangle_x is not None and self.rectangle_y is not None:
+                        rectangle_end_point = (self.rectangle_x, self.rectangle_y)
+                    else:
+                        rectangle_end_point = self.start_corner
+
+                    cv2.rectangle(remove_img, self.start_corner, rectangle_end_point, (0, 255, 0), 2)
                     # TODO: incorporate select region
                 else:
                     cv2.rectangle(frame, self.start_corner, self.end_corner, 0, -1)
@@ -285,9 +403,26 @@ class CalibrationTool(Node):
                 return frame
             if key == ord('q'):
                 raise CalibrationException('User quit')
-            
+
     def detect_contours(self, frame: MatLike, column_start: tuple[int, int], column_end: tuple[int, int], row_start: tuple[int, int], row_end: tuple[int, int])-> tuple[list[MatLike], list[MatLike], list[MatLike]]:
-        # Returns filtered contours in row, and column, and all found filtered contours in image
+        """ Detects contours in image, selected row, and selected column greater than the minimum contour area
+        
+        Args:
+            frame (MatLike): HSV thresholded image with excess points removed
+            column_start (tuple[int, int]): start point for selected column
+            column_end (tuple[int, int]): end point for selected column
+            row_start (tuple[int, int]): start point for selected row
+            row_end (tuple[int, int]): end point for selected row
+        
+        Raises:
+            CalibrationException: Not enough holes detected
+            CalibrationException: Too many holes detected
+        
+        Returns:
+            tuple[list[MatLike], list[MatLike], list[MatLike]]: All contours in image, all contours in selected column, and all columns 
+            in selected row greater than the minimum contour area set earlier
+        """
+        
         all_contours, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         selected_column_region = frame[column_start[1]:column_end[1], column_start[0]:column_end[0]]
@@ -308,31 +443,46 @@ class CalibrationTool(Node):
             raise CalibrationException(f'Not enough holes detected! Minimum Contour Area: {self.minimum_contour_area}')
         elif num_holes > num_rows * num_columns:
             raise CalibrationException(f'Too many holes detected. Minimum Contour Area: {self.minimum_contour_area}')
-        
+
         return (all_contours, contours_in_selected_column, contours_in_selected_row)
-    
-    def sort_all_holes(self, frame, column_start_y, all_holes: list[MatLike], holes_in_column: list[MatLike])-> list[MatLike]:
+
+    def sort_all_holes(self, frame: MatLike, column_start_y: int, all_holes: list[MatLike], holes_in_column: list[MatLike])-> list[MatLike]:
+        """Sort all holes in image from left to right and top to bottom
+        
+        Args:
+            frame (MatLike): HSV thresholded image with excess points removed
+            column_start_y (int): y-coordinate of the starting point of the selected column
+            all_holes (list[MatLike]): list of all holes(contours) in the image
+            holes_in_column (list[MatLike]): list of all holes(contours) in the selected column
+        
+        Raises:
+            CalibrationException: Not able to properly sort holes
+        
+        Returns:
+            list[MatLike]: Sorted centerpoints of all contours in image, sorted from left to right and top to bottom
+        """
+        
         # Find center of contours and sort
         center_points = []
         for hole in all_holes:
             # Calculate moments for each contour
-            M = cv2.moments(hole)
+            moments = cv2.moments(hole)
 
             # Calculate center of contour
-            if M["m00"] != 0:
-                cX = int(M["m10"] / M["m00"])
-                cY = int(M["m01"] / M["m00"])
+            if moments["m00"] != 0:
+                c_x = int(moments["m10"] / moments["m00"])
+                c_y = int(moments["m01"] / moments["m00"])
 
-                center_points.append((cX, cY))
-        
+                center_points.append((c_x, c_y))
+
         row_y = []
         for contour in holes_in_column:
             # Calculate moments for each contour
-            M = cv2.moments(contour)
+            moments = cv2.moments(contour)
 
             # Calculate center of contour
-            if M["m00"] != 0:
-                row_y.append( int(M["m01"] / M["m00"]))
+            if moments["m00"] != 0:
+                row_y.append( int(moments["m01"] / moments["m00"]))
 
         row_y.sort()
 
@@ -344,33 +494,45 @@ class CalibrationTool(Node):
 
             if i == 0:
                 lower_bound = 0
-                upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2 
+                upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2
             elif i == len(holes_in_column) - 1:
-                lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2 
+                lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2
                 upper_bound = frame.shape[0]
             else:
-                lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2 
-                upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2 
+                lower_bound = column_start_y + row_y[i] - (row_y[i] - row_y[i-1])/2
+                upper_bound = column_start_y + row_y[i] + (row_y[i+1] - row_y[i])/2
 
             for x, y in center_points:
                 if lower_bound <= y <= upper_bound:
                     working_points.append((x, y))
-                     
+
             sorted_points += sorted(working_points, key=lambda k: [k[0]])
 
             # Check to see if all points were sorted
         if not len(sorted_points) == len(center_points):
             raise CalibrationException('Not able to properly sort holes!')
-        
+
         return sorted_points
 
     def create_mappings(self, sorted_holes: list[MatLike], num_rows: int, num_columns: int)-> tuple[MatLike, MatLike]:
+        """Create mappings necessary for the calibration file. This mapping assigns pixel coordinates so that one inch in the image
+        is 30 pixels, ie the distance between two holes in both x and y is assigned to be 30 pixels.
+        
+        Args:
+            sorted_holes (list[MatLike]): List of all sorted centerpoints
+            num_rows (int): number of rows of holes in image
+            num_columns (int): number of columns of holes in image
+        
+        Returns:
+            tuple[MatLike, MatLike]: Mapping for x coordinates, mapping for y coordinates
+        """
+        
         actual_points = []
         # Create grid, assigning each hole distance a certain number of pixels
         for i in range(num_rows):
-            x = (i * self.pixels_per_inch)
+            x = i * self.pixels_per_inch
             for j in range(num_columns):
-                y = (j * self.pixels_per_inch)
+                y = j * self.pixels_per_inch
                 actual_points.append([x, y])
 
         grid_x, grid_y = np.mgrid[0:(num_rows-1)*self.pixels_per_inch, 0:(num_columns-1)*self.pixels_per_inch]
@@ -383,309 +545,6 @@ class CalibrationTool(Node):
         map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape((num_rows-1)*self.pixels_per_inch,(num_columns-1)*self.pixels_per_inch).astype('float32')
 
         return (map_x, map_y)
+
     def get_frame(self):
         return self.frame
-        
-        
-        
-        
-        
-        
-        
-        
-    # def rotation_change(self, val):
-    #     self.rotate_image(val/5)
-
-    # def rotate_image(self, angle):
-    #     self.angle = angle
-    #     self.rotation_matrix = cv2.getRotationMatrix2D((self.current_frame.shape[1] / 2, self.current_frame.shape[0] / 2), angle, 1)
-    #     self.rotated_image = cv2.warpAffine(self.current_frame, self.rotation_matrix, (self.current_frame.shape[1], self.current_frame.shape[0]))
-    #     grid_image = self.rotated_image.copy()
-    #     self.draw_grid(grid_image, 15, 20, (100, 100, 100), 1)
-    #     cv2.imshow('Image Rotation', grid_image)
-
-
-    # def draw_grid(self, img, rows, cols, color=(0, 255, 0), thickness=1):
-    #     """Draws a grid over the image."""
-
-    #     h, w, _ = img.shape
-
-    #     for i in range(0, rows + 1):
-    #         y = int(i * h / rows)
-    #         cv2.line(img, (0, y), (w, y), color, thickness)
-
-    #     for j in range(0, cols + 1):
-    #         x = int(j * w / cols)
-    #         cv2.line(img, (x, 0), (x, h), color, thickness)
-
-    #     return img
-
-    # def contour_area_slider(self, val):
-    #     contour_image = self.just_holes_original.copy()
-    #     contours, _ = cv2.findContours(contour_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    #     filtered_contours = []
-    #     for contour in contours:
-    #         area = cv2.contourArea(contour)
-    #         if area >= val:
-    #             filtered_contours.append(contour)
-    #     self.minimum_contour_area = val
-
-    #     colored_image = cv2.cvtColor(contour_image,cv2.COLOR_GRAY2BGR)
-    #     cv2.drawContours(colored_image,filtered_contours,-1,(0,255,0),-1) #type: ignore
-    #     cv2.imshow('Remove Excess Points', colored_image)
-    #     self.just_holes_calibration = colored_image.copy()
-
-    # def draw_box_on_image(self,event,x,y,flags,param):
-    #     rectangle_image = self.just_holes_calibration.copy()
-    #     if event == cv2.EVENT_MBUTTONDOWN:
-    #         self.start_point = (x,y)
-    #         self.drawing_rectangle = True
-    #     if event == cv2.EVENT_MBUTTONUP:
-    #         cv2.rectangle(self.just_holes_calibration, self.start_point, (x,y), 0, -1) #type: ignore
-    #         cv2.rectangle(self.just_holes_original, self.start_point, (x,y), 0, -1) #type: ignore
-    #         cv2.imshow('Remove Excess Points', self.just_holes_calibration)
-    #         self.drawing_rectangle = False
-    #     if self.drawing_rectangle:
-    #         rectangle_image = self.just_holes_calibration.copy()
-    #         cv2.rectangle(rectangle_image, self.start_point, (x,y), (120,120,120), 1)
-    #         cv2.imshow('Remove Excess Points', rectangle_image)
-    
-    # def select_column(self,event,x,y,flags,param):
-    #     rectangle_image = self.current_frame.copy()
-        
-    #     if event == cv2.EVENT_MBUTTONDOWN:
-    #         self.column_start = (x, y)
-
-    #     if self.column_start is not None and self.column_end is None:
-    #         rectangle_image = self.current_frame.copy()
-    #         cv2.rectangle(rectangle_image, self.column_start, (x,y), 120, 2)
-    #         cv2.imshow('Select Columns and Rows', rectangle_image)
-            
-    #     if event == cv2.EVENT_MBUTTONUP and self.column_start is not None:
-    #         self.column_end = (x, y)
-    #         cv2.rectangle(rectangle_image, self.column_start, self.column_end, 120, 2)
-    #         cv2.imshow('Select Columns and Rows', rectangle_image)
-
-    # def select_row(self,event,x,y,flags,param):
-    #     rectangle_image = self.current_frame.copy()
-        
-    #     if event == cv2.EVENT_MBUTTONDOWN:
-    #         self.row_start = (x, y)
-
-    #     if self.row_start is not None and self.row_end is None:
-    #         rectangle_image = self.current_frame.copy()
-    #         cv2.rectangle(rectangle_image, self.row_start, (x,y), 120, 2)
-    #         cv2.imshow('Select Columns and Rows', rectangle_image)
-            
-    #     if event == cv2.EVENT_MBUTTONUP and self.row_start is not None:
-    #         self.row_end = (x, y)
-    #         cv2.rectangle(rectangle_image, self.row_start, self.row_end, 120, 2)
-    #         cv2.imshow('Select Columns and Rows', rectangle_image)
-            
-    
-
-    # def run_calibration(self)-> Optional[tuple[float, tuple[int, int], tuple[int, int], MatLike, MatLike]]:
-    #     pass
-        # # Rotate image so grid of holes is perpendicular
-        # self.rotated_image = self.current_frame
-        # cv2.namedWindow('Image Rotation', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('Image Rotation' , 800, 800)
-        # cv2.imshow('Image Rotation', self.current_frame)
-        # cv2.createTrackbar('Angle','Image Rotation',0,50,self.rotation_change)
-        # cv2.setTrackbarMin('Angle', 'Image Rotation', -50)
-        # rotation_set = False
-        # while not rotation_set:
-        #     key = cv2.waitKey(0) & 0xFF
-        #     if key == ord('c'):
-        #         rotation_set = True
-        
-        # self.current_frame = self.rotated_image
-        # rectangle_set = False
-        # cv2.destroyAllWindows()
-
-        # # Determine cropping region
-        # cv2.namedWindow('Corner Selection', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('Corner Selection' , 800, 800)
-        # cv2.imshow('Corner Selection', self.current_frame)
-        # cv2.setMouseCallback('Corner Selection',self.mouse_callback)
-        # while not rectangle_set:
-        #     key = cv2.waitKey(0) & 0xFF
-        #     if key == ord('c'):
-        #         rectangle_set = True
-        
-        # # Crop image 
-        # offset = -10
-        
-        # self.current_frame = self.current_frame[
-        #     self.start_corner[1] - offset:self.end_corner[1] + offset,
-        #     self.start_corner[0] - offset:self.end_corner[0] + offset
-        # ]
-
-        # cropped_image = self.current_frame.copy()
-        
-        # cv2.destroyAllWindows()
-
-        # # Threshold image to remove everything but holes 
-        # blur = cv2.GaussianBlur(self.current_frame,(5,5),0)
-        # hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
-        
-        # cv2.imwrite('hsv.jpg', hsv)
-        
-        # return None
-        
-        # threshold = cv2.inRange(hsv, self.background_hsv_bounds[self.camera_name]['lower'], self.background_hsv_bounds[self.camera_name]['upper']) #type: ignore
-
-        # self.just_holes_calibration = threshold.copy()
-        # self.just_holes_original = self.just_holes_calibration
-
-        # # Mouse callback on window to allow for a middle-click drag to remove any excess points
-        # cv2.namedWindow('Remove Excess Points', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('Remove Excess Points' , 800, 800)
-        # cv2.setMouseCallback('Remove Excess Points',self.draw_box_on_image)
-        # cv2.createTrackbar("Minimum contour area", 'Remove Excess Points', self.minimum_contour_area, 30, self.contour_area_slider)
-        # cv2.imshow('Remove Excess Points', self.just_holes_calibration)
-        
-        # excess_points_removed = False
-        # while not excess_points_removed:
-        #     key = cv2.waitKey(0) & 0xFF
-        #     if key == ord('c'):
-        #         excess_points_removed = True
-
-        # cv2.destroyAllWindows()
-
-        # self.current_frame = self.just_holes_original
-
-        # # Select region for columns and rows
-        # cv2.namedWindow('Select Columns and Rows', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('Select Columns and Rows' , 800, 800)
-        # while True:
-        #     cv2.setMouseCallback('Select Columns and Rows', self.select_column)
-        #     cv2.imshow('Select Columns and Rows', self.current_frame)
-        #     key = cv2.waitKey(0) & 0xFF
-        #     if key == ord('r'):
-        #         self.column_start = None
-        #         self.column_end = None
-                
-        #     elif key == ord('c'):
-        #         break
-
-        # # Mouse callback for selecting a single row
-        # while True:
-        #     cv2.imshow('Select Columns and Rows', self.current_frame)
-        #     cv2.setMouseCallback('Select Columns and Rows', self.select_row)
-        #     key = cv2.waitKey(0) & 0xFF
-        #     if key == ord('r'):
-        #         self.row_start = None
-        #         self.row_end = None
-
-        #     elif key == ord('c'):
-        #         break
-            
-        # cv2.destroyAllWindows()
-
-        # # Detect contours 
-        # all_contours, _ = cv2.findContours(self.current_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-        # if self.column_start is not None and self.column_end is not None:
-        #     selected_column_region = self.current_frame[self.column_start[1]:self.column_end[1], self.column_start[0]:self.column_end[0]]
-        # else:
-        #     print("something bad happened")
-        #     return None
-        
-        # contours_in_selected_column, _ = cv2.findContours(selected_column_region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        
-        # if self.row_start is not None and self.row_end is not None:
-        #     selected_row_region = self.current_frame[self.row_start[1]:self.row_end[1], self.row_start[0]:self.row_end[0]]
-        # else:
-        #     print("something bad happened")
-        #     return None
-        
-        # contours_in_selected_row, _ = cv2.findContours(selected_row_region, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-        # # Count num contours
-        # all_contours = [c for c in all_contours if cv2.contourArea(c) > self.minimum_contour_area]
-        # contours_in_selected_column = [c for c in contours_in_selected_column if cv2.contourArea(c) > self.minimum_contour_area]
-
-        # num_holes = len(all_contours)
-        # num_rows = len(contours_in_selected_column)
-        # num_columns = len([c for c in contours_in_selected_row if cv2.contourArea(c) > self.minimum_contour_area])
-
-        # print(f'rows: {num_rows}, columns: {num_columns}, num_holes: {num_holes}"')
-
-        # if not num_rows * num_columns == num_holes:
-        #     print(f"I fucked up :(")
-        #     return None
-
-        # # Find center of contours and sort
-        # center_points = []
-        # for contour in all_contours:
-        #     # Calculate moments for each contour
-        #     M = cv2.moments(contour)
-
-        #     # Calculate center of contour
-        #     if M["m00"] != 0:
-        #         cX = int(M["m10"] / M["m00"])
-        #         cY = int(M["m01"] / M["m00"])
-
-        #         center_points.append((cX, cY))
-        
-        # row_y = []
-        # for contour in contours_in_selected_column:
-        #     # Calculate moments for each contour
-        #     M = cv2.moments(contour)
-
-        #     # Calculate center of contour
-        #     if M["m00"] != 0:
-        #         row_y.append( int(M["m01"] / M["m00"]))
-
-        # row_y.sort()
-
-        # # Loop through each detected row and sort points in each row from left to right
-        # sorted_points = []
-
-        # for i in range(num_rows):
-        #     working_points = []
-
-        #     if i == 0:
-        #         lower_bound = 0
-        #         upper_bound = self.column_start[1] + row_y[i] + (row_y[i+1] - row_y[i])/2 
-        #     elif i == num_rows - 1:
-        #         lower_bound = self.column_start[1] + row_y[i] - (row_y[i] - row_y[i-1])/2 
-        #         upper_bound = self.current_frame.shape[1]
-        #     else:
-        #         lower_bound = self.column_start[1] + row_y[i] - (row_y[i] - row_y[i-1])/2 
-        #         upper_bound = self.column_start[1] + row_y[i] + (row_y[i+1] - row_y[i])/2 
-
-        #     for x, y in center_points:
-        #         if lower_bound <= y <= upper_bound:
-        #             working_points.append((x, y))
-                     
-        #     sorted_points += sorted(working_points, key=lambda k: [k[0]])
-
-        # # Check to see if all points were sorted
-        # if not len(sorted_points) == len(center_points):
-        #     # self.get_logger().error("Not able to properly sort holes")
-        #     print("Not able to properly sort holes")
-        #     return None
-
-        # actual_points = []
-        # # Create grid, assigning each hole distance a certain number of pixels
-        # for i in range(num_rows):
-        #     x = (i * self.pixels_per_inch)
-        #     for j in range(num_columns):
-        #         y = (j * self.pixels_per_inch)
-        #         actual_points.append([x, y])
-
-        # grid_x, grid_y = np.mgrid[0:(num_rows-1)*self.pixels_per_inch, 0:(num_columns-1)*self.pixels_per_inch]
-
-        # destination = np.array(actual_points)
-        # source = np.array(sorted_points)
-
-        # grid_z = griddata(destination, source, (grid_x, grid_y), method='cubic')
-        # map_x = np.append([], [ar[:,0] for ar in grid_z]).reshape((num_rows-1)*self.pixels_per_inch,(num_columns-1)*self.pixels_per_inch).astype('float32')
-        # map_y = np.append([], [ar[:,1] for ar in grid_z]).reshape((num_rows-1)*self.pixels_per_inch,(num_columns-1)*self.pixels_per_inch).astype('float32')
-
-        # cv2.imshow("Remapped", cv2.remap(cropped_image, map_x, map_y, cv2.INTER_CUBIC))
-        # cv2.waitKey(0)
-
-        # return (self.angle, self.start_corner, self.end_corner, map_x, map_y)
