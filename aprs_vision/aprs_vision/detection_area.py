@@ -81,19 +81,6 @@ class DetectionArea(Node):
 
         self.image_frame = self.get_parameter('transform.child_frame').get_parameter_value().string_value
 
-        image_frame_transform = self.generate_transform(
-            self.get_parameter('transform.parent_frame').get_parameter_value().string_value,
-            self.get_parameter('transform.child_frame').get_parameter_value().string_value,
-            Point(
-                x=self.get_parameter('transform.translation.x').get_parameter_value().double_value,
-                y=self.get_parameter('transform.translation.y').get_parameter_value().double_value,
-                z=self.get_parameter('transform.translation.z').get_parameter_value().double_value
-            ),
-            self.get_parameter('transform.rotation.roll').get_parameter_value().double_value,
-            self.get_parameter('transform.rotation.pitch').get_parameter_value().double_value,
-            self.get_parameter('transform.rotation.yaw').get_parameter_value().double_value
-        )
-
         # Stream Handler
         share_path = get_package_share_directory('aprs_vision')
         calibration_filepath = os.path.join(share_path, 'config', f'{self.robot_name}_{self.location}_calibration.npz')
@@ -118,7 +105,22 @@ class DetectionArea(Node):
         self.transforms: list[TransformStamped] = []
 
         self.static_tf_broadcaster = StaticTransformBroadcaster(self)
-        self.static_tf_broadcaster.sendTransform(image_frame_transform)
+
+        if self.publish_frames:
+            image_frame_transform = self.generate_transform(
+            self.get_parameter('transform.parent_frame').get_parameter_value().string_value,
+            self.get_parameter('transform.child_frame').get_parameter_value().string_value,
+            Point(
+                x=self.get_parameter('transform.translation.x').get_parameter_value().double_value,
+                y=self.get_parameter('transform.translation.y').get_parameter_value().double_value,
+                z=self.get_parameter('transform.translation.z').get_parameter_value().double_value
+            ),
+            self.get_parameter('transform.rotation.roll').get_parameter_value().double_value,
+            self.get_parameter('transform.rotation.pitch').get_parameter_value().double_value,
+            self.get_parameter('transform.rotation.yaw').get_parameter_value().double_value
+            )
+
+            self.static_tf_broadcaster.sendTransform(image_frame_transform)
 
         # ROS Timers
         self.publish_timer = self.create_timer(timer_period_sec=1, callback=self.publish)
@@ -169,14 +171,14 @@ class DetectionArea(Node):
 
     def remove_background(self, frame: MatLike) -> MatLike:
         """ Takes in image from camera and returns the image with the white background removed
-        
+
         Args:
             frame (MatLike): Input image
-        
+
         Returns:
             MatLike: Image with white background removed
         """
-        
+
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, self.background_v_upper)) #type: ignore
@@ -205,7 +207,7 @@ class DetectionArea(Node):
         Returns:
             tuple[int, int, tuple[float, float], float]: identifier, id, center, rotation(radians)
         """
-        
+
         # Use contours and mask to isolate tray in image
         canvas = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
         cv2.drawContours(canvas, [contour], -1, color=255, thickness=-1) # type: ignore
@@ -240,14 +242,14 @@ class DetectionArea(Node):
 
     def detect_trays(self, table_image: MatLike) -> Trays:
         """ Takes in image with background removed, then builds and returns the Trays() message to be published.
-        
+
         Args:
             table_image (MatLike): Background removed image
-        
+
         Returns:
             Trays: Trays info topic
         """
-        
+
         # Clear list of transforms
         self.transforms.clear()
 
@@ -311,20 +313,20 @@ class DetectionArea(Node):
         return trays_info
 
     def build_slot_info_message(self, identifier: int, tray_name: str, slot_name: str, x_off: float, y_off: float) -> SlotInfo:
-        """ Takes in tray identifier, tray name, slot name, the x_offset of the slot and the y_offset of the slot and returns the 
+        """ Takes in tray identifier, tray name, slot name, the x_offset of the slot and the y_offset of the slot and returns the
         built SlotInfo message
-        
+
         Args:
             identifier (int): numerical identifier for the tray found in the Tray message
             tray_name (str): name of the tray
             slot_name (str): name of the slot
             x_off (float): x offset in meters from center of fiducial
             y_off (float): y offset in meters from center of fiducial
-        
+
         Returns:
             SlotInfo: fully built SlotInfo message
         """
-        
+
         # Create slot info for each slot
         slot_info = SlotInfo()
         slot_info.name = f"{tray_name}_{slot_name}"
