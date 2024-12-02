@@ -183,13 +183,13 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
   RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
 
-  if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
+  if (slot_t.translation.y < 0 && joint_1_pos > 0){
     RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
     auto result = move_to_named_pose("above_conveyor");
     if (!result.first){
       return result;
     }
-  } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
+  } else if (slot_t.translation.y > 0 && joint_1_pos < 0)
   {
     RCLCPP_INFO(get_logger(),"Moving to Above Table");
     auto result = move_to_named_pose("above_table");
@@ -514,13 +514,7 @@ void RobotCommander::initialize_planning_scene_cb(
   planning_scene_->applyCollisionObject(create_collision_object("optical_table","world","optical_table.stl", optical_table_pose),get_object_color(-1));
   planning_scene_->applyCollisionObject(create_collision_object("conveyor_belt", "world", "conveyor.stl", conveyor_belt_pose), get_object_color(-1));
   
-  // if (!received_table_tray_info && !received_conveyor_tray_info){
-  //   response->success = true;
-  //   response->message = "Tray info not yet received";
-  //   return;
-  // }
-
-  if (!received_table_tray_info){
+  if (!received_table_tray_info && !received_conveyor_tray_info){
     response->success = true;
     response->message = "Tray info not yet received";
     return;

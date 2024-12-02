@@ -79,6 +79,14 @@ add_executable(move_conveyor_action_node src/move_conveyor_action.cpp)
 target_include_directories(move_conveyor_action_node PRIVATE include)
 ament_target_dependencies(move_conveyor_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+add_executable(motoman_move_home_action_node src/motoman_move_home_action.cpp)
+target_include_directories(motoman_move_home_action_node PRIVATE include)
+ament_target_dependencies(motoman_move_home_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+add_executable(fanuc_move_home_action_node src/fanuc_move_home_action.cpp)
+target_include_directories(fanuc_move_home_action_node PRIVATE include)
+ament_target_dependencies(fanuc_move_home_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 install(TARGETS
     task_planner_node
     fanuc_pick_part_action_node
@@ -86,6 +94,8 @@ install(TARGETS
     motoman_pick_part_action_node
     motoman_place_part_action_node
     move_conveyor_action_node
+    motoman_move_home_action_node
+    fanuc_move_home_action_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

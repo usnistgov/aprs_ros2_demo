@@ -73,7 +73,7 @@ class MinimalPublisher(Node):
 
         msg.kit_trays.append(m2l1_tray)
         msg.kit_trays.append(s2l2_tray)
-        self.publisher_teach_.publish(msg)
+        # self.publisher_teach_.publish(msg)
 
         empty_trays = Trays()
         self.publisher_fanuc_.publish(empty_trays)
