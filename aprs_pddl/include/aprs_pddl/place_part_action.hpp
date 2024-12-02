@@ -16,18 +16,15 @@ protected:
 
 private:
 
-  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client_fanuc_;
-  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client_motoman_;
+  rclcpp::Client<aprs_interfaces::srv::Place>::SharedPtr place_part_client_;
   
   // Service response callbacks
-  void place_response_cb_fanuc(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
-  void place_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
+  void place_response_cb_(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
 
   // Flags
-  bool fanuc_waiting_for_response_;
-  bool fanuc_service_called_;  
-  bool motoman_waiting_for_response_;
-  bool motoman_service_called_;
+  bool waiting_for_response_;
+  bool service_called_;  
+
 
   //progress
   double progress_;

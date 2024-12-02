@@ -1,10 +1,7 @@
 (define (problem kit_building)
     (:domain aprs_demo)
     (:objects
-        fanuc motoman - robot
-        small medium large - size
-        fanuc_table motoman_table fanuc_conveyor motoman_conveyor - location
-        
+       
         m2l1_kit_tray_1_lg_1 m2l1_kit_tray_1_mg_1 m2l1_kit_tray_1_mg_2 - slot
         m2l1_kit_tray_2_lg_1 m2l1_kit_tray_2_mg_1 m2l1_kit_tray_2_mg_2 - slot
         m2l1_kit_tray_3_lg_1 m2l1_kit_tray_3_mg_1 m2l1_kit_tray_3_mg_2 - slot

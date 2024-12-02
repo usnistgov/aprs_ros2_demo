@@ -15,18 +15,14 @@ protected:
   void reset_action();
 private:
 
-  rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client_fanuc_;
-  rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client_motoman_;
+  rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client_;
 
   // Service response callbacks
-  void pick_response_cb_fanuc(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
-  void pick_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
+  void pick_response_cb_(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
 
   // Flags
-  bool fanuc_waiting_for_response_;
-  bool fanuc_service_called_;  
-  bool motoman_waiting_for_response_;
-  bool motoman_service_called_;
+  bool waiting_for_response_;
+  bool service_called_;  
 
   //progress
   double progress_;

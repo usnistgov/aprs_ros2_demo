@@ -136,7 +136,8 @@ class DetectionArea(Node):
 
         try:
             no_background = self.remove_background(self.current_frame)
-
+            cv2.imshow("teach table", no_background)
+            cv2.waitKey(0)
             self.trays_info = self.detect_trays(no_background)
 
         except DetectionException as e:

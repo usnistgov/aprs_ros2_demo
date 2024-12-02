@@ -55,14 +55,24 @@ ament_target_dependencies(task_planner_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 # Action Executables
 
 # pick_part_action
-add_executable(pick_part_action_node src/pick_part_action.cpp)
-target_include_directories(pick_part_action_node PRIVATE include)
-ament_target_dependencies(pick_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+add_executable(fanuc_pick_part_action_node src/fanuc_pick_part_action.cpp)
+target_include_directories(fanuc_pick_part_action_node PRIVATE include)
+ament_target_dependencies(fanuc_pick_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # place_part_action
-add_executable(place_part_action_node src/place_part_action.cpp)
-target_include_directories(place_part_action_node PRIVATE include)
-ament_target_dependencies(place_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+add_executable(fanuc_place_part_action_node src/fanuc_place_part_action.cpp)
+target_include_directories(fanuc_place_part_action_node PRIVATE include)
+ament_target_dependencies(fanuc_place_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+# pick_part_action
+add_executable(motoman_pick_part_action_node src/motoman_pick_part_action.cpp)
+target_include_directories(motoman_pick_part_action_node PRIVATE include)
+ament_target_dependencies(motoman_pick_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+# place_part_action
+add_executable(motoman_place_part_action_node src/motoman_place_part_action.cpp)
+target_include_directories(motoman_place_part_action_node PRIVATE include)
+ament_target_dependencies(motoman_place_part_action_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 # move_conveyor_action
 add_executable(move_conveyor_action_node src/move_conveyor_action.cpp)
@@ -71,8 +81,10 @@ ament_target_dependencies(move_conveyor_action_node ${THIS_PACKAGE_INCLUDE_DEPEN
 
 install(TARGETS
     task_planner_node
-    pick_part_action_node
-    place_part_action_node
+    fanuc_pick_part_action_node
+    fanuc_place_part_action_node
+    motoman_pick_part_action_node
+    motoman_place_part_action_node
     move_conveyor_action_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

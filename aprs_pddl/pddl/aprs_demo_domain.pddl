@@ -24,52 +24,102 @@
         (conveyor_used_by ?robot - robot)
     )   
 
-    (:durative-action pick
+    (:durative-action fanuc_pick
         :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
         :duration (= ?duration 5)
         :condition (and 
             (at start (and
-                (in_reach ?location ?robot)
+                (in_reach ?location fanuc)
                 (slot_at ?slot_name ?location)
-                (gripper_empty ?robot)
+                (gripper_empty fanuc)
                 (slot_occupied ?slot_name ?size)
-                (robot_on_standby ?robot)
-                (robot_operational ?robot)
+                (robot_on_standby fanuc)
+                (robot_operational fanuc)
             ))
         )
         :effect (and 
-            (at start (not (robot_on_standby ?robot)))
+            (at start (not (robot_on_standby fanuc)))
             (at end (and
                 (not (slot_occupied ?slot_name ?size))
                 (slot_empty ?slot_name ?size)
-                (in_gripper ?size ?robot)
-                (robot_on_standby ?robot)
-                (not (gripper_empty ?robot))
+                (in_gripper ?size fanuc)
+                (robot_on_standby fanuc)
+                (not (gripper_empty fanuc))
             ))
         )
     )
 
-    (:durative-action place
+    (:durative-action fanuc_place
         :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
         :duration (= ?duration 5)
         :condition (and
             (at start (and
-                (in_gripper ?size ?robot)
-                (in_reach ?location ?robot)
+                (in_gripper ?size fanuc)
+                (in_reach ?location fanuc)
                 (slot_at ?slot_name ?location)
-                (robot_on_standby ?robot)
+                (robot_on_standby fanuc)
                 (slot_empty ?slot_name ?size)
-                (robot_operational ?robot)
+                (robot_operational fanuc)
             ))
         )
         :effect (and 
-            (at start (not (robot_on_standby ?robot)))
+            (at start (not (robot_on_standby fanuc)))
             (at end (and
                 (slot_occupied ?slot_name ?size)
                 (not (slot_empty ?slot_name ?size))
-                (robot_on_standby ?robot)
-                (gripper_empty ?robot)
-                (not (in_gripper ?size ?robot))
+                (robot_on_standby fanuc)
+                (gripper_empty fanuc)
+                (not (in_gripper ?size fanuc))
+            ))
+        )
+    )
+
+        (:durative-action motoman_pick
+        :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
+        :duration (= ?duration 5)
+        :condition (and 
+            (at start (and
+                (in_reach ?location motoman)
+                (slot_at ?slot_name ?location)
+                (gripper_empty motoman)
+                (slot_occupied ?slot_name ?size)
+                (robot_on_standby motoman)
+                (robot_operational motoman)
+            ))
+        )
+        :effect (and 
+            (at start (not (robot_on_standby motoman)))
+            (at end (and
+                (not (slot_occupied ?slot_name ?size))
+                (slot_empty ?slot_name ?size)
+                (in_gripper ?size motoman)
+                (robot_on_standby motoman)
+                (not (gripper_empty motoman))
+            ))
+        )
+    )
+
+    (:durative-action motoman_place
+        :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
+        :duration (= ?duration 5)
+        :condition (and
+            (at start (and
+                (in_gripper ?size motoman)
+                (in_reach ?location motoman)
+                (slot_at ?slot_name ?location)
+                (robot_on_standby motoman)
+                (slot_empty ?slot_name ?size)
+                (robot_operational motoman)
+            ))
+        )
+        :effect (and 
+            (at start (not (robot_on_standby motoman)))
+            (at end (and
+                (slot_occupied ?slot_name ?size)
+                (not (slot_empty ?slot_name ?size))
+                (robot_on_standby motoman)
+                (gripper_empty motoman)
+                (not (in_gripper ?size motoman))
             ))
         )
     )
