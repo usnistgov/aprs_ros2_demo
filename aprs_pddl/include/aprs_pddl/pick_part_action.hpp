@@ -12,7 +12,7 @@ public:
 
 protected:
   void do_work() override;
-
+  void reset_action();
 private:
 
   rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client_fanuc_;
@@ -23,8 +23,10 @@ private:
   void pick_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
 
   // Flags
-  bool waiting_for_response_;
-  bool service_called_;
+  bool fanuc_waiting_for_response_;
+  bool fanuc_service_called_;  
+  bool motoman_waiting_for_response_;
+  bool motoman_service_called_;
 
   //progress
   double progress_;

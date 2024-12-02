@@ -2,11 +2,11 @@
 
 TaskPlanner::TaskPlanner() : Node("task_planner")
 {
-  fanuc_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc/table_vision/trays_info", 10, bind(&TaskPlanner::FanucTableTraysInfoCallback, this, std::placeholders::_1));
-  fanuc_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc/conveyor_vision/trays_info", 10, bind(&TaskPlanner::FanucConveyorTraysInfoCallback, this, std::placeholders::_1));
-  motoman_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/table_vision/trays_info", 10, bind(&TaskPlanner::MotomanTableTraysInfoCallback, this, std::placeholders::_1));
-  motoman_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/conveyor_vision/trays_info", 10, bind(&TaskPlanner::MotomanConveyorTraysInfoCallback, this, std::placeholders::_1));
-  teach_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach_table_vision/trays_info", 10, bind(&TaskPlanner::TeachTableTraysInfoCallback, this, std::placeholders::_1));
+  fanuc_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc/table_trays_info", 10, bind(&TaskPlanner::FanucTableTraysInfoCallback, this, std::placeholders::_1));
+  fanuc_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/fanuc/conveyor_trays_info", 10, bind(&TaskPlanner::FanucConveyorTraysInfoCallback, this, std::placeholders::_1));
+  motoman_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/table_trays_info", 10, bind(&TaskPlanner::MotomanTableTraysInfoCallback, this, std::placeholders::_1));
+  motoman_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/conveyor_trays_info", 10, bind(&TaskPlanner::MotomanConveyorTraysInfoCallback, this, std::placeholders::_1));
+  teach_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach/table_trays_info", 10, bind(&TaskPlanner::TeachTableTraysInfoCallback, this, std::placeholders::_1));
   robot_status_subscriber_ = this->create_subscription<aprs_interfaces::msg::RobotStatus>("/robot_status", 10, bind(&TaskPlanner::RobotStatusCallback, this, std::placeholders::_1));
 
   generate_plan_server_ = this->create_service<aprs_interfaces::srv::GeneratePlan>(
@@ -279,9 +279,9 @@ void TaskPlanner::init_world_state(){
 
 void TaskPlanner::init_goal_state(){
 
-  goal_str_ == "(and";
+  goal_str_ = "(and";
 
-  for (auto& kit_tray : fanuc_table_kit_trays_){
+  for (auto& kit_tray : teach_table_kit_trays_){
     for (auto& kit_tray_slot : kit_tray.slots){
       if (!kit_tray_slot.occupied) {
         goal_str_ += ("(slot_empty " + kit_tray_slot.name + " " + part_size_[kit_tray_slot.size] + ")");

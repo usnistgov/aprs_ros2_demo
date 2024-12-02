@@ -12,6 +12,7 @@ public:
 
 protected:
   void do_work() override;
+  void reset_action(std::string robot);
 
 private:
 
@@ -23,8 +24,10 @@ private:
   void place_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future);
 
   // Flags
-  bool waiting_for_response_;
-  bool service_called_;
+  bool fanuc_waiting_for_response_;
+  bool fanuc_service_called_;  
+  bool motoman_waiting_for_response_;
+  bool motoman_service_called_;
 
   //progress
   double progress_;

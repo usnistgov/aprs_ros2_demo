@@ -79,8 +79,8 @@ public:
   bool recieved_teach_table_info = false;
 
   // Robot Status
-  bool fanuc_operational;
-  bool motoman_operational;
+  bool fanuc_operational=true;
+  bool motoman_operational=true;
 
   // PDDL
   std::string goal_str_;

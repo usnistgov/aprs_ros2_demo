@@ -2,8 +2,10 @@
 
 PlacePartAction::PlacePartAction()
 : plansys2::ActionExecutorClient("place_part", std::chrono::milliseconds(250)),
-    waiting_for_response_{false},
-    service_called_{false}
+    fanuc_waiting_for_response_{false},
+    fanuc_service_called_{false}, 
+    motoman_waiting_for_response_{false},
+    motoman_service_called_{false}
 {
     place_part_client_fanuc_ = this->create_client<aprs_interfaces::srv::Place>("/fanuc/place_in_slot");
     place_part_client_motoman_ = this->create_client<aprs_interfaces::srv::Place>("/motoman/place_in_slot");
@@ -11,27 +13,41 @@ PlacePartAction::PlacePartAction()
 
 void PlacePartAction::do_work() {
 
-  if(!service_called_) {
+  if(!fanuc_service_called_ && current_arguments_[2] == "fanuc") {
 
     auto request = std::make_shared<aprs_interfaces::srv::Place::Request>();
 
     request->frame_name = current_arguments_[0];
 
-    if(current_arguments_[2] == "fanuc")
-      place_part_client_fanuc_->async_send_request(request,
-      std::bind(&PlacePartAction::place_response_cb_fanuc, this, std::placeholders::_1));
-    else if (current_arguments_[2] == "motoman")
-      place_part_client_motoman_->async_send_request(request,
-      std::bind(&PlacePartAction::place_response_cb_motoman, this, std::placeholders::_1));
-    else
-      RCLCPP_ERROR(get_logger(),"Invalid Robot Name");
+    place_part_client_fanuc_->async_send_request(request,
+    std::bind(&PlacePartAction::place_response_cb_fanuc, this, std::placeholders::_1));
 
-    waiting_for_response_=true;
-    service_called_ = true;
+    fanuc_waiting_for_response_=true;
+    fanuc_service_called_ = true;
 
   } else {
-    if(!waiting_for_response_) {
-      service_called_ = false;
+    if(!fanuc_waiting_for_response_) {
+      fanuc_service_called_ = false;
+      progress_ = 1.0;
+      finish(true, progress_,"Placed Part in Slot Successfully");
+    }
+  }
+
+  if(!motoman_service_called_ && current_arguments_[2] == "motoman") {
+
+    auto request = std::make_shared<aprs_interfaces::srv::Place::Request>();
+
+    request->frame_name = current_arguments_[0];
+
+    place_part_client_motoman_->async_send_request(request,
+    std::bind(&PlacePartAction::place_response_cb_motoman, this, std::placeholders::_1));
+
+    motoman_waiting_for_response_=true;
+    motoman_service_called_ = true;
+
+  } else {
+    if(!motoman_waiting_for_response_) {
+      motoman_service_called_ = false;
       progress_ = 1.0;
       finish(true, progress_,"Placed Part in Slot Successfully");
     }
@@ -45,7 +61,7 @@ void PlacePartAction::place_response_cb_fanuc(rclcpp::Client<aprs_interfaces::sr
   if (!result->success) {
     finish(false, progress_, "Fanuc Unable to Place Part");
   }
-  waiting_for_response_ = false;
+  fanuc_waiting_for_response_ = false;
 }
 
 void PlacePartAction::place_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future){
@@ -53,7 +69,7 @@ void PlacePartAction::place_response_cb_motoman(rclcpp::Client<aprs_interfaces::
   if (!result->success) {
     finish(false, progress_, "Motoman Unable to Place Part");
   }
-  waiting_for_response_ = false;
+  motoman_waiting_for_response_ = false;
 }
 
 int main(int argc, char **argv)

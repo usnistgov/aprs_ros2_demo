@@ -2,39 +2,54 @@
 
 PickPartAction::PickPartAction()
 : plansys2::ActionExecutorClient("pick_part", std::chrono::milliseconds(250)),
-    waiting_for_response_{false},
-    service_called_{false}
+  fanuc_waiting_for_response_{false},
+  fanuc_service_called_{false}, 
+  motoman_waiting_for_response_{false},
+  motoman_service_called_{false}
 {
   pick_part_client_fanuc_ = this->create_client<aprs_interfaces::srv::Pick>("/fanuc/pick_from_slot");
   pick_part_client_motoman_ = this->create_client<aprs_interfaces::srv::Pick>("/motoman/pick_from_slot");
 }
 
 void PickPartAction::do_work() {
-  RCLCPP_INFO(get_logger(),"Inside Do work");
-  if(!service_called_) {
+
+  if(!fanuc_service_called_ && current_arguments_[2] == "fanuc") {
 
     auto request = std::make_shared<aprs_interfaces::srv::Pick::Request>();
 
     request->frame_name = current_arguments_[0];
-    RCLCPP_INFO(get_logger(),"Sending request");
 
-    if(current_arguments_[2] == "fanuc")
-      pick_part_client_fanuc_->async_send_request(request,
-      std::bind(&PickPartAction::pick_response_cb_fanuc, this, std::placeholders::_1));
-    else if (current_arguments_[2] == "motoman")
-      pick_part_client_motoman_->async_send_request(request,
-      std::bind(&PickPartAction::pick_response_cb_motoman, this, std::placeholders::_1));
-    else
-      RCLCPP_ERROR(get_logger(),"Invalid Robot Name");
+    pick_part_client_fanuc_->async_send_request(request,
+    std::bind(&PickPartAction::pick_response_cb_fanuc, this, std::placeholders::_1));
 
-    waiting_for_response_=true;
-    service_called_ = true;
+    fanuc_waiting_for_response_=true;
+    fanuc_service_called_ = true;
 
   } else {
-    if(!waiting_for_response_) {
-      service_called_ = false;
+    if(!fanuc_waiting_for_response_) {
+      fanuc_service_called_ = false;
       progress_ = 1.0;
-      finish(true, progress_,"Picked Part from Slot Successfully");
+      finish(true, progress_,"Pickd Part in Slot Successfully");
+    }
+  }
+
+  if(!motoman_service_called_ && current_arguments_[2] == "motoman") {
+
+    auto request = std::make_shared<aprs_interfaces::srv::Pick::Request>();
+
+    request->frame_name = current_arguments_[0];
+
+    pick_part_client_motoman_->async_send_request(request,
+    std::bind(&PickPartAction::pick_response_cb_motoman, this, std::placeholders::_1));
+    
+    motoman_waiting_for_response_=true;
+    motoman_service_called_ = true;
+
+  } else {
+    if(!motoman_waiting_for_response_) {
+      motoman_service_called_ = false;
+      progress_ = 1.0;
+      finish(true, progress_,"Pickd Part in Slot Successfully");
     }
   }
       
@@ -47,7 +62,7 @@ void PickPartAction::pick_response_cb_fanuc(rclcpp::Client<aprs_interfaces::srv:
   if (!result->success) {
     finish(false, progress_, "Fanuc Unable to Pick Part");
   }
-  waiting_for_response_ = false;
+  fanuc_waiting_for_response_ = false;
 }
 
 void PickPartAction::pick_response_cb_motoman(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future){
@@ -56,7 +71,7 @@ void PickPartAction::pick_response_cb_motoman(rclcpp::Client<aprs_interfaces::sr
   if (!result->success) {
     finish(false, progress_, "Motoman Unable to Pick Part");
   }
-  waiting_for_response_ = false;
+  motoman_waiting_for_response_ = false;
 }
 
 int main(int argc, char **argv)

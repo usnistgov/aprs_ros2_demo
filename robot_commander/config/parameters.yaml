@@ -17,7 +17,7 @@ fanuc_robot_commander:
 
     offsets:
       pick: 0.0
-      place: 0.040
+      place: 0.01
       above_slot: 0.1
 
 motoman_robot_commander:
