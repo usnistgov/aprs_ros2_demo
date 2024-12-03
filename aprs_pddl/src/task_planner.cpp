@@ -292,7 +292,8 @@ void TaskPlanner::init_goal_state(){
     }
   }
 
-  goal_str_ += "(at_home fanuc)(at_home motoman))";
+  // goal_str_ += "(at_home fanuc)(at_home motoman))";
+  goal_str_ += ")";
 
   RCLCPP_INFO_STREAM(get_logger(), "Goal is: " << goal_str_);
   problem_expert_->setGoal(plansys2::Goal(goal_str_));

@@ -1,0 +1,179 @@
+import math
+
+import tkinter as tk
+
+from aprs_vision.conversions import euler_from_quaternion
+from aprs_interfaces.msg import Tray, SlotInfo
+
+from customtkinter import CTkCanvas
+
+class TrayCanvas(CTkCanvas):
+    tray_corners_ = {
+        Tray.SMALL_GEAR_TRAY: [
+            (-0.08, 0.08),
+            (0.08, 0.08),
+            (0.08, -0.08),
+            (-0.08, -0.08)
+        ],
+        Tray.MEDIUM_GEAR_TRAY: [
+            (-0.098, 0.098),
+            (0.098, 0.098),
+            (0.098, -0.098),
+            (-0.098, -0.098)
+        ],
+        Tray.LARGE_GEAR_TRAY: [
+            (-0.105, 0.113),
+            (0.105, 0.113),
+            (0.105, -0.025),
+            (-0.105, -0.025),
+        ],
+        Tray.M2L1_KIT_TRAY: [
+            (-0.108, 0.043), # Top left corner
+            (0.108, 0.043), # Top right corner
+            (0.108, -0.054), # Bottom right corner
+            (0.019, -0.128), # Very bottom right corner
+            (-0.019, -0.128), # Very bottom left corner
+            (-0.108, -0.054), # Bottom left corner
+        ],
+        Tray.S2L2_KIT_TRAY: [
+            (-0.105, 0.113), # Top left corner
+            (0.105, 0.113), # Top right corner
+            (0.105, 0.0), # Middle right coner
+            (0.067, -0.08), # Bottom right corner
+            (-0.067,  -0.08), # Bottom left corner
+            (-0.105, 0.0), # Middle left coner
+        ],
+        -1: [
+            (-0.02, 0.02),
+            (0.02, 0.02),
+            (0.02, -0.02),
+            (-0.02, -0.02)
+        ]
+    }
+
+    gear_radii_ = {
+        SlotInfo.SMALL: 0.032,
+        SlotInfo.MEDIUM: 0.04,
+        SlotInfo.LARGE: 0.05}
+    
+    tray_colors_ = {
+        Tray.SMALL_GEAR_TRAY: "#3b3a3a",
+        Tray.MEDIUM_GEAR_TRAY: "#3b3a3a",
+        Tray.LARGE_GEAR_TRAY: "#3b3a3a",
+        Tray.M2L1_KIT_TRAY: "#3b3a3a",
+        Tray.S2L2_KIT_TRAY: "#3b3a3a"
+    }
+
+    fiducial_square_measurements = (0.04, 0.04)
+    radius = 0.03
+    
+    def __init__(self, frame, width, height, img_height):
+        super().__init__(frame, bd = 0, highlightthickness=0, height=height, width=width)
+        
+        actual_height = (img_height / 30.0) * 0.0254
+        self.conversion_factor = height / actual_height
+
+        self.all_trays: list[Tray] = []
+        
+        self.update_canvas()
+    
+    def update_canvas(self):
+        self.delete("all")
+
+        for tray in self.all_trays:
+            if tray.identifier not in TrayCanvas.tray_corners_.keys():
+                return None
+            
+            x = tray.tray_pose.pose.position.x
+            y = tray.tray_pose.pose.position.y
+            _, __, rotation = euler_from_quaternion(tray.tray_pose.pose.orientation)
+
+            self.draw_tray(tray.identifier, (x, y), rotation)
+
+            for slot in tray.slots:
+                slot: SlotInfo
+                
+                if not slot.occupied:
+                    continue
+                
+                x_off = slot.slot_pose.pose.position.x
+                y_off = slot.slot_pose.pose.position.y
+                
+                self.draw_gear(slot.size, (x, y), rotation, x_off, y_off)
+        
+        self.after(1000, self.update_canvas)
+    
+    def draw_tray(self, identifier: int, center: tuple[float, float], rotation: float):
+        corners = TrayCanvas.tray_corners_[identifier]
+        
+        rounded_corners = self.round_points(corners)
+        
+        rotated_points = self.rotate_points(rounded_corners, rotation)
+        
+        # Handle canvas axis is defined from top left
+        flipped_points = [(x, -y) for x, y in rotated_points]
+        
+        translated_points = self.translate_points(center, flipped_points)
+        
+        canvas_points = self.get_canvas_points(translated_points)
+        
+        self.create_polygon(canvas_points, fill=TrayCanvas.tray_colors_[identifier], smooth=True, splinesteps=32)
+    
+    def draw_gear(self, size: int, tray_center: tuple[float, float], tray_rotation: float, x_off: float, y_off: float):
+        slot_center = [(x_off, y_off)]
+
+        rotated_points = self.rotate_points(slot_center, tray_rotation)
+        flipped_points = [(x, -y) for x, y in rotated_points]
+
+        translated_points = self.translate_points(tray_center, flipped_points)
+        
+        canvas_points = self.get_canvas_points(translated_points)
+
+        cx = canvas_points[0]
+        cy = canvas_points[1]
+
+        radius = self.gear_radii_[size] * self.conversion_factor
+
+        self.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill="#40bd42")
+
+    def round_points(self, points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+        rounded_points = []
+        for i in range(len(points)):
+            p1 = points[i]
+            p2 = points[(i+1)%len(points)]
+            angle = math.atan2((p2[1] - p1[1]), (p2[0] - p1[0]))
+            
+            # Add original point
+            rounded_points.append(p1)
+            
+            # Add two points between i and i+1 point 
+            p3 = (p1[0] + self.radius * math.cos(angle), p1[1] + self.radius * math.sin(angle))
+            p4 = (p2[0] - self.radius * math.cos(angle), p2[1] - self.radius * math.sin(angle))
+                
+            rounded_points.append(p3)
+            rounded_points.append(p3)
+            rounded_points.append(p4)
+            rounded_points.append(p4)
+
+        return rounded_points
+    
+    def translate_points(self, center: tuple[float, float], points) -> list[tuple[float, float]]:
+        return [(p[0] + center[0], p[1] + center[1]) for p in points]
+    
+    def rotate_points(self, points: list[tuple[float, float]], angle: float) -> list[tuple[float, float]]:
+        rotated_points = []
+        for x,y in points:
+            x_r = x * math.cos(angle) - y * math.sin(angle)
+            y_r = x * math.sin(angle) + y * math.cos(angle)
+            rotated_points.append((x_r, y_r))
+        
+        return rotated_points
+
+    def get_canvas_points(self, points: list[tuple[float, float]]) -> list[float]:
+        canvas_points = []
+        for x, y in points:
+            canvas_points.append(x*self.conversion_factor)
+            canvas_points.append(y*self.conversion_factor)
+        
+        return canvas_points
+    

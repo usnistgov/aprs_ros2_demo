@@ -20,21 +20,27 @@ class LiveImage(ctk.CTkLabel):
         "teach_table": "http://192.168.1.105/mjpg/video.mjpg",
     }
 
-    def __init__(self, frame: ctk.CTk, detection_area: str):
-        super().__init__(frame, text="Image not found", fg_color="#C2C2C2", font=("UbuntuMono",50))
-        
-        self.height = 100 
-        self.width = 100
+    def __init__(self, frame, detection_area: str, height=200):
+        super().__init__(frame, text="Image not found", fg_color="#C2C2C2", font=("UbuntuMono", 50))
 
-        self.configure(width=self.width, height=self.height)
-        
+        self.height = height 
+
+        # Get calibration file
         share_path = get_package_share_directory('aprs_vision')
         calibration_filepath = os.path.join(share_path, 'config', f'{detection_area}_calibration.npz')
 
+        # Connect to stream and set width
         try:
             self.stream = StreamHandler(self.streams[detection_area], calibration_filepath)
+            shape = self.stream.read_frame().shape
+            self.width = int(shape[1] * self.height / shape[0])
+            self.image_height = shape[0]
+
         except StreamException:
             self.stream = None
+            self.image_height = 100
+        
+        self.configure(width=self.width, height=self.height)
         
         self.update_image()
 
@@ -45,8 +51,6 @@ class LiveImage(ctk.CTkLabel):
         try:
             cv_image = self.stream.read_frame()
             cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
-
-            self.width = int(cv_image.shape[1] * self.height / cv_image.shape[0])
 
             return cv_image
             
@@ -62,3 +66,9 @@ class LiveImage(ctk.CTkLabel):
             self.configure(text="", image=ctk.CTkImage(Image.fromarray(cv_image), size=(self.width, self.height)), fg_color="transparent")
         
         self.after(50, self.update_image)
+
+    def get_shape(self) -> tuple[int, int]:
+        return (self.width, self.height)
+    
+    def get_image_height(self) -> int:
+        return self.image_height
