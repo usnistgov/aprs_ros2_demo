@@ -31,6 +31,15 @@
       <joint name="joint_6" value="0.0" />
     </group_state>
 
+    <group_state name="conveyor_home" group="fanuc_arm">
+      <joint name="joint_1" value="-0.5" />
+      <joint name="joint_2" value="0.0" />
+      <joint name="joint_3" value="0.0" />
+      <joint name="joint_4" value="0.0" />
+      <joint name="joint_5" value="-1.5707" />
+      <joint name="joint_6" value="0.0" />
+    </group_state>
+
     
     <disable_collisions link1="fanuc_base_link" link2="link_1" reason="Adjacent" />
     <disable_collisions link1="link_1" link2="link_2" reason="Adjacent" />

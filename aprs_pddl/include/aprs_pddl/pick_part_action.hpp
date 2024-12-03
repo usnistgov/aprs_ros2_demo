@@ -4,7 +4,6 @@
 #include "plansys2_executor/ActionExecutorClient.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include <aprs_interfaces/srv/pick.hpp>
-#include <aprs_pddl/pick_part_action.hpp>
 
 class PickPartAction : public plansys2::ActionExecutorClient
 {
@@ -14,17 +13,16 @@ public:
 protected:
   void do_work() override;
   void reset_action();
-
 private:
 
-  rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client;
+  rclcpp::Client<aprs_interfaces::srv::Pick>::SharedPtr pick_part_client_;
 
   // Service response callbacks
-  void pick_response_cb(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
+  void pick_response_cb_(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future);
 
   // Flags
   bool waiting_for_response_;
-  bool service_called_;
+  bool service_called_;  
 
   //progress
   double progress_;

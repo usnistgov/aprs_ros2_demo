@@ -21,24 +21,40 @@ def launch_setup(context, *args, **kwargs):
           }.items())
 
     # Specify the actions
-    place_part_action = Node(
+    fanuc_place_part_action = Node(
         package='aprs_pddl',
-        executable='place_part_action_node',
-        name='place',
+        executable='fanuc_place_part_action_node',
+        name='fanuc_place',
         output='screen',
         parameters=[])
     
-    pick_part_action = Node(
+    fanuc_pick_part_action = Node(
         package='aprs_pddl',
-        executable='pick_part_action_node',
-        name='pick',
+        executable='fanuc_pick_part_action_node',
+        name='fanuc_pick',
+        output='screen',
+        parameters=[])
+    
+    motoman_place_part_action = Node(
+        package='aprs_pddl',
+        executable='motoman_place_part_action_node',
+        name='motoman_place',
+        output='screen',
+        parameters=[])
+    
+    motoman_pick_part_action = Node(
+        package='aprs_pddl',
+        executable='motoman_pick_part_action_node',
+        name='motoman_pick',
         output='screen',
         parameters=[])
 
     nodes_to_start = [
         plansys2_cmd,
-        place_part_action,
-        pick_part_action,
+        fanuc_place_part_action,
+        fanuc_pick_part_action,
+        motoman_place_part_action,
+        motoman_pick_part_action
     ]
 
     return nodes_to_start

@@ -17,7 +17,7 @@ fanuc_robot_commander:
 
     offsets:
       pick: 0.0
-      place: 0.040
+      place: 0.01
       above_slot: 0.1
 
 motoman_robot_commander:
@@ -29,8 +29,8 @@ motoman_robot_commander:
       - motoman_left_finger
       - motoman_right_finger
 
-    velocity_scaling_factor: 0.2
-    acceleration_scaling_factor: 0.2
+    velocity_scaling_factor: 0.3
+    acceleration_scaling_factor: 0.3
     motion_pause: 1.0
 
     gripper_rotation:
@@ -38,6 +38,6 @@ motoman_robot_commander:
       pitch: 3.14159
 
     offsets:
-      pick: 0.0
+      pick: 0.005
       place: 0.01
       above_slot: 0.1

@@ -136,7 +136,6 @@ class DetectionArea(Node):
 
         try:
             no_background = self.remove_background(self.current_frame)
-
             self.trays_info = self.detect_trays(no_background)
 
         except DetectionException as e:
@@ -151,7 +150,6 @@ class DetectionArea(Node):
             return response
 
         response.message = 'Located trays'
-
         return response
 
     def get_frame(self):

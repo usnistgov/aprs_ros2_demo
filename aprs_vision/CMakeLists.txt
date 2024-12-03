@@ -34,6 +34,7 @@ ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_N
 install(PROGRAMS
   nodes/detection_area_node.py
   nodes/calibration_tool_node.py
+  nodes/publish_dummy_trays.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
