@@ -352,8 +352,8 @@ class DetectionArea(Node):
 
     def check_occupied(self, image: MatLike, slot_center: tuple[int, int]) -> bool:
         offset = 15
-        gear_hsv_lower = (0, 83, 0)
-        gear_hsv_upper = (147, 255, 255)
+        gear_hsv_lower = (0, 50, 0)
+        gear_hsv_upper = (100, 255, 255)
 
         try:
             square = image[slot_center[1]-offset:slot_center[1]+offset, slot_center[0]-offset:slot_center[0]+offset]

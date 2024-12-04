@@ -11,17 +11,18 @@ from example_interfaces.srv import Trigger
 class LocateTraysFrame(ctk.CTkFrame):
     srv_names = {
         "fanuc_table": "fanuc/locate_trays_on_table",
-        "fanuc_conveyor": "fanuc/locate_trays_on_conveyor",
+        # "fanuc_conveyor": "fanuc/locate_trays_on_conveyor",
         "teach_table": "teach/locate_trays_on_table",
         "motoman_table": "motoman/locate_trays_on_table",
-        "motoman_conveyor": "motoman/locate_trays_on_conveyor",
+        # "motoman_conveyor": "motoman/locate_trays_on_conveyor",
     }
     def __init__(self, frame, node: Node):
-        super().__init__(frame, height=800, width=600)
-        self.rowconfigure([i for i in range(4)], weight=1)
-        self.rowconfigure([i for i in range(3)], weight=1)
+        super().__init__(frame, height=300, width=650, fg_color="#EBEBEB")
+        self.grid_rowconfigure([i for i in range(3)], weight=1)
+        self.grid_columnconfigure([i for i in range(2)], weight=1)
 
         self.font = ("", 15)
+        self.disabled_color = "#404040"
 
         self.successfully_locate_trays = True
         self.service_request_futures: dict[str, Future] = {}
@@ -50,12 +51,13 @@ class LocateTraysFrame(ctk.CTkFrame):
             )
         
         checkbox_count = 0
-        for detection_area in ["All", "fanuc_table", "fanuc_conveyor", "teach_table", "motoman_table", "motoman_conveyor"]:
-            self.checkboxes[detection_area].grid(row=checkbox_count//3 + 1, column=checkbox_count%3, pady=5, padx=3, sticky="w")
+        # for detection_area in ["All", "fanuc_table", "fanuc_conveyor", "teach_table", "motoman_table", "motoman_conveyor"]:
+        for detection_area in ["All", "fanuc_table", "teach_table", "motoman_table"]:
+            self.checkboxes[detection_area].grid(row=checkbox_count//2 + 1, column=checkbox_count%2, pady=5, padx=3, sticky="w")
             checkbox_count += 1
 
-        self.locate_trays_button = ctk.CTkButton(self, text="Locate trays in selected areas", command=self.button_command_cb, font=self.font, state=tk.DISABLED)
-        self.locate_trays_button.grid(row = 0, column = 1, pady=10)
+        self.locate_trays_button = ctk.CTkButton(self, text="Locate trays in selected areas", command=self.button_command_cb, font=self.font, state=tk.DISABLED, fg_color=self.disabled_color)
+        self.locate_trays_button.grid(row = 0, column = 0, columnspan=2, pady=10)
         
         self.selected_detection_areas["All"].trace_add("write", self.select_all_detection_areas)
 
@@ -121,12 +123,12 @@ class LocateTraysFrame(ctk.CTkFrame):
     def activate_all(self):
         for checkbox in self.checkboxes.values():
             checkbox.configure(state=tk.NORMAL)
-        self.locate_trays_button.configure(state=tk.NORMAL)
+        self.locate_trays_button.configure(state=tk.NORMAL, fg_color="#3B8ED0")
 
     def deactivate_all(self):
         for checkbox in self.checkboxes.values():
             checkbox.configure(state=tk.DISABLED)
-        self.locate_trays_button.configure(state=tk.DISABLED)
+        self.locate_trays_button.configure(state=tk.DISABLED, fg_color=self.disabled_color)
 
     def reactivate_button_timeout(self):
         for detection_area, future in self.service_request_futures.items():
@@ -138,19 +140,22 @@ class LocateTraysFrame(ctk.CTkFrame):
         self.activate_all()
     
     def check_box_trace_cb(self):
-        all_bools = [checkbox_selected.get() for checkbox_selected in self.selected_detection_areas.values()]
-        self.locate_trays_button.configure(state = (tk.NORMAL if any(all_bools) else tk.DISABLED))
+        if any([checkbox_selected.get() for checkbox_selected in self.selected_detection_areas.values()]):
+            self.locate_trays_button.configure(state=tk.NORMAL, fg_color="#3B8ED0")
+        else:
+            self.locate_trays_button.configure(state=tk.DISABLED, fg_color=self.disabled_color)
 
 class InitializePlanningSceneFrame(ctk.CTkFrame):
     srv_names = {
         "fanuc": "fanuc/initialize_planning_scene",
         "motoman": "motoman/initialize_planning_scene"}
     def __init__(self, frame, node: Node):
-        super().__init__(frame, height=800, width=600)
+        super().__init__(frame, height=300, width=650, fg_color="#EBEBEB")
         self.rowconfigure([i for i in range(4)], weight=1)
         self.rowconfigure([i for i in range(3)], weight=1)
 
         self.font = ("", 15)
+        self.disabled_color = "#404040"
 
         self.successfully_locate_trays = True
         self.service_request_futures: dict[str, Future] = {}
@@ -181,8 +186,8 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
         self.checkboxes["fanuc"].grid(row=1, column=0, pady=5, padx=3, sticky="w")
         self.checkboxes["motoman"].grid(row=1, column=1, pady=5, padx=3, sticky="w")
 
-        self.locate_trays_button = ctk.CTkButton(self, text="Initialize Planning Scene", command=self.button_command_cb, font=self.font, state=tk.DISABLED)
-        self.locate_trays_button.grid(row = 0, column = 0, columnspan=2, pady=10)
+        self.initialize_button = ctk.CTkButton(self, text="Initialize Planning Scene", command=self.button_command_cb, font=self.font, state=tk.DISABLED, fg_color=self.disabled_color)
+        self.initialize_button.grid(row = 0, column = 0, columnspan=2, pady=10)
         
     def button_command_cb(self):
         self.num_services_done = 0
@@ -232,12 +237,12 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
     def activate_all(self):
         for checkbox in self.checkboxes.values():
             checkbox.configure(state=tk.NORMAL)
-        self.locate_trays_button.configure(state=tk.NORMAL)
+        self.initialize_button.configure(state=tk.NORMAL, fg_color="#3B8ED0")
 
     def deactivate_all(self):
         for checkbox in self.checkboxes.values():
             checkbox.configure(state=tk.DISABLED)
-        self.locate_trays_button.configure(state=tk.DISABLED)
+        self.initialize_button.configure(state=tk.DISABLED, fg_color=self.disabled_color)
 
     def reactivate_button_timeout(self):
         for robot, future in self.service_request_futures.items():
@@ -249,5 +254,7 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
         self.activate_all()
     
     def check_box_trace_cb(self):
-        all_bools = [checkbox_selected.get() for checkbox_selected in self.selected_robots.values()]
-        self.locate_trays_button.configure(state = (tk.NORMAL if any(all_bools) else tk.DISABLED))
+        if any([checkbox_selected.get() for checkbox_selected in self.selected_robots.values()]):
+            self.initialize_button.configure(state=tk.NORMAL, fg_color="#3B8ED0")
+        else:
+            self.initialize_button.configure(state=tk.DISABLED, fg_color=self.disabled_color)

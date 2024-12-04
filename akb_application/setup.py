@@ -21,7 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'akb_application = akb_application.akb_application:main',
-            'dummy_locate_trays = akb_application.dummy_srv_server:main'
+            'dummy_pddl_server = akb_application.dummy_srv_server:main'
         ],
     },
 )
