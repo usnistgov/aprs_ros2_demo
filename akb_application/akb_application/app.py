@@ -5,7 +5,7 @@ from rclpy.node import Node
 
 from akb_application.live_image import LiveImage
 from akb_application.tray_canvas import TrayCanvas
-from akb_application.service_handlers import LocateTraysFrame, InitializePlanningSceneFrame
+from akb_application.service_handlers import LocateTraysFrame, InitializePlanningSceneFrame, RobotFunctionsFrame
 from akb_application.pddl_frame import PDDLFrame
 
 class App(ctk.CTk):
@@ -17,7 +17,7 @@ class App(ctk.CTk):
         self.node = node
         self.geometry("2000x1100")
 
-        self.grid_columnconfigure((0,1,2), weight=1)
+        self.grid_columnconfigure((0,1,2,3), weight=1)
         self.grid_rowconfigure((0,1), weight=1)
 
         self.font = ("", 18)
@@ -56,25 +56,11 @@ class App(ctk.CTk):
 
         self.locate_trays_frame = LocateTraysFrame(self, self.node)
         self.planning_scene_frame = InitializePlanningSceneFrame(self, self.node)
+        self.robot_function_frame = RobotFunctionsFrame(self, self.node)
         self.pddl_frame = PDDLFrame(self, self.node)
     
-        self.visualization_frame.grid(row=0, column=0, columnspan=2)
-        self.locate_trays_frame.grid(row=1, column=0)
-        self.planning_scene_frame.grid(row=1, column=1)
-        self.pddl_frame.grid(row=0, column=2, rowspan=2)
-
-        # self.fanuc_table_image = LiveImage(self, "fanuc_table", height=400)
-
-        # self.fanuc_table_image.pack(pady=20, padx=20)
-
-        # w, h = self.fanuc_table_image.get_shape()
-        # img_h = self.fanuc_table_image.get_image_height()
-
-        # self.fanuc_trays = TrayCanvas(self, self.node, "/fanuc/table_trays_info", w, h, img_h)
-
-        # self.fanuc_trays.pack(pady=20, padx=20)
-
-        # LocateTraysFrame(self, node).pack(pady=20, padx=20)
-        # InitializePlanningSceneFrame(self, node).pack(pady=35)
-
-        # PDDLFrame(self, self.node).pack(pady=20, padx=20)
+        self.visualization_frame.grid(row=0, column=0, columnspan=3)
+        self.locate_trays_frame.grid(row=1, column=0, sticky='n')
+        self.planning_scene_frame.grid(row=1, column=1, sticky='n')
+        self.robot_function_frame.grid(row=1, column=2, sticky='n')
+        self.pddl_frame.grid(row=0, column=3, rowspan=2, sticky='n', pady=30)

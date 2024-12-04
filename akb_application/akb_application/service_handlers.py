@@ -5,8 +5,9 @@ from functools import partial
 
 from rclpy.node import Node
 from rclpy.task import Future
-from aprs_interfaces.srv import LocateTrays
+from aprs_interfaces.srv import LocateTrays, MoveToNamedPose, PneumaticGripperControl
 from example_interfaces.srv import Trigger
+from ament_index_python.packages import get_package_share_directory
 
 class LocateTraysFrame(ctk.CTkFrame):
     srv_names = {
@@ -17,7 +18,7 @@ class LocateTraysFrame(ctk.CTkFrame):
         # "motoman_conveyor": "motoman/locate_trays_on_conveyor",
     }
     def __init__(self, frame, node: Node):
-        super().__init__(frame, height=300, width=650, fg_color="#EBEBEB")
+        super().__init__(frame, height=300, width=433, fg_color="#EBEBEB")
         self.grid_rowconfigure([i for i in range(3)], weight=1)
         self.grid_columnconfigure([i for i in range(2)], weight=1)
 
@@ -150,7 +151,7 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
         "fanuc": "fanuc/initialize_planning_scene",
         "motoman": "motoman/initialize_planning_scene"}
     def __init__(self, frame, node: Node):
-        super().__init__(frame, height=300, width=650, fg_color="#EBEBEB")
+        super().__init__(frame, height=300, width=433, fg_color="#EBEBEB")
         self.rowconfigure([i for i in range(4)], weight=1)
         self.rowconfigure([i for i in range(3)], weight=1)
 
@@ -165,7 +166,7 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
 
         self.node = node
         self.clients = {robot: self.node.create_client(Trigger, srv_name) for robot, srv_name in self.srv_names.items()}
-        self.selected_robots = {robot: ctk.BooleanVar(value=False) for robot in list(self.srv_names.keys())}
+        self.selected_robots = {robot: ctk.BooleanVar(value=True) for robot in list(self.srv_names.keys())}
 
         self.checkboxes: dict[str, ctk.CTkCheckBox] = {}
         checkbox_names = list(self.srv_names.keys())
@@ -258,3 +259,118 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
             self.initialize_button.configure(state=tk.NORMAL, fg_color="#3B8ED0")
         else:
             self.initialize_button.configure(state=tk.DISABLED, fg_color=self.disabled_color)
+
+class RobotFunctionsFrame(ctk.CTkFrame):
+    srv_names = {
+        "fanuc": "fanuc/initialize_planning_scene",
+        "motoman": "motoman/initialize_planning_scene"}
+    def __init__(self, frame, node: Node):
+        super().__init__(frame, height=300, width=433, fg_color="#EBEBEB")
+        self.node = node
+        self.font = ("", 15)
+
+        self.actuate_gripper_clients = {
+            "fanuc": self.node.create_client(PneumaticGripperControl, "fanuc/actuate_gripper"),
+            "motoman": self.node.create_client(PneumaticGripperControl, "motoman/actuate_gripper")
+        }
+
+        self.move_to_named_pose_clients = {
+            "fanuc": self.node.create_client(MoveToNamedPose, "fanuc/move_to_named_pose"),
+            "motoman": self.node.create_client(MoveToNamedPose, "motoman/move_to_named_pose")
+        }
+
+        self.named_poses = {
+            "fanuc": self.get_named_positions("fanuc"),
+            "motoman": self.get_named_positions("motoman")
+        }
+
+        self.selected_robot = ctk.StringVar(value="fanuc")
+        self.robot_switch = ctk.CTkSwitch(self, text="Fanuc", command=self.update_robot_switch,
+                                          variable=self.selected_robot, onvalue="motoman", offvalue="fanuc", height=40, width=135, font=self.font, fg_color="#3B8ED0", progress_color="#3B8ED0")
+        
+        self.robot_switch.grid(column=0, row=0, columnspan = 2, padx=10, pady=10)
+        
+        self.open_gripper_button = ctk.CTkButton(self, text="Open Gripper", command=partial(self.actuate_gripper_button_cb, False), font=self.font)
+        self.open_gripper_button.grid(column=0, row=2, padx=10, pady=10, columnspan=2)
+        self.open_gripper_button = ctk.CTkButton(self, text="Close Gripper", command=partial(self.actuate_gripper_button_cb, True), font=self.font)
+        self.open_gripper_button.grid(column=0, row=3, padx=10, pady=10, columnspan=2)
+
+        self.selected_named_position = ctk.StringVar(value=self.named_poses[self.selected_robot.get()][0])
+        self.named_pose_dropdown = ctk.CTkOptionMenu(
+            self, 
+            variable=self.selected_named_position, 
+            values=self.named_poses[self.selected_robot.get()], 
+            font=self.font, 
+            dropdown_font=self.font,
+            anchor="center"
+        )
+        self.named_pose_dropdown.grid(column=1, row=1, padx=10, pady=10)
+        self.move_to_named_pose_button = ctk.CTkButton(self, text="Move to Pose:", command=self.move_to_named_pose_button_cb, font=self.font)
+        self.move_to_named_pose_button.grid(column=0, row=1, padx=10, pady=10)
+    
+    def actuate_gripper_button_cb(self, enable: bool):
+        if not self.actuate_gripper_clients[self.selected_robot.get()].service_is_ready():
+            self.node.get_logger().error(f"Acuate gripper service not ready for {self.selected_robot.get()}")
+            return
+
+        gripper_request = PneumaticGripperControl.Request()
+        gripper_request.enable = enable
+
+        future = self.actuate_gripper_clients[self.selected_robot.get()].call_async(gripper_request)
+
+        future.add_done_callback(self.gripper_done_cb)
+    
+    def gripper_done_cb(self, future: Future):
+        result: PneumaticGripperControl.Response = future.result() # type: ignore
+        if result.success:
+            self.node.get_logger().info(f"Acuated gripper for {self.selected_robot.get()}")
+        else:
+            self.node.get_logger().error(f"Unable to actuate gripper for {self.selected_robot.get()}")
+    
+    def move_to_named_pose_button_cb(self):
+        if not self.move_to_named_pose_clients[self.selected_robot.get()].service_is_ready():
+            self.node.get_logger().error(f"Move to named pose service not ready for {self.selected_robot.get()}")
+            return
+
+        move_to_named_pose_request = MoveToNamedPose.Request()
+        move_to_named_pose_request.name = self.selected_named_position.get()
+
+        self.move_to_named_pose_button.configure(state=tk.DISABLED)
+
+        future = self.move_to_named_pose_clients[self.selected_robot.get()].call_async(move_to_named_pose_request)
+
+        future.add_done_callback(self.move_to_named_pose_done_cb)
+    
+    def move_to_named_pose_done_cb(self, future: Future):
+        result: MoveToNamedPose.Response = future.result() # type: ignore
+        if result.success:
+            self.node.get_logger().info(f"Moved to pose {self.selected_named_position.get()} for {self.selected_robot.get()}")
+        else:
+            self.node.get_logger().error(f"Could not move to pose {self.selected_named_position.get()} for {self.selected_robot.get()}")
+        self.move_to_named_pose_button.configure(state=tk.NORMAL)
+
+    def update_robot_switch(self):
+        self.robot_switch.configure(text=self.selected_robot.get().capitalize())
+        self.selected_named_position.set(self.named_poses[self.selected_robot.get()][0])
+        self.named_pose_dropdown.configure(values=self.named_poses[self.selected_robot.get()])
+
+    def get_named_positions(self, robot_name: str):
+        moveit_package = get_package_share_directory(f'{robot_name}_moveit_config')
+        srdf_file_path = moveit_package + f"/config/{robot_name}.srdf"
+        found_named_positions = []
+        with open(srdf_file_path, "+r") as f:
+            for line in f:
+                if "group_state" in line and " name" in line:
+                    found_name = ""
+                    inside_quotes = False
+                    for c in line[line.find(" name"):]:
+                        if c == '"':
+                            if inside_quotes == False:
+                                inside_quotes = True
+                                continue
+                            else:
+                                break
+                        if inside_quotes:
+                            found_name += c
+                    found_named_positions.append(found_name)
+        return found_named_positions

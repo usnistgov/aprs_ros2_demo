@@ -180,23 +180,23 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
     return std::make_pair(false, "Not a valid frame name");
   }
 
-  double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
-  RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
+  // double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
+  // RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
 
-  if (slot_t.translation.y < 0 && joint_1_pos > 0){
-    RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
-    auto result = move_to_named_pose("above_conveyor");
-    if (!result.first){
-      return result;
-    }
-  } else if (slot_t.translation.y > 0 && joint_1_pos < 0)
-  {
-    RCLCPP_INFO(get_logger(),"Moving to Above Table");
-    auto result = move_to_named_pose("above_table");
-    if (!result.first){
-      return result;
-    }
-  }  
+  // if (slot_t.translation.y < 0 && joint_1_pos > 0){
+  //   RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
+  //   auto result = move_to_named_pose("above_conveyor");
+  //   if (!result.first){
+  //     return result;
+  //   }
+  // } else if (slot_t.translation.y > 0 && joint_1_pos < 0)
+  // {
+  //   RCLCPP_INFO(get_logger(),"Moving to Above Table");
+  //   auto result = move_to_named_pose("above_table");
+  //   if (!result.first){
+  //     return result;
+  //   }
+  // }  
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
@@ -269,14 +269,14 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
     return std::make_pair(false, "Not a valid frame name");
   }
 
-  double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
+  // double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
 
-  if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
-    move_to_named_pose("above_conveyor");
-  } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
-  {
-    move_to_named_pose("above_table");
-  }
+  // if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
+  //   move_to_named_pose("above_conveyor");
+  // } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
+  // {
+  //   move_to_named_pose("above_table");
+  // }
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;

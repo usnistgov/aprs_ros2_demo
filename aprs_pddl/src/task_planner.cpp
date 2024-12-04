@@ -100,7 +100,8 @@ void TaskPlanner::ClearCurrentStateCallback(const std::shared_ptr<aprs_interface
 void TaskPlanner::GeneratePlanCallback(const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request>,
                                         const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Response> response)
 {
-  if (!recieved_fanuc_table_info || !recieved_fanuc_conveyor_info || !recieved_motoman_table_info || !recieved_motoman_conveyor_info || !recieved_teach_table_info){
+  // if (!recieved_fanuc_table_info || !recieved_fanuc_conveyor_info || !recieved_motoman_table_info || !recieved_motoman_conveyor_info || !recieved_teach_table_info){
+  if (!recieved_fanuc_table_info || !recieved_motoman_table_info || !recieved_teach_table_info){
     RCLCPP_ERROR(this->get_logger(), "Could not generate plan, missing tray information");
     response->success = false;
     response->status = "Could not generate plan, missing tray information";
