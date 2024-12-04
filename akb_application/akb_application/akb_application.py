@@ -14,12 +14,7 @@ class AKBApplication(Node):
     def __init__(self):
         super().__init__("akb_application")
 
-        self.root = App()
-
-        self.create_subscription(Trays, "/fanuc/table_trays_info", self.fanuc_table_trays_cb_, qos_profile_default)
-    
-    def fanuc_table_trays_cb_(self, msg: Trays):
-        self.root.fanuc_trays.all_trays = msg.part_trays + msg.kit_trays # type: ignore
+        self.root = App(self)
 
 def main(args=None):
     rclpy.init(args=args)

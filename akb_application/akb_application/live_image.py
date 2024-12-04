@@ -40,7 +40,7 @@ class LiveImage(ctk.CTkLabel):
             self.stream = None
             self.image_height = 100
         
-        self.configure(width=self.width, height=self.height)
+        # self.configure(width=self.width, height=self.height)
         
         self.update_image()
 

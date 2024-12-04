@@ -1,9 +1,12 @@
 import math
 
-import tkinter as tk
+from typing import Optional
+
+from rclpy.node import Node
+from rclpy.qos import qos_profile_default
 
 from aprs_vision.conversions import euler_from_quaternion
-from aprs_interfaces.msg import Tray, SlotInfo
+from aprs_interfaces.msg import Trays, Tray, SlotInfo
 
 from customtkinter import CTkCanvas
 
@@ -67,41 +70,54 @@ class TrayCanvas(CTkCanvas):
     fiducial_square_measurements = (0.04, 0.04)
     radius = 0.03
     
-    def __init__(self, frame, width, height, img_height):
+    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int):
         super().__init__(frame, bd = 0, highlightthickness=0, height=height, width=width)
+
+        self.node = node
         
         actual_height = (img_height / 30.0) * 0.0254
         self.conversion_factor = height / actual_height
 
-        self.all_trays: list[Tray] = []
+        self.node.create_subscription(Trays, topic, self.trays_info_cb, qos_profile_default)
+
+        self.trays_info: Optional[Trays] = None
+
+        self.update_rate = 1000 #ms
         
         self.update_canvas()
+
+    def trays_info_cb(self, msg: Trays):
+        self.trays_info = msg
     
     def update_canvas(self):
         self.delete("all")
 
-        for tray in self.all_trays:
-            if tray.identifier not in TrayCanvas.tray_corners_.keys():
-                return None
-            
-            x = tray.tray_pose.pose.position.x
-            y = tray.tray_pose.pose.position.y
-            _, __, rotation = euler_from_quaternion(tray.tray_pose.pose.orientation)
-
-            self.draw_tray(tray.identifier, (x, y), rotation)
-
-            for slot in tray.slots:
-                slot: SlotInfo
-                
-                if not slot.occupied:
+        if self.trays_info is not None:
+            all_trays: list[Tray] = self.trays_info.kit_trays + self.trays_info.part_trays # type: ignore
+            for tray in all_trays:
+                if tray.identifier not in TrayCanvas.tray_corners_.keys():
                     continue
                 
-                x_off = slot.slot_pose.pose.position.x
-                y_off = slot.slot_pose.pose.position.y
-                
-                self.draw_gear(slot.size, (x, y), rotation, x_off, y_off)
+                x = tray.tray_pose.pose.position.x
+                y = tray.tray_pose.pose.position.y
+                _, __, yaw = euler_from_quaternion(tray.tray_pose.pose.orientation)
+
+                tray_rotation = -yaw
+
+                self.draw_tray(tray.identifier, (x, y), tray_rotation)
+
+                for slot in tray.slots:
+                    slot: SlotInfo
+                    
+                    if not slot.occupied:
+                        continue
+                    
+                    x_off = slot.slot_pose.pose.position.x
+                    y_off = slot.slot_pose.pose.position.y
+                    
+                    self.draw_gear(slot.size, (x, y), tray_rotation, x_off, y_off)
         
-        self.after(1000, self.update_canvas)
+        self.after(self.update_rate, self.update_canvas)
     
     def draw_tray(self, identifier: int, center: tuple[float, float], rotation: float):
         corners = TrayCanvas.tray_corners_[identifier]
