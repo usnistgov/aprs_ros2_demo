@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'akb_application = akb_application.akb_application:main'
+            'akb_application = akb_application.akb_application:main',
+            'dummy_locate_trays = akb_application.dummy_srv_server:main'
         ],
     },
 )
