@@ -70,6 +70,8 @@ class DetectionArea(Node):
         self.declare_parameter('transform.translation.x', 0.0)
         self.declare_parameter('transform.translation.y', 0.0)
         self.declare_parameter('transform.translation.z', 0.0)
+        self.declare_parameter('gear_hsv_lower_threshold', [0, 83, 0])
+        self.declare_parameter('gear_hsv_higher_threshold', [147, 255, 255])
 
         self.robot_name = self.get_parameter('robot_name').get_parameter_value().string_value
         self.location = self.get_parameter('location').get_parameter_value().string_value
@@ -78,6 +80,8 @@ class DetectionArea(Node):
         self.publish_frames = self.get_parameter('publish_frames').get_parameter_value().bool_value
 
         self.background_v_upper = self.get_parameter('background_value_threshold').get_parameter_value().integer_value
+        self.gear_hsv_lower_threshold = self.get_parameter('gear_hsv_lower_threshold').get_parameter_value().integer_array_value
+        self.gear_hsv_higher_threshold = self.get_parameter('gear_hsv_higher_threshold').get_parameter_value().integer_array_value
 
         self.image_frame = self.get_parameter('transform.child_frame').get_parameter_value().string_value
 
@@ -352,16 +356,29 @@ class DetectionArea(Node):
 
     def check_occupied(self, image: MatLike, slot_center: tuple[int, int]) -> bool:
         offset = 15
-        gear_hsv_lower = (0, 83, 0)
-        gear_hsv_upper = (147, 255, 255)
+        cv2.imshow('window', image)
+        cv2.waitKey(0)
 
+        gear_hsv_threshold_low = (
+            self.gear_hsv_lower_threshold[0],
+            self.gear_hsv_lower_threshold[1],
+            self.gear_hsv_lower_threshold[2]
+        )
+        gear_hsv_threshold_high = (
+            self.gear_hsv_higher_threshold[0],
+            self.gear_hsv_higher_threshold[1],
+            self.gear_hsv_higher_threshold[2]
+        )
+        
         try:
             square = image[slot_center[1]-offset:slot_center[1]+offset, slot_center[0]-offset:slot_center[0]+offset]
 
-            gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), gear_hsv_lower, gear_hsv_upper) # type: ignore
+            gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), gear_hsv_threshold_low, gear_hsv_threshold_high) # type: ignore
+            cv2.imshow('window', gear)
+            cv2.waitKey(0)
 
         except cv2.error as e:
-            raise DetectionException("Slot outside of detection area") from e
+            raise DetectionException(f"Slot outside of detection area.") from e
 
         if cv2.countNonZero(gear) > ((offset**2) * 0.5):
             return True

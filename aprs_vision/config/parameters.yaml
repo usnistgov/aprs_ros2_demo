@@ -45,6 +45,8 @@ motoman:
       video_stream: http://192.168.1.110/mjpg/video.mjpg
       publish_frames: True
       background_value_threshold: 138
+      gear_hsv_lower_threshold: [0, 52, 35]
+      gear_hsv_higher_threshold: [138, 255, 255]
       transform:
         parent_frame: world
         child_frame: motoman_table_image
