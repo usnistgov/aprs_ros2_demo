@@ -21,7 +21,7 @@
 #include "aprs_interfaces/msg/trays.hpp"
 #include "aprs_interfaces/msg/slot_info.hpp"
 #include "aprs_interfaces/msg/tray.hpp"
-#include "aprs_interfaces/msg/robot_status.hpp"
+// #include "aprs_interfaces/msg/robot_status.hpp"
 
 class TaskPlanner : public rclcpp::Node
 {
@@ -53,7 +53,7 @@ public:
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr motoman_table_subscriber_;
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr motoman_conveyor_subscriber_;
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr teach_table_subscriber_;
-  rclcpp::Subscription<aprs_interfaces::msg::RobotStatus>::SharedPtr robot_status_subscriber_;
+  // rclcpp::Subscription<aprs_interfaces::msg::RobotStatus>::SharedPtr robot_status_subscriber_;
 
   rclcpp::Client<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr fanuc_move_to_named_pose_client_;
   rclcpp::Client<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr motoman_move_to_named_pose_client_;
@@ -95,7 +95,7 @@ public:
   void MotomanTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
   void MotomanConveyorTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
   void TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg);
-  void RobotStatusCallback(const aprs_interfaces::msg::RobotStatus::SharedPtr msg);
+  // void RobotStatusCallback(const aprs_interfaces::msg::RobotStatus::SharedPtr msg);
 
   void GeneratePlanCallback(
     const std::shared_ptr<aprs_interfaces::srv::GeneratePlan::Request> request,
