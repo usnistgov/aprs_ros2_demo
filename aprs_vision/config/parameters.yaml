@@ -44,7 +44,7 @@ motoman:
       location: table
       video_stream: http://192.168.1.110/mjpg/video.mjpg
       publish_frames: True
-      background_value_threshold: 138
+      background_value_threshold: 90
       transform:
         parent_frame: world
         child_frame: motoman_table_image
