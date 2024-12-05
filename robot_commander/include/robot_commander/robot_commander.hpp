@@ -19,6 +19,7 @@
 
 #include <aprs_interfaces/msg/trays.hpp>
 #include <aprs_interfaces/msg/tray.hpp>
+#include <aprs_interfaces/msg/robot_changeover.hpp>
 
 #include <example_interfaces/srv/trigger.hpp>
 #include <aprs_interfaces/srv/pick.hpp>
@@ -26,6 +27,16 @@
 #include <aprs_interfaces/srv/move_to_named_pose.hpp>
 #include <aprs_interfaces/srv/pneumatic_gripper_control.hpp>
 
+enum PICK_STATE {
+  PRE_PICK,
+  MOVE_TO_SLOT,
+  PRE_GRASP,
+  GRASP,
+  POST_GRASP,
+  FINISHED,
+  PLANNING_FAILURE,
+  EXECUTION_FAILURE
+};
 class RobotCommander : public rclcpp::Node
 {
   public:
@@ -41,6 +52,8 @@ class RobotCommander : public rclcpp::Node
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_to_target();
     std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan_cartesian(geometry_msgs::msg::Pose pose);
     void retime_trajectory(moveit_msgs::msg::RobotTrajectory& trajectory);
+    PICK_STATE execute_pick(PICK_STATE state);
+    void handle_changeover(PICK_STATE state);
 
     // Utility Functions
     geometry_msgs::msg::Pose build_robot_pose(double x, double y, double z, double rotation);
@@ -68,8 +81,11 @@ class RobotCommander : public rclcpp::Node
     // Subscriber
     rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_table_vision_sub_;
     rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_conveyor_vision_sub_;
+    rclcpp::Subscription<aprs_interfaces::msg::RobotChangeover>::SharedPtr robot_changeover_sub_;
+
     void table_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
     void conveyor_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
+    void robot_changeover_cb(const aprs_interfaces::msg::RobotChangeover::ConstSharedPtr msg);
 
     // Services
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;
@@ -119,12 +135,18 @@ class RobotCommander : public rclcpp::Node
     bool received_table_tray_info = false;
     bool received_conveyor_tray_info = false;
     bool holding_part = false;
-
+    bool disabled = false;
+    bool changeover_requested = false;
+    
     // Variables
     aprs_interfaces::msg::Trays table_trays_info;
     aprs_interfaces::msg::Trays conveyor_trays_info;
     std::string attached_part_name;
     int attached_part_type;
+
+    geometry_msgs::msg::Pose above_slot;
+    geometry_msgs::msg::Pose pick_pose;
+    std::string pick_slot_name;
 
     // Maps
     std::map<int, int> gear_counter = {

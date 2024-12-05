@@ -122,6 +122,10 @@ RobotCommander::RobotCommander()
       "/" + robot_name_ + "/conveyor_trays_info", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::conveyor_trays_info_cb, this, std::placeholders::_1));
 
+  robot_changeover_sub_ = this->create_subscription<aprs_interfaces::msg::RobotChangeover>(
+      "/robot_changeover_requested", rclcpp::SensorDataQoS(),
+      std::bind(&RobotCommander::robot_changeover_cb, this, std::placeholders::_1));
+
   // Create clients
   gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/" + robot_name_ + "/actuate_gripper");    
 }
@@ -170,90 +174,205 @@ std::pair<bool, std::string> RobotCommander::move_to_named_pose(const std::strin
 
 std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_name)
 {
-  std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan;
+  // Check if changeover was requested
+  PICK_STATE state = PRE_PICK;
+  if (changeover_requested) {
+    handle_changeover(state);
+    return std::make_pair(false, "Changeover requested");
+  }
 
+  pick_slot_name = slot_name;
+  geometry_msgs::msg::Transform slot_transform;
   // Get slot transform from TF
-  geometry_msgs::msg::Transform slot_t;
   try {
-    slot_t = tf_buffer->lookupTransform("world", slot_name, tf2::TimePointZero).transform;
+    slot_transform = tf_buffer->lookupTransform("world", pick_slot_name, tf2::TimePointZero).transform;
   } catch (tf2::LookupException& e) {
     return std::make_pair(false, "Not a valid frame name");
   }
 
-  // double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
-  // RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
+  // Set poses
+  above_slot = build_robot_pose(
+    slot_transform.translation.x,
+    slot_transform.translation.y,
+    slot_transform.translation.z + above_slot_offset_, 
+    0.0
+  );
 
-  // if (slot_t.translation.y < 0 && joint_1_pos > 0){
-  //   RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
-  //   auto result = move_to_named_pose("above_conveyor");
-  //   if (!result.first){
-  //     return result;
-  //   }
-  // } else if (slot_t.translation.y > 0 && joint_1_pos < 0)
-  // {
-  //   RCLCPP_INFO(get_logger(),"Moving to Above Table");
-  //   auto result = move_to_named_pose("above_table");
-  //   if (!result.first){
-  //     return result;
-  //   }
-  // }  
+  pick_pose = build_robot_pose(
+    slot_transform.translation.x,
+    slot_transform.translation.y,
+    slot_transform.translation.z + pick_offset_, 
+    0.0
+  );
 
-  // Move to pose above slot
-  geometry_msgs::msg::Pose above_slot;
-  above_slot = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + above_slot_offset_, 0.0);
+  // Execute pick states
+  state = MOVE_TO_SLOT;
+  while (state != FINISHED)
+  {
+    state = execute_pick(state);
 
-  plan = plan_cartesian(above_slot);
-  
-  if (!plan.first)
-    return std::make_pair(false, "Unable to plan to above slot");
+    if (state == PLANNING_FAILURE){
+      return std::make_pair(false, "Planning failed");
+    } else if (state == PLANNING_FAILURE){
+      return std::make_pair(false, "Execution failed");
+    } else if (changeover_requested) {
+      handle_changeover(state);
+      return std::make_pair(false, "Changeover requested");
+    }
 
-  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
-    return std::make_pair(false, "Unable to move to above slot");
-  }
-
-  actuate_gripper(false);
-
-  sleep(motion_pause_);
-
-  // Move to pick pose
-  geometry_msgs::msg::Pose pick_pose;
-  pick_pose = build_robot_pose(slot_t.translation.x, slot_t.translation.y, slot_t.translation.z + pick_offset_, 0.0);
-
-  plan = plan_cartesian(pick_pose);
-  
-  if (!plan.first)
-    return std::make_pair(false, "Unable to plan to pick pose");
-
-  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
-    return std::make_pair(false, "Unable to move to pick pose");
-  }
-
-  sleep(motion_pause_);
-
-  actuate_gripper(true);
-
-  attached_part_name = slot_objects[slot_name];
-  attached_part_type = slot_types[slot_name];
-
-  planning_interface_->attachObject(slot_objects[slot_name], end_effector_link_, touch_links_);
-  slot_objects[slot_name] = "";
-  slot_types[slot_name] = -1;
-
-  sleep(motion_pause_);
-
-  holding_part = true;
-
-  // Move back up
-  plan = plan_cartesian(above_slot);
-  
-  if (!plan.first)
-    return std::make_pair(false, "Unable to plan to above slot");
-
-  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
-    return std::make_pair(false, "Unable to move to above slot");
+    sleep(motion_pause_);
   }
 
   return std::make_pair(true, "Successfully picked part");
+}
+
+PICK_STATE RobotCommander::execute_pick(PICK_STATE state)
+{
+  std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan;
+
+  switch (state)
+  {
+  case MOVE_TO_SLOT:
+    // Plan to above slot
+    plan = plan_cartesian(above_slot);
+    
+    if (!plan.first)
+      return PLANNING_FAILURE;
+
+    // Execute to above slot
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return EXECUTION_FAILURE;
+    }
+
+    actuate_gripper(false);
+
+    return PRE_GRASP;
+
+  case PRE_GRASP:
+    // Move down to gear
+    plan = plan_cartesian(pick_pose);
+    
+    if (!plan.first)
+      return PLANNING_FAILURE;
+
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return EXECUTION_FAILURE;
+    }
+
+    return GRASP;
+  
+  case GRASP:
+    // Close gripper and add part to planning scene
+    actuate_gripper(true);
+
+    attached_part_name = slot_objects[pick_slot_name];
+    attached_part_type = slot_types[pick_slot_name];
+
+    planning_interface_->attachObject(slot_objects[pick_slot_name], end_effector_link_, touch_links_);
+    slot_objects[pick_slot_name] = "";
+    slot_types[pick_slot_name] = -1;
+
+    return POST_GRASP;
+
+  case POST_GRASP:
+    // Move back to above slot
+    plan = plan_cartesian(above_slot);
+  
+    if (!plan.first)
+      return PLANNING_FAILURE;
+
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return EXECUTION_FAILURE;
+    }
+    
+    return FINISHED;
+  
+  default:
+    return EXECUTION_FAILURE;
+  }
+}
+
+void RobotCommander::handle_changeover(PICK_STATE state)
+{
+  std::pair<bool, moveit_msgs::msg::RobotTrajectory> plan;
+
+  switch (state)
+  {
+  
+  case PRE_PICK:
+    // Do nothing
+    break;
+
+  case MOVE_TO_SLOT:
+    // Do nothing
+    break;
+  
+  case PRE_GRASP:
+    // Move up
+    plan = plan_cartesian(above_slot);
+  
+    if (!plan.first)
+      return;
+
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return;
+    }
+
+    break;
+  
+  case GRASP:
+    // Open gripper
+    actuate_gripper(false);
+    
+    // Detach object in planning scene
+    planning_interface_->detachObject();
+    holding_part = false;
+
+    // Move up
+    plan = plan_cartesian(above_slot);
+  
+    if (!plan.first)
+      return;
+
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return;
+    }
+
+    break;
+  
+  case POST_GRASP:
+    // Move down
+    plan = plan_cartesian(pick_pose);
+  
+    if (!plan.first)
+      return;
+
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return;
+    }
+
+    // Open gripper
+    actuate_gripper(false);
+    
+    // Detach object in planning scene
+    planning_interface_->detachObject();
+    holding_part = false;
+
+    // Move up
+    plan = plan_cartesian(above_slot);
+  
+    if (!plan.first)
+      return;
+
+    if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+      return;
+    }
+
+    break;
+  
+  default:
+    break;
+  }
 }
 
 std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_name)
@@ -268,15 +387,6 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   } catch (tf2::LookupException& e) {
     return std::make_pair(false, "Not a valid frame name");
   }
-
-  // double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
-
-  // if (slot_name.find("conveyor") != std::string::npos && joint_1_pos > 0){
-  //   move_to_named_pose("above_conveyor");
-  // } else if (slot_name.find("table") != std::string::npos && joint_1_pos < 0)
-  // {
-  //   move_to_named_pose("above_table");
-  // }
 
   // Move to pose above slot
   geometry_msgs::msg::Pose above_slot;
@@ -338,6 +448,10 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
   }
 
   sleep(motion_pause_);
+
+  if (changeover_requested){
+    return std::make_pair(false, "Changeover requested");
+  }
 
   return std::make_pair(true, "Successfully placed part");
 }
@@ -491,6 +605,22 @@ void RobotCommander::conveyor_trays_info_cb(
 {
   received_conveyor_tray_info = true;
   conveyor_trays_info = *msg;
+}
+
+void RobotCommander::robot_changeover_cb(
+  const aprs_interfaces::msg::RobotChangeover::ConstSharedPtr msg)
+{
+  if (msg->fanuc || msg->motoman) {
+    changeover_requested = true; 
+  }
+
+  if (robot_name_ == "fanuc") {
+    disabled = msg->fanuc;
+  } 
+
+  if (robot_name_ == "motoman") {
+    disabled = msg->motoman;
+  }
 }
 
 void RobotCommander::initialize_planning_scene_cb(
