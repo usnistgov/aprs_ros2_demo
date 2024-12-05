@@ -25,18 +25,17 @@ void MoveRobotAction::do_work() {
   } else {
     if(!waiting_for_response_) {
       service_called_ = false;
-      progress_ = 1.0;
-      finish(true, progress_,"Picked Part in Slot Successfully");
+      finish(true, 1.0,"Picked Part in Slot Successfully");
     }
   }
   
-  send_feedback(progress_);
+  send_feedback(0.0);
 }
 
 void MoveRobotAction::move_response_cb_(rclcpp::Client<aprs_interfaces::srv::MoveToNamedPose>::SharedFuture future){
   auto result = future.get();
   if (!result->success) {
-    finish(false, progress_, "Fanuc Unable to Move Home");
+    finish(false, 0.0, "Fanuc Unable to Move Home");
   }
   waiting_for_response_ = false;
 }

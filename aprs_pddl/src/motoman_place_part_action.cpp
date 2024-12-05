@@ -25,18 +25,17 @@ void PlacePartAction::do_work() {
   } else {
     if(!waiting_for_response_) {
       service_called_ = false;
-      progress_ = 1.0;
-      finish(true, progress_,"Placed Part in Slot Successfully");
+      finish(true, 1.0,"Placed Part in Slot Successfully");
     }
   }
       
-  send_feedback(progress_);
+  send_feedback(0.0);
 }
 
 void PlacePartAction::place_response_cb_(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future){
   auto result = future.get();
   if (!result->success) {
-    finish(false, progress_, "Motoman Unable to Place Part");
+    finish(false, 0.0, "Motoman Unable to Place Part");
   }
   waiting_for_response_ = false;
 }
