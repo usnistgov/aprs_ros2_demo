@@ -108,6 +108,7 @@ install(DIRECTORY include/
 install(DIRECTORY 
   launch
   pddl
+  config
   DESTINATION share/${PROJECT_NAME}
 )
 

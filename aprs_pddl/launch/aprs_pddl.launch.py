@@ -11,13 +11,17 @@ def launch_setup(context, *args, **kwargs):
 
     pkg_share = get_package_share_directory('aprs_pddl')
 
+    param_config_path = os.path.join(pkg_share, 'config', "plansys2_params.yaml")
+    domain_file_path = os.path.join(pkg_share, 'pddl', 'aprs_demo_domain.pddl')
+
     plansys2_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('plansys2_bringup'),
             'launch',
             'plansys2_bringup_launch_monolithic.py')),
         launch_arguments={
-          'model_file': pkg_share + '/pddl/aprs_demo_domain.pddl',
+          'model_file': domain_file_path,
+          'params_file': param_config_path,
           }.items())
 
     # Specify the actions
