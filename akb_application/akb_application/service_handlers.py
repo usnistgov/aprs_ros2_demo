@@ -187,7 +187,7 @@ class InitializePlanningSceneFrame(ctk.CTkFrame):
         self.checkboxes["fanuc"].grid(row=1, column=0, pady=5, padx=3, sticky="w")
         self.checkboxes["motoman"].grid(row=1, column=1, pady=5, padx=3, sticky="w")
 
-        self.initialize_button = ctk.CTkButton(self, text="Initialize Planning Scene", command=self.button_command_cb, font=self.font, state=tk.DISABLED, fg_color=self.disabled_color)
+        self.initialize_button = ctk.CTkButton(self, text="Initialize Planning Scene", command=self.button_command_cb, font=self.font, state=tk.NORMAL)
         self.initialize_button.grid(row = 0, column = 0, columnspan=2, pady=10)
         
     def button_command_cb(self):

@@ -64,7 +64,7 @@ def launch_setup(context, *args, **kwargs):
         akb_application,
         fanuc_bringup,
         motoman_bringup,
-        robot_commander,
+        # robot_commander,
         pddl,
         task_planner,
         vision_system

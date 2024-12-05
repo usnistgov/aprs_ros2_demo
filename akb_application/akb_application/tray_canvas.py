@@ -7,6 +7,7 @@ from rclpy.qos import qos_profile_default
 
 from aprs_vision.conversions import euler_from_quaternion
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
+from akb_application.canvas_tool_tip import CanvasTooltip
 
 from customtkinter import CTkCanvas
 
@@ -104,22 +105,22 @@ class TrayCanvas(CTkCanvas):
 
                 tray_rotation = -yaw
 
-                self.draw_tray(tray.identifier, (x, y), tray_rotation)
+                self.draw_tray(tray.identifier, (x, y), tray_rotation, tray.name)
 
                 for slot in tray.slots:
                     slot: SlotInfo
                     
-                    if not slot.occupied:
-                        continue
+                    # if not slot.occupied:
+                    #     continue
                     
                     x_off = slot.slot_pose.pose.position.x
                     y_off = slot.slot_pose.pose.position.y
                     
-                    self.draw_gear(slot.size, (x, y), tray_rotation, x_off, y_off)
+                    self.draw_gear(slot.size, (x, y), tray_rotation, x_off, y_off, slot.name, slot.occupied)
         
         self.after(self.update_rate, self.update_canvas)
     
-    def draw_tray(self, identifier: int, center: tuple[float, float], rotation: float):
+    def draw_tray(self, identifier: int, center: tuple[float, float], rotation: float, tray_name: str):
         corners = TrayCanvas.tray_corners_[identifier]
         
         rounded_corners = self.round_points(corners)
@@ -133,9 +134,10 @@ class TrayCanvas(CTkCanvas):
         
         canvas_points = self.get_canvas_points(translated_points)
         
-        self.create_polygon(canvas_points, fill=TrayCanvas.tray_colors_[identifier], smooth=True, splinesteps=32)
+        tray_polygon = self.create_polygon(canvas_points, fill=TrayCanvas.tray_colors_[identifier], smooth=True, splinesteps=32)
+        tooltip = CanvasTooltip(self, tray_polygon, text=tray_name)
     
-    def draw_gear(self, size: int, tray_center: tuple[float, float], tray_rotation: float, x_off: float, y_off: float):
+    def draw_gear(self, size: int, tray_center: tuple[float, float], tray_rotation: float, x_off: float, y_off: float, gear_name: str, occupied: bool):
         slot_center = [(x_off, y_off)]
 
         rotated_points = self.rotate_points(slot_center, tray_rotation)
@@ -150,7 +152,8 @@ class TrayCanvas(CTkCanvas):
 
         radius = self.gear_radii_[size] * self.conversion_factor
 
-        self.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill="#40bd42")
+        gear_oval = self.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill=("#40bd42" if occupied else "#616161"))
+        tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
 
     def round_points(self, points: list[tuple[float, float]]) -> list[tuple[float, float]]:
         rounded_points = []
