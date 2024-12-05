@@ -33,9 +33,11 @@ void PickPartAction::do_work() {
 }
 
 void PickPartAction::pick_response_cb_(rclcpp::Client<aprs_interfaces::srv::Pick>::SharedFuture future){
-  RCLCPP_INFO(get_logger(),"Inside  pick response callback");
+  RCLCPP_INFO(get_logger(),"Inside pick response callback");
   auto result = future.get();
   if (!result->success) {
+    service_called_ = false;
+    waiting_for_response_ = false;
     finish(false, 0.0, "Fanuc Unable to Pick Part");
   }
   waiting_for_response_ = false;

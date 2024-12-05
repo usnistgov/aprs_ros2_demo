@@ -213,7 +213,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
     if (state == PLANNING_FAILURE){
       return std::make_pair(false, "Planning failed");
-    } else if (state == PLANNING_FAILURE){
+    } else if (state == EXECUTION_FAILURE){
       return std::make_pair(false, "Execution failed");
     } else if (changeover_requested) {
       handle_changeover(state);
@@ -271,6 +271,8 @@ PICK_STATE RobotCommander::execute_pick(PICK_STATE state)
     planning_interface_->attachObject(slot_objects[pick_slot_name], end_effector_link_, touch_links_);
     slot_objects[pick_slot_name] = "";
     slot_types[pick_slot_name] = -1;
+
+    holding_part = true;
 
     return POST_GRASP;
 

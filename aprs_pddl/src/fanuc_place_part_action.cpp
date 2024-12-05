@@ -35,6 +35,8 @@ void PlacePartAction::do_work() {
 void PlacePartAction::place_response_cb_(rclcpp::Client<aprs_interfaces::srv::Place>::SharedFuture future){
   auto result = future.get();
   if (!result->success) {
+    service_called_ = false;
+    waiting_for_response_ = false;
     finish(false, 0.0, "Fanuc Unable to Place Part");
   }
   waiting_for_response_ = false;

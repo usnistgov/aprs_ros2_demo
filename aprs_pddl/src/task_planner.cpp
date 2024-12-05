@@ -107,9 +107,13 @@ void TaskPlanner::GeneratePlanCallback(const std::shared_ptr<aprs_interfaces::sr
     init_goal_state();
   }
   else if (fanuc_changeover){
+    init_world_state();
+    init_goal_state();
     update_world_state("fanuc");
   }
   else if (motoman_changeover){
+    init_world_state();
+    init_goal_state();
     update_world_state("motoman");
   }
 
