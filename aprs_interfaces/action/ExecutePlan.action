@@ -3,4 +3,4 @@ plansys2_msgs/Plan plan
 bool success
 string status
 ---
-string current_action
+plansys2_msgs/ActionExecutionInfo[] action_execution_status

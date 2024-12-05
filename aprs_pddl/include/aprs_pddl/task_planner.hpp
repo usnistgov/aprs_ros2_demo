@@ -16,6 +16,7 @@
 
 #include "aprs_interfaces/srv/generate_plan.hpp"
 #include "aprs_interfaces/srv/clear_current_state.hpp"
+#include "aprs_interfaces/srv/move_to_named_pose.hpp"
 #include "aprs_interfaces/action/execute_plan.hpp"
 #include "aprs_interfaces/msg/trays.hpp"
 #include "aprs_interfaces/msg/slot_info.hpp"
@@ -53,6 +54,9 @@ public:
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr motoman_conveyor_subscriber_;
   rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr teach_table_subscriber_;
   rclcpp::Subscription<aprs_interfaces::msg::RobotStatus>::SharedPtr robot_status_subscriber_;
+
+  rclcpp::Client<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr fanuc_move_to_named_pose_client_;
+  rclcpp::Client<aprs_interfaces::srv::MoveToNamedPose>::SharedPtr motoman_move_to_named_pose_client_;
 
   rclcpp::CallbackGroup::SharedPtr cb_group_;
   rclcpp::CallbackGroup::SharedPtr topic_cb_group_;
@@ -106,6 +110,7 @@ public:
   rclcpp_action::CancelResponse ExecutePlanHandelCancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle);
   void ExecutePlanHandelAccept(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle);
   void ExecutePlanExecute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<aprs_interfaces::action::ExecutePlan>> goal_handle);
+  bool MoveRobotsHome();
 
   std::map<uint8_t, std::string> part_size_{
     {aprs_interfaces::msg::SlotInfo::SMALL, "small"},

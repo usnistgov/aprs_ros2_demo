@@ -25,7 +25,7 @@
     )   
 
     (:durative-action fanuc_pick
-        :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
+        :parameters (?slot_name - slot ?size - size  ?location - location)
         :duration (= ?duration 5)
         :condition (and 
             (at start (and
@@ -50,7 +50,7 @@
     )
 
     (:durative-action fanuc_place
-        :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
+        :parameters (?slot_name - slot ?size - size  ?location - location)
         :duration (= ?duration 5)
         :condition (and
             (at start (and
@@ -75,7 +75,7 @@
     )
 
         (:durative-action motoman_pick
-        :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
+        :parameters (?slot_name - slot ?size - size  ?location - location)
         :duration (= ?duration 5)
         :condition (and 
             (at start (and
@@ -100,7 +100,7 @@
     )
 
     (:durative-action motoman_place
-        :parameters (?slot_name - slot ?size - size ?robot - robot ?location - location)
+        :parameters (?slot_name - slot ?size - size  ?location - location)
         :duration (= ?duration 5)
         :condition (and
             (at start (and
