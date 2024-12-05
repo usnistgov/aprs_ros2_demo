@@ -29,6 +29,8 @@ TaskPlanner::TaskPlanner() : Node("task_planner")
   problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>();
   executor_client_ = std::make_shared<plansys2::ExecutorClient>();
 
+  fanuc_move_to_named_pose_client_ = this->create_client<aprs_interfaces::srv::MoveToNamedPose>("fanuc/move_to_named_pose");
+  motoman_move_to_named_pose_client_ = this->create_client<aprs_interfaces::srv::MoveToNamedPose>("motoman/move_to_named_pose");
   RCLCPP_INFO(get_logger(), "Initialization successful.");
 }
 
@@ -38,46 +40,36 @@ TaskPlanner::~TaskPlanner()
 
 void TaskPlanner::FanucTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (fanuc_table_kit_trays_.empty() && fanuc_table_part_trays_.empty()){
-    fanuc_table_kit_trays_ = msg->kit_trays;
-    fanuc_table_part_trays_ = msg->part_trays;
-  }
+  fanuc_table_kit_trays_ = msg->kit_trays;
+  fanuc_table_part_trays_ = msg->part_trays;
   recieved_fanuc_table_info = true;
 }
 
 void TaskPlanner::FanucConveyorTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (fanuc_conveyor_kit_trays_.empty() && fanuc_conveyor_part_trays_.empty()){
-    fanuc_conveyor_kit_trays_ = msg->kit_trays;
-    fanuc_conveyor_part_trays_ = msg->part_trays;
-  }
+  fanuc_conveyor_kit_trays_ = msg->kit_trays;
+  fanuc_conveyor_part_trays_ = msg->part_trays;
   recieved_fanuc_conveyor_info = true;
 }
 
 void TaskPlanner::MotomanTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (motoman_table_kit_trays_.empty() && motoman_table_part_trays_.empty()){
-    motoman_table_kit_trays_ = msg->kit_trays;
-    motoman_table_part_trays_ = msg->part_trays;
-  }
+  motoman_table_kit_trays_ = msg->kit_trays;
+  motoman_table_part_trays_ = msg->part_trays;
   recieved_motoman_table_info = true;
 }
 
 void TaskPlanner::MotomanConveyorTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (motoman_conveyor_kit_trays_.empty() && motoman_conveyor_part_trays_.empty()){
-    motoman_conveyor_kit_trays_ = msg->kit_trays;
-    motoman_conveyor_part_trays_ = msg->part_trays;
-  }
+  motoman_conveyor_kit_trays_ = msg->kit_trays;
+  motoman_conveyor_part_trays_ = msg->part_trays;
   recieved_motoman_conveyor_info = true;
 }
 
 void TaskPlanner::TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays::SharedPtr msg)
 {
-  if (teach_table_kit_trays_.empty() && teach_table_part_trays_.empty()){
-    teach_table_kit_trays_ = msg->kit_trays;
-    teach_table_part_trays_ = msg->part_trays;
-  }
+  teach_table_kit_trays_ = msg->kit_trays;
+  teach_table_part_trays_ = msg->part_trays;
   recieved_teach_table_info = true;
 }
 
@@ -92,6 +84,7 @@ void TaskPlanner::ClearCurrentStateCallback(const std::shared_ptr<aprs_interface
 {
   problem_expert_->clearGoal();
   problem_expert_->clearKnowledge();
+
   goal_str_.clear();
   response->success = true;
   response->status = "Successfully Cleared Knowledge and Goal";
@@ -173,6 +166,7 @@ void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::Server
     result->success = false;    
     result->status = "Error starting plan execution";
     goal_handle->abort(result);
+    MoveRobotsHome();
     return;
   }
 
@@ -187,13 +181,9 @@ void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::Server
       return;
     }
 
-    plansys_feedback = executor_client_->getFeedBack();
+    feedback->action_execution_status = executor_client_->getFeedBack().action_execution_status;
 
-    for (auto& action_feedback : plansys_feedback.action_execution_status){
-      if (action_feedback.status == plansys2_msgs::msg::ActionExecutionInfo::EXECUTING){
-        feedback->current_action = action_feedback.action;
-      }
-    }
+    goal_handle->publish_feedback(feedback);
   }
 
   auto plansys_result = executor_client_->getResult();
@@ -203,6 +193,7 @@ void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::Server
     result->success = true;
     result->status = "Plan executed successfully";
     goal_handle->succeed(result);
+    MoveRobotsHome();
     return;
   } else {
     RCLCPP_ERROR(this->get_logger(), "Error executing plan");
@@ -213,10 +204,26 @@ void TaskPlanner::ExecutePlanExecute(const std::shared_ptr<rclcpp_action::Server
         result->success = false;
         result->status = "Action " + action_status.action + " failed";
         goal_handle->abort(result);
+        MoveRobotsHome();
         return;
       }
     }
   }
+}
+
+bool TaskPlanner::MoveRobotsHome(){
+  auto request = std::make_shared<aprs_interfaces::srv::MoveToNamedPose::Request>();
+
+  request->name = "home";
+
+  auto fanuc_future = fanuc_move_to_named_pose_client_->async_send_request(request);
+
+  auto motoman_future = motoman_move_to_named_pose_client_->async_send_request(request);
+
+  fanuc_future.wait();
+  motoman_future.wait();
+
+  return fanuc_future.get()->success && motoman_future.get()->success;
 }
 
 void TaskPlanner::process_trays(const std::vector<aprs_interfaces::msg::Tray>& trays, const std::string& location) {
