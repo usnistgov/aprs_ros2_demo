@@ -356,8 +356,6 @@ class DetectionArea(Node):
 
     def check_occupied(self, image: MatLike, slot_center: tuple[int, int]) -> bool:
         offset = 15
-        cv2.imshow('window', image)
-        cv2.waitKey(0)
 
         gear_hsv_threshold_low = (
             self.gear_hsv_lower_threshold[0],
@@ -374,8 +372,6 @@ class DetectionArea(Node):
             square = image[slot_center[1]-offset:slot_center[1]+offset, slot_center[0]-offset:slot_center[0]+offset]
 
             gear = cv2.inRange(cv2.cvtColor(square, cv2.COLOR_BGR2HSV), gear_hsv_threshold_low, gear_hsv_threshold_high) # type: ignore
-            cv2.imshow('window', gear)
-            cv2.waitKey(0)
 
         except cv2.error as e:
             raise DetectionException(f"Slot outside of detection area.") from e
