@@ -15,7 +15,7 @@ set(msg_files
   "msg/Tray.msg"
   "msg/Trays.msg"
   "msg/SlotInfo.msg"
-  "msg/RobotStatus.msg"
+  "msg/RobotChangeover.msg"
 )
 
 set(srv_files

@@ -7,7 +7,8 @@ TaskPlanner::TaskPlanner() : Node("task_planner")
   motoman_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/table_trays_info", 10, bind(&TaskPlanner::MotomanTableTraysInfoCallback, this, std::placeholders::_1));
   motoman_conveyor_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/motoman/conveyor_trays_info", 10, bind(&TaskPlanner::MotomanConveyorTraysInfoCallback, this, std::placeholders::_1));
   teach_table_subscriber_ = this->create_subscription<aprs_interfaces::msg::Trays>("/teach/table_trays_info", 10, bind(&TaskPlanner::TeachTableTraysInfoCallback, this, std::placeholders::_1));
-  robot_status_subscriber_ = this->create_subscription<aprs_interfaces::msg::RobotStatus>("/robot_status", 10, bind(&TaskPlanner::RobotStatusCallback, this, std::placeholders::_1));
+  robot_changeover_subscriber_ = this->create_subscription<aprs_interfaces::msg::RobotChangeover>("/robot_changeover_requested", 10, bind(&TaskPlanner::RobotChangeoverCallback, this, std::placeholders::_1));
+
 
   generate_plan_server_ = this->create_service<aprs_interfaces::srv::GeneratePlan>(
     "/generate_pddl_plan",
@@ -73,10 +74,10 @@ void TaskPlanner::TeachTableTraysInfoCallback(const aprs_interfaces::msg::Trays:
   recieved_teach_table_info = true;
 }
 
-void TaskPlanner::RobotStatusCallback(const aprs_interfaces::msg::RobotStatus::SharedPtr msg)
+void TaskPlanner::RobotChangeoverCallback(const aprs_interfaces::msg::RobotChangeover::SharedPtr msg)
 {
-  fanuc_operational = msg->fanuc;
-  motoman_operational = msg->motoman;
+  fanuc_changeover = msg->fanuc;
+  motoman_changeover = msg->motoman;
 }
 
 void TaskPlanner::ClearCurrentStateCallback(const std::shared_ptr<aprs_interfaces::srv::ClearCurrentState::Request>,
@@ -105,10 +106,10 @@ void TaskPlanner::GeneratePlanCallback(const std::shared_ptr<aprs_interfaces::sr
     init_world_state();
     init_goal_state();
   }
-  else if (!fanuc_operational){
+  else if (fanuc_changeover){
     update_world_state("fanuc");
   }
-  else if (!motoman_operational){
+  else if (motoman_changeover){
     update_world_state("motoman");
   }
 
@@ -268,6 +269,8 @@ void TaskPlanner::init_world_state(){
   problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor fanuc)"));
   problem_expert_->addPredicate(plansys2::Predicate("(in_reach motoman_conveyor motoman)"));
 
+  problem_expert_->addPredicate(plansys2::Predicate("(conveyor_used_by fanuc)"));
+
   // Process Fanuc Table
   process_trays(fanuc_table_kit_trays_, "fanuc_table");
   process_trays(fanuc_table_part_trays_, "fanuc_table");
@@ -315,7 +318,7 @@ void TaskPlanner::update_world_state(std::string robot){
     problem_expert_->removePredicate(plansys2::Predicate("(in_reach fanuc_conveyor fanuc)"));
 
     problem_expert_->addPredicate(plansys2::Predicate("(robot_faulty fanuc)"));
-    problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor motoman)"));
+    // problem_expert_->addPredicate(plansys2::Predicate("(in_reach fanuc_conveyor motoman)"));
   }
   else if (robot == "motoman"){
     problem_expert_->removePredicate(plansys2::Predicate("(robot_operational motoman)"));
