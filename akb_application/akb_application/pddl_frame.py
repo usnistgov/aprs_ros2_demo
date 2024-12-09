@@ -160,7 +160,7 @@ class PDDLFrame(ctk.CTkFrame):
                 sep = ttk.Separator(self.pddl_info_frame, orient='horizontal')
                 sep.grid(column=0, row=self.pddl_info_frame_current_row, columnspan=2, sticky="ew")
                 self.pddl_info_frame_current_row += 1
-            self.execute_plan_button.configure(state=tk.NORMAL)
+            self.execute_plan_button.configure(state=tk.NORMAL, fg_color="#3B8ED0")
             self.plan = response.plan
         else:
             self.clear_pddl_info_frame()

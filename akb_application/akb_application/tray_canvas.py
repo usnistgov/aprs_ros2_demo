@@ -1,15 +1,26 @@
 import math
 
 from typing import Optional
+from functools import partial
 
 from rclpy.node import Node
+from rclpy.task import Future
 from rclpy.qos import qos_profile_default
 
 from aprs_vision.conversions import euler_from_quaternion
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
+from aprs_interfaces.srv import Pick, Place
 from akb_application.canvas_tool_tip import CanvasTooltip
 
 from customtkinter import CTkCanvas
+
+class Gear:
+    def __init__(self, frame_name: str, c_x: int, c_y: int, radius: float, occupied: bool):
+        self.frame_name = frame_name
+        self.c_x = c_x
+        self.c_y = c_y
+        self.radius = radius
+        self.occupied = occupied
 
 class TrayCanvas(CTkCanvas):
     tray_corners_ = {
@@ -71,10 +82,12 @@ class TrayCanvas(CTkCanvas):
     fiducial_square_measurements = (0.04, 0.04)
     radius = 0.03
     
-    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int):
+    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int, robot: Optional[str]=None):
         super().__init__(frame, bd = 0, highlightthickness=0, height=height, width=width)
 
         self.node = node
+
+        self.robot: Optional[str] = None
         
         actual_height = (img_height / 30.0) * 0.0254
         self.conversion_factor = height / actual_height
@@ -84,6 +97,15 @@ class TrayCanvas(CTkCanvas):
         self.trays_info: Optional[Trays] = None
 
         self.update_rate = 1000 #ms
+
+        self.pick_client = self.node.create_client(Pick, f"{robot}/pick_from_slot")
+        self.place_client = self.node.create_client(Place, f"{robot}/place_in_slot")
+        self.actively_picking = False
+        self.actively_placing = False
+
+        self.held_gear_type: Optional[str] = None
+        self.gears_present: list[Gear] = []
+        self.bind('<Button-1>', self.tray_canvas_clicked)
         
         self.update_canvas()
 
@@ -95,6 +117,7 @@ class TrayCanvas(CTkCanvas):
 
         if self.trays_info is not None:
             all_trays: list[Tray] = self.trays_info.kit_trays + self.trays_info.part_trays # type: ignore
+            self.gears_present.clear()
             for tray in all_trays:
                 if tray.identifier not in TrayCanvas.tray_corners_.keys():
                     continue
@@ -153,6 +176,7 @@ class TrayCanvas(CTkCanvas):
         radius = self.gear_radii_[size] * self.conversion_factor
 
         gear_oval = self.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill=("#40bd42" if occupied else "#616161"))
+        self.gears_present.append(Gear(gear_name, cx, cy, radius, occupied))
         tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
 
     def round_points(self, points: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -196,3 +220,96 @@ class TrayCanvas(CTkCanvas):
         
         return canvas_points
     
+    def dist(self, p_1, p_2):
+        return math.sqrt(sum([(p_1[i]-p_2[i])**2 for i in range(len(p_1))]))
+    
+    def tray_canvas_clicked(self, event):
+        if self.robot is None:
+            return
+        
+        if self.held_gear_type is None:
+            for gear in self.gears_present:
+                if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) < gear.radius:
+                    if not gear.occupied:
+                        self.node.get_logger().error("Tried to pick from unoccupied slot")
+                        return
+                    self.pick_gear(gear.frame_name)
+        
+        else:
+            for gear in self.gears_present:
+                if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) < gear.radius:
+                    if not gear.occupied:
+                        self.node.get_logger().error("Tried to place in occupied slot")
+                        return
+                    self.place(gear.frame_name)
+
+
+    
+    def pick_gear(self, frame_name):
+        if not self.pick_client.service_is_ready():
+            self.node.get_logger().error(f"Pick service not ready for {self.robot}")
+            return
+        
+        if self.actively_picking or self.actively_placing:
+            self.node.get_logger().error(f"Already picking or placing with {self.robot}")
+            return
+        
+        pick_request = Pick.Request()
+        pick_request.frame_name = frame_name
+
+        self.actively_picking = True
+
+        future = self.pick_client.call_async(pick_request)
+
+        future.add_done_callback(partial(self.pick_gear_done_cb, frame_name))
+
+    def pick_gear_done_cb(self, frame_name: str, future: Future):
+        result: Pick.Response = future.result()
+        self.actively_picking = False
+        if result.success:
+            self.node.get_logger().info(f"Successfully picked gear with {self.robot} on frame {frame_name}")
+            if "small" in frame_name or "sg" in frame_name:
+                self.held_gear_type = "small"
+            elif "medium" in frame_name or "mg" in frame_name:
+                self.held_gear_type = "medium"
+            else:
+                self.held_gear_type = "large"
+        else:
+            self.node.get_logger().error(f"{self.robot} could not pick from frame {frame_name}")
+    
+    def place_gear(self, frame_name):
+        if not self.pick_client.service_is_ready():
+            self.node.get_logger().error(f"Place service not ready for {self.robot}")
+            return
+        
+        if self.actively_picking or self.actively_placing:
+            self.node.get_logger().error(f"Already picking or placing with {self.robot}")
+            return
+        
+        if self.held_gear_type == "small" and "small" not in frame_name and "sg" not in frame_name:
+            self.node.get_logger().error(f"{self.robot} is holding a small gear. Cannot place in not small slot.")
+            return
+        elif self.held_gear_type == "medium" and "medium" not in frame_name and "mg" not in frame_name:
+            self.node.get_logger().error(f"{self.robot} is holding a medium gear. Cannot place in not medium slot.")
+            return
+        elif self.held_gear_type == "large" and "large" not in frame_name and "lg" not in frame_name:
+            self.node.get_logger().error(f"{self.robot} is holding a large gear. Cannot place in not large slot.")
+            return
+        
+        place_request = Place.Request()
+        place_request.frame_name = frame_name
+
+        self.actively_placing = True
+
+        future = self.place_client.call_async(place_request)
+
+        future.add_done_callback(partial(self.place_gear_done_cb, frame_name))
+
+    def place_gear_done_cb(self, frame_name: str, future: Future):
+        result: Place.Response = future.result()
+        self.actively_placing = False
+        if result.success:
+            self.node.get_logger().info(f"Successfully place gear with {self.robot} on frame {frame_name}")
+            self.held_gear_type = None
+        else:
+            self.node.get_logger().error(f"{self.robot} could not place from frame {frame_name}")
