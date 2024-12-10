@@ -11,6 +11,8 @@ from aprs_vision.conversions import euler_from_quaternion
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from aprs_interfaces.srv import Pick, Place
 from akb_application.canvas_tool_tip import CanvasTooltip
+from sensor_msgs.msg import JointState
+
 
 from customtkinter import CTkCanvas
 
@@ -98,19 +100,28 @@ class TrayCanvas(CTkCanvas):
 
         self.update_rate = 1000 #ms
 
-        self.pick_client = self.node.create_client(Pick, f"{robot}/pick_from_slot")
-        self.place_client = self.node.create_client(Place, f"{robot}/place_in_slot")
-        self.actively_picking = False
-        self.actively_placing = False
+        if self.robot is not None:
+            self.node.create_subscription(JointState, f"{self.robot}/joint_states", self.joint_states_cb, qos_profile_default)
+            self.pick_client = self.node.create_client(Pick, f"{robot}/pick_from_slot")
+            self.place_client = self.node.create_client(Place, f"{robot}/place_in_slot")
+            self.actively_picking = False
+            self.actively_placing = False
+            self.gripper_open = False
 
-        self.held_gear_type: Optional[str] = None
-        self.gears_present: list[Gear] = []
-        self.bind('<Button-1>', self.tray_canvas_clicked)
+            self.held_gear_type: Optional[str] = None
+            self.gears_present: list[Gear] = []
+            self.bind('<Button-1>', self.tray_canvas_clicked)
         
         self.update_canvas()
 
     def trays_info_cb(self, msg: Trays):
         self.trays_info = msg
+    
+    def joint_states_cb(self, msg: JointState):
+        for i in range(len(msg.name)):
+            if "finger" in msg.name[i]:
+                self.gripper_open = msg.position[i] != 0
+                return
     
     def update_canvas(self):
         self.delete("all")
@@ -227,7 +238,7 @@ class TrayCanvas(CTkCanvas):
         if self.robot is None:
             return
         
-        if self.held_gear_type is None:
+        if self.gripper_open:
             for gear in self.gears_present:
                 if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) < gear.radius:
                     if not gear.occupied:
