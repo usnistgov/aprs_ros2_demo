@@ -11,6 +11,9 @@
 #include <aprs_driver/network_utilities.hpp>
 #include <aprs_driver/simple_messages.hpp>
 
+#include <std_msgs/msg/bool.hpp>
+
+
 #include <exception>
 #include <string>
 
@@ -37,6 +40,7 @@ namespace pneumatic_controller {
                                     std::shared_ptr<aprs_interfaces::srv::PneumaticGripperControl::Response> response);
 
     rclcpp::Service<aprs_interfaces::srv::PneumaticGripperControl>::SharedPtr change_gripper_state_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pneumatic_gripper_controller_status_pub_;
   
     std::vector<std::string> joint_names_;
     double gripper_state_ = 0;

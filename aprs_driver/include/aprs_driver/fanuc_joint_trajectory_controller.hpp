@@ -3,6 +3,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/publisher.hpp>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -10,6 +12,7 @@
 #include <controller_interface/controller_interface.hpp>
 
 #include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
@@ -30,8 +33,12 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
   CallbackReturn on_init() override;
   CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
+
+  ~FanucJointTrajectoryController();
 
  private:
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr fanuc_joint_trajectory_controller_status_pub_;
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const FollowJointTrajectory::Goal> goal);

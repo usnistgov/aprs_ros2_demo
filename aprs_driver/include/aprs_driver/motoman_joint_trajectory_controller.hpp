@@ -10,6 +10,7 @@
 #include <controller_interface/controller_interface.hpp>
 
 #include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
@@ -35,6 +36,7 @@ class MotomanJointTrajectoryController : public controller_interface::Controller
   ~MotomanJointTrajectoryController();
 
  private:
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr motoman_joint_trajectory_controller_status_pub_;
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const FollowJointTrajectory::Goal> goal);

@@ -3,6 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/state.hpp>
+#include <rclcpp/node.hpp>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -15,6 +16,7 @@
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 namespace fanuc_hardware {
 
@@ -42,6 +44,8 @@ namespace fanuc_hardware {
     ~FanucHardwareInterface() {on_deactivate(rclcpp_lifecycle::State());};
 
   private:
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr fanuc_joint_state_broadcaster_status_pub_;
     rclcpp::Logger get_logger();
     void update_from_robot_controller();
 

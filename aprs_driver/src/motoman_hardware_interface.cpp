@@ -19,6 +19,11 @@ namespace motoman_hardware {
     hw_velocities_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
     hw_accelerations_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
     hw_commands_.resize(num_urdf_joints_, std::numeric_limits<double>::quiet_NaN());
+    
+    node_ = rclcpp::Node::make_shared("joint_state_broadcaster_status");
+    motoman_joint_state_broadcaster_status_pub_ = node_->create_publisher<std_msgs::msg::Bool>(
+      "joint_state_broadcaster_status", rclcpp::QoS(1)
+    );
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -51,8 +56,11 @@ namespace motoman_hardware {
 
     int connection_success = connect(state_socket_, (struct sockaddr *)&state_socket_address_, sizeof(state_socket_address_));
 
+    auto status = std_msgs::msg::Bool();
     if (connection_success < 0){
       RCLCPP_INFO(get_logger(), "Unable to connect to socket");
+      status.data = false;
+      motoman_joint_state_broadcaster_status_pub_->publish(status);
       return hardware_interface::CallbackReturn::FAILURE;
     }
 
@@ -75,6 +83,9 @@ namespace motoman_hardware {
 
     activated_ = true;
 
+    status.data = true;
+    motoman_joint_state_broadcaster_status_pub_->publish(status);
+
     return hardware_interface::CallbackReturn::SUCCESS;
   }
 
@@ -83,6 +94,10 @@ namespace motoman_hardware {
     (void)previous_state;
 
     close(state_socket_);
+    
+    auto status = std_msgs::msg::Bool();
+    status.data = false;
+    motoman_joint_state_broadcaster_status_pub_->publish(status);
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }

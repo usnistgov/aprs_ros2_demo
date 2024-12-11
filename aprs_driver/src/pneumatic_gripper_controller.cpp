@@ -49,6 +49,10 @@ namespace pneumatic_controller {
       return CallbackReturn::ERROR;
     }
 
+    pneumatic_gripper_controller_status_pub_ = get_node()->create_publisher<std_msgs::msg::Bool>(
+      "pneumatic_gripper_status", rclcpp::QoS(1)
+    );
+
     get_node()->declare_parameter("robot_name", "");
 
     return CallbackReturn::SUCCESS;
@@ -90,8 +94,11 @@ namespace pneumatic_controller {
 
     int connection_success = connect(gripper_socket, (struct sockaddr *)&gripper_socket_address, sizeof(gripper_socket_address));
 
+    auto controller_status = std_msgs::msg::Bool();
     if (connection_success < 0){
       RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
+      controller_status.data = false;
+      pneumatic_gripper_controller_status_pub_->publish(controller_status);
       return CallbackReturn::FAILURE;
     }
 
@@ -111,6 +118,8 @@ namespace pneumatic_controller {
         gripper_state_ = 0.0;
       } else {
         RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Unknown value recieved for fanuc gripper get state. Recieved: " << status);
+        controller_status.data = false;
+        pneumatic_gripper_controller_status_pub_->publish(controller_status);
         return CallbackReturn::FAILURE;
       }
     
@@ -133,8 +142,13 @@ namespace pneumatic_controller {
       }
     } else {
       RCLCPP_ERROR(get_node()->get_logger(), "Robot name invalid");
+      controller_status.data = false;
+      pneumatic_gripper_controller_status_pub_->publish(controller_status);
       return CallbackReturn::FAILURE;
     }
+
+    controller_status.data = true;
+    pneumatic_gripper_controller_status_pub_->publish(controller_status);
 
     return CallbackReturn::SUCCESS;
   }
@@ -241,6 +255,9 @@ namespace pneumatic_controller {
   }
 
   PneumaticGripperController::~PneumaticGripperController(){
+    auto status = std_msgs::msg::Bool();
+    status.data = false;
+    pneumatic_gripper_controller_status_pub_->publish(status);
     on_deactivate(rclcpp_lifecycle::State());
   }
 

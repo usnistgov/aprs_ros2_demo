@@ -15,6 +15,7 @@
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 namespace motoman_hardware {
 
@@ -42,6 +43,8 @@ namespace motoman_hardware {
     ~MotomanHardwareInterface() {on_deactivate(rclcpp_lifecycle::State());};
 
   private:
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr motoman_joint_state_broadcaster_status_pub_;
     rclcpp::Logger get_logger();
     void update_from_robot_controller();
 
