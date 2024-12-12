@@ -143,15 +143,15 @@ class PDDLFrame(ctk.CTkFrame):
             plan_items: list[PlanItem] = response.plan.items # type: ignore
             for item in plan_items:
                 filtered_action = item.action.replace("(", "").replace(")", "")
-                seperated_action = filtered_action.split(" ")
-                action = seperated_action[0]
-                action_args = "  ".join(seperated_action[1:])
+                separated_action = filtered_action.split(" ")
+                action = separated_action[0]
+                action_args = "  ".join(separated_action[1:])
                 self.action_labels[action] = ctk.CTkLabel(self.pddl_info_frame, text=action, height=15)
                 self.action_labels[action].grid(column=0, row=self.pddl_info_frame_current_row, sticky="w", pady=0)
                 self.pddl_info_frame_current_row += 1
 
-                self.progress_bars[action + "_" + seperated_action[1]] = ActionProgressBar(ctk.CTkProgressBar(self.pddl_info_frame), copy(self.pddl_info_frame_current_row - 1))
-                self.progress_bars[action + "_" + seperated_action[1]].progress_bar.set(0.0)
+                self.progress_bars[action + "_" + separated_action[1]] = ActionProgressBar(ctk.CTkProgressBar(self.pddl_info_frame), copy(self.pddl_info_frame_current_row - 1))
+                self.progress_bars[action + "_" + separated_action[1]].progress_bar.set(0.0)
 
                 self.action_args_labels[action] = ctk.CTkLabel(self.pddl_info_frame, text=action_args, height=15)
                 self.action_args_labels[action].grid(column=0, row=self.pddl_info_frame_current_row, sticky="w", padx=3, pady=0)
