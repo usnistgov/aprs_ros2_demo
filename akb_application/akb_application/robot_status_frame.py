@@ -63,9 +63,9 @@ class RobotStatusSubFrame(ctk.CTkFrame):
     def joint_trajectory_controller_cb(self, msg: Bool):
         if self.joint_trajectory_controller_active != msg.data:
             self.joint_trajectory_controller_active = msg.data
-            self.joint_trajectory_controller_status_label.configure(text=("ACTIVE" if self.joint_state_broadcaster_active else "INACTIVE"), text_color=("green" if self.joint_state_broadcaster_active else "red"))
+            self.joint_trajectory_controller_status_label.configure(text=("ACTIVE" if self.joint_trajectory_controller_active else "INACTIVE"), text_color=("green" if self.joint_trajectory_controller_active else "red"))
         
     def pneumatic_gripper_status_cb(self, msg: Bool):
         if self.pneumatic_gripper_active != msg.data:
             self.pneumatic_gripper_active = msg.data
-            self.pneumatic_gripper_status_label.configure(text=("ACTIVE" if self.joint_state_broadcaster_active else "INACTIVE"), text_color=("green" if self.joint_state_broadcaster_active else "red"))
+            self.pneumatic_gripper_status_label.configure(text=("ACTIVE" if self.pneumatic_gripper_active else "INACTIVE"), text_color=("green" if self.pneumatic_gripper_active else "red"))
