@@ -35,6 +35,10 @@ namespace pneumatic_controller {
       cmd_interface.set_value(gripper_state_);
     }
 
+    auto controller_status = std_msgs::msg::Bool();
+    controller_status.data = true;
+    pneumatic_gripper_controller_status_pub_->publish(controller_status);
+
     return controller_interface::return_type::OK;
   }
 
@@ -171,6 +175,10 @@ namespace pneumatic_controller {
     close(gripper_socket);
 
     RCLCPP_INFO(get_node()->get_logger(), "Successfully deactivated!");
+
+    auto controller_status = std_msgs::msg::Bool();
+    controller_status.data = false;
+    pneumatic_gripper_controller_status_pub_->publish(controller_status);
 
     return CallbackReturn::SUCCESS;
   }

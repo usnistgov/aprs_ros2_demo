@@ -135,6 +135,10 @@ namespace motoman_hardware {
     hw_positions_[7] = hw_commands_[7];
     hw_positions_[8] = hw_commands_[8];
 
+    auto status = std_msgs::msg::Bool();
+    status.data = true;
+    motoman_joint_state_broadcaster_status_pub_->publish(status);
+
     return hardware_interface::return_type::OK;
   }
 

@@ -125,6 +125,10 @@ namespace fanuc_hardware {
     hw_positions_[6] = hw_commands_[6];
     hw_positions_[7] = hw_commands_[7];
 
+    auto status = std_msgs::msg::Bool();
+    status.data = true;
+    fanuc_joint_state_broadcaster_status_pub_->publish(status);
+
     return hardware_interface::return_type::OK;
   }
 

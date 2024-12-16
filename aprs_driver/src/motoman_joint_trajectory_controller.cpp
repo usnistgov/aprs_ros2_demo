@@ -154,6 +154,10 @@ namespace motoman_controller {
       }
     }
 
+    auto status = std_msgs::msg::Bool();
+    status.data = true;
+    motoman_joint_trajectory_controller_status_pub_->publish(status);
+
     return controller_interface::return_type::OK;  
   }
 
