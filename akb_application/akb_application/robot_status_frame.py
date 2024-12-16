@@ -41,19 +41,19 @@ class RobotStatusSubFrame(ctk.CTkFrame):
         ctk.CTkLabel(self, text= f"{robot_name.capitalize()} controllers:", height=15).grid(row=0, column=0, columnspan=2, pady=10)
 
         self.joint_state_broadcaster_label = ctk.CTkLabel(self, text="Joint State Broadcaster:", height=15)
-        self.joint_state_broadcaster_label.grid(row=1, column=0, pady=10, padx=2)
+        self.joint_state_broadcaster_label.grid(row=1, column=0, pady=2, padx=2)
         self.joint_state_broadcaster_status_label = ctk.CTkLabel(self, text="INACTIVE", text_color="red", height=15)
-        self.joint_state_broadcaster_status_label.grid(row=1, column=1, pady=10, padx=2)
+        self.joint_state_broadcaster_status_label.grid(row=1, column=1, pady=2, padx=2)
 
         self.joint_trajectory_controller_label = ctk.CTkLabel(self, text="Joint Trajectory Controller:", height=15)
-        self.joint_trajectory_controller_label.grid(row=2, column=0, pady=10, padx=2)
+        self.joint_trajectory_controller_label.grid(row=2, column=0, pady=2, padx=2)
         self.joint_trajectory_controller_status_label = ctk.CTkLabel(self, text="INACTIVE", text_color="red", height=15)
-        self.joint_trajectory_controller_status_label.grid(row=2, column=1, pady=10, padx=2)
+        self.joint_trajectory_controller_status_label.grid(row=2, column=1, pady=2, padx=2)
 
         self.pneumatic_gripper_label = ctk.CTkLabel(self, text="Pneumatic Gripper:", height=15)
-        self.pneumatic_gripper_label.grid(row=1, column=0, pady=10, padx=2)
+        self.pneumatic_gripper_label.grid(row=3, column=0, pady=2, padx=2)
         self.pneumatic_gripper_status_label = ctk.CTkLabel(self, text="INACTIVE", text_color="red", height=15)
-        self.pneumatic_gripper_status_label.grid(row=1, column=1, pady=10, padx=2)
+        self.pneumatic_gripper_status_label.grid(row=3, column=1, pady=2, padx=2)
 
     def joint_state_broadcaster_cb(self, msg: Bool):
         if self.joint_state_broadcaster_active != msg.data:
