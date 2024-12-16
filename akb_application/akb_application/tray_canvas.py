@@ -89,7 +89,7 @@ class TrayCanvas(CTkCanvas):
 
         self.node = node
 
-        self.robot: Optional[str] = None
+        self.robot: Optional[str] = robot
         
         actual_height = (img_height / 30.0) * 0.0254
         self.conversion_factor = height / actual_height
@@ -100,6 +100,8 @@ class TrayCanvas(CTkCanvas):
 
         self.update_rate = 1000 #ms
 
+        self.gears_present: list[Gear] = []
+        
         if self.robot is not None:
             self.node.create_subscription(JointState, f"{self.robot}/joint_states", self.joint_states_cb, qos_profile_default)
             self.pick_client = self.node.create_client(Pick, f"{robot}/pick_from_slot")
@@ -109,7 +111,6 @@ class TrayCanvas(CTkCanvas):
             self.gripper_open = False
 
             self.held_gear_type: Optional[str] = None
-            self.gears_present: list[Gear] = []
             self.bind('<Button-1>', self.tray_canvas_clicked)
         
         self.update_canvas()
@@ -120,7 +121,7 @@ class TrayCanvas(CTkCanvas):
     def joint_states_cb(self, msg: JointState):
         for i in range(len(msg.name)):
             if "finger" in msg.name[i]:
-                self.gripper_open = msg.position[i] != 0
+                self.gripper_open = msg.position[i] != 0.0
                 return
     
     def update_canvas(self):
@@ -235,6 +236,7 @@ class TrayCanvas(CTkCanvas):
         return math.sqrt(sum([(p_1[i]-p_2[i])**2 for i in range(len(p_1))]))
     
     def tray_canvas_clicked(self, event):
+        self.node.get_logger().info("Canvas clicked. Gripper opened: " + str(self.gripper_open))
         if self.robot is None:
             return
         
@@ -244,15 +246,22 @@ class TrayCanvas(CTkCanvas):
                     if not gear.occupied:
                         self.node.get_logger().error("Tried to pick from unoccupied slot")
                         return
+                    self.node.get_logger().info(f"Attempt pick {gear.frame_name}")
                     self.pick_gear(gear.frame_name)
+                    return
+                    
         
         else:
             for gear in self.gears_present:
                 if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) < gear.radius:
-                    if not gear.occupied:
+                    if gear.occupied:
                         self.node.get_logger().error("Tried to place in occupied slot")
                         return
-                    self.place(gear.frame_name)
+                    self.place_gear(gear.frame_name)
+                    self.node.get_logger().info(f"Attempt place {gear.frame_name}")
+                    return
+
+        self.node.get_logger().info("Did not click gear")
 
 
     

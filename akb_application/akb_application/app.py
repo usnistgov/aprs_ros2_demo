@@ -33,7 +33,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(self.visualization_frame, text="Fanuc Table Tray Visualization", font=self.font, fg_color="#EBEBEB", anchor="s").grid(column=0, row=2, pady=2)
         w, h = self.fanuc_table_image.get_shape()
         img_h = self.fanuc_table_image.get_image_height()
-        self.fanuc_trays = TrayCanvas(self.visualization_frame, self.node, "/fanuc/table_trays_info", w, h, img_h)
+        self.fanuc_trays = TrayCanvas(self.visualization_frame, self.node, "/fanuc/table_trays_info", w, h, img_h, "fanuc")
         self.fanuc_trays.grid(column=0, row=3, padx=5)
 
         ctk.CTkLabel(self.visualization_frame, text="Motoman Table Image", font=self.font, fg_color="#EBEBEB", anchor="s").grid(column=1, row=0, pady=2)
@@ -42,7 +42,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(self.visualization_frame, text="Motoman Table Tray Visualization", font=self.font, fg_color="#EBEBEB", anchor="s").grid(column=1, row=2, pady=2)
         w, h = self.motoman_table_image.get_shape()
         img_h = self.motoman_table_image.get_image_height()
-        self.motoman_trays = TrayCanvas(self.visualization_frame, self.node, "/motoman/table_trays_info", w, h, img_h)
+        self.motoman_trays = TrayCanvas(self.visualization_frame, self.node, "/motoman/table_trays_info", w, h, img_h, "motoman")
         self.motoman_trays.grid(column=1, row=3, padx=5)
 
         ctk.CTkLabel(self.visualization_frame, text="Teach Table Image", font=self.font, fg_color="#EBEBEB", anchor="s").grid(column=2, row=0, pady=2)
@@ -66,4 +66,4 @@ class App(ctk.CTk):
         self.planning_scene_frame.grid(row=1, column=1, sticky='n')
         self.robot_function_frame.grid(row=1, column=2, sticky='n')
         self.pddl_frame.grid(row=0, column=3, sticky='n', pady=30)
-        self.robot_status_frame.grid(row=1, column=3, sticky='n')
+        self.robot_status_frame.grid(row=1, column=3)

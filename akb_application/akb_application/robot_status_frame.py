@@ -34,7 +34,7 @@ class RobotStatusSubFrame(ctk.CTkFrame):
         self.joint_trajectory_controller_active = False
         self.pneumatic_gripper_active = False
 
-        self.joint_state_broadcaster_sub = self.node.create_subscription(Bool, f"{robot_name}/joint_state_boradcaster_status", self.joint_state_broadcaster_cb, 1)
+        self.joint_state_broadcaster_sub = self.node.create_subscription(Bool, f"{robot_name}/joint_state_broadcaster_status", self.joint_state_broadcaster_cb, 1)
         self.joint_trajectory_controller_sub = self.node.create_subscription(Bool, f"{robot_name}/joint_trajectory_controller_status", self.joint_trajectory_controller_cb, 1)
         self.pneumatic_gripper_sub = self.node.create_subscription(Bool, f"{robot_name}/pneumatic_gripper_status", self.pneumatic_gripper_status_cb, 1)
 
