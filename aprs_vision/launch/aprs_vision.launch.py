@@ -38,14 +38,14 @@ def launch_setup(_):
         output='screen',
     )
 
-    motoman_conveyor_detection_area = Node(
-        package='aprs_vision',
-        executable='detection_area_node.py',
-        name='conveyor_detection_area',
-        namespace='motoman',
-        parameters=[parameters],
-        output='screen',
-    )
+    # motoman_conveyor_detection_area = Node(
+    #     package='aprs_vision',
+    #     executable='detection_area_node.py',
+    #     name='conveyor_detection_area',
+    #     namespace='motoman',
+    #     parameters=[parameters],
+    #     output='screen',
+    # )
 
     teach_table_detection_area = Node(
         package='aprs_vision',
@@ -60,7 +60,7 @@ def launch_setup(_):
         fanuc_table_detection_area,
         motoman_table_detection_area,
         fanuc_conveyor_detection_area,
-        motoman_conveyor_detection_area,
+        # motoman_conveyor_detection_area,
         teach_table_detection_area
     ]
 

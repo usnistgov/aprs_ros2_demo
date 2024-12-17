@@ -24,6 +24,7 @@ from aprs_interfaces.srv import LocateTrays
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from aprs_vision.slot_offsets import SlotOffsets
 from aprs_vision.stream_handler import StreamHandler
+from numpy.lib.npyio import NpzFile
 
 class DetectionException(Exception):
     pass
@@ -85,7 +86,13 @@ class DetectionArea(Node):
         share_path = get_package_share_directory('aprs_vision')
         calibration_filepath = os.path.join(share_path, 'config', f'{self.robot_name}_{self.location}_calibration.npz')
 
-        self.stream_handler = StreamHandler(video_stream, calibration_filepath)
+        if self.location == "conveyor":
+            calibration: NpzFile = np.load(calibration_filepath)
+            self.mtx = calibration["mtx"]
+            self.dist = calibration["dist"]
+            self.marker_length = 0.0295
+
+        self.stream_handler = StreamHandler(video_stream, calibration_filepath, self.location)
         self.current_frame: Optional[MatLike] = None
 
         # ArUco
@@ -119,6 +126,18 @@ class DetectionArea(Node):
             self.get_parameter('transform.rotation.pitch').get_parameter_value().double_value,
             self.get_parameter('transform.rotation.yaw').get_parameter_value().double_value
             )
+
+            if self.location == "conveyor":
+                center_of_conveyor= self.generate_transform(
+                self.get_parameter('transform.child_frame').get_parameter_value().string_value,
+                f'{self.robot_name}_conveyor_center',
+                Point(
+                    x=.4191,
+                    y=.2413,
+                    z=0.0
+                ),
+                0,0,0)
+                self.static_tf_broadcaster.sendTransform(center_of_conveyor)
 
             self.static_tf_broadcaster.sendTransform(image_frame_transform)
 
@@ -219,22 +238,31 @@ class DetectionArea(Node):
 
         if len(marker_ids) > 1:
             raise DetectionException("Detected multiple fiducials on one tray")
-
+        
         tray_id = marker_ids[0][0]
 
-        corners = np.reshape(corners[0],(4,2))
+        if self.location != "conveyor":
+            corners = np.reshape(corners[0],(4,2))
 
-        # Calculate marker center and angle of rotation
-        marker_center = (float(corners[0][0] + (corners[2][0]-corners[0][0])/2), float(corners[0][1] + (corners[2][1]-corners[0][1])/2))
-        angle = math.atan2(corners[0][1] - corners[1][1],corners[0][0]-corners[1][0])
+            # Calculate marker center and angle of rotation
+            marker_center = (float(corners[0][0] + (corners[2][0]-corners[0][0])/2), float(corners[0][1] + (corners[2][1]-corners[0][1])/2))
+            angle = math.atan2(corners[0][1] - corners[1][1],corners[0][0]-corners[1][0])
 
-        # Use area to classify tray identifier
-        tray_area = cv2.contourArea(contour) * self.conversion_factor**2
+            # Use area to classify tray identifier
+            tray_area = cv2.contourArea(contour) * self.conversion_factor**2
 
-        if tray_area < 20000:
-            raise DetectionException('Detected a partial tray')
+            if tray_area < 20000:
+                raise DetectionException('Detected a partial tray')
 
-        identifier = min({k: abs(v - tray_area) for (k,v) in self.tray_areas.items()}.items(), key=lambda x: x[1])[0]
+            identifier = min({k: abs(v - tray_area) for (k,v) in self.tray_areas.items()}.items(), key=lambda x: x[1])[0]
+        else:
+             rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners,self.marker_length,self.mtx, self.dist)
+             print(rvec)
+             print(tvec)
+             marker_center = (float(tvec[0][0][0]), float(tvec[0][0][1]))
+             angle = float(rvec[0][0][2])
+             #TODO: reconfigure identifier
+             identifier = Tray.M2L1_KIT_TRAY
 
         return (identifier, tray_id, marker_center, angle)
 
@@ -261,7 +289,11 @@ class DetectionArea(Node):
         trays_info = Trays()
         for contour in tray_contours:
             # Ignore small contours
+
             if cv2.contourArea(contour) < 200:
+                continue
+
+            if self.location == "conveyor" and cv2.contourArea(contour) < 60000:
                 continue
 
             # Classify tray based on contours
@@ -272,11 +304,19 @@ class DetectionArea(Node):
             tray_msg.identifier = identifier
             tray_msg.name = f'{self.tray_names[identifier]}_{tray_id:02}'
 
-            tray_center = Point(
-                x=(tray_x * self.conversion_factor) / 1000,
-                y=(tray_y * self.conversion_factor) / 1000,
-                z=-self.tray_height
-            )
+            if self.location != "conveyor":
+                tray_center = Point(
+                    x=(tray_x * self.conversion_factor) / 1000,
+                    y=(tray_y * self.conversion_factor) / 1000,
+                    z=-self.tray_height
+                )
+            else:
+                tray_center = Point(
+                    x=tray_x,
+                    y=tray_y,
+                    z=-self.tray_height
+                )
+                self.table_image = f'{self.robot_name}_conveyor_center'
 
             tray_msg.tray_pose = self.generate_pose(self.image_frame, tray_center, 0.0, math.pi, theta)
 
@@ -291,14 +331,18 @@ class DetectionArea(Node):
             # Build slot messages
             for slot_name, (x_off, y_off) in SlotOffsets.offsets[tray_msg.identifier].items():
                 slot_info = self.build_slot_info_message(tray_msg.identifier, tray_msg.name, slot_name, x_off, y_off)
+                if self.location != "conveyor":
+                    x_off_px = (x_off*1000) / self.conversion_factor
+                    y_off_px = (y_off*1000) / self.conversion_factor
+                else:
+                    x_off_px = (x_off*1000)
+                    y_off_px = (y_off*1000)
 
-                x_off_px = (x_off*1000) / self.conversion_factor
-                y_off_px = (y_off*1000) / self.conversion_factor
 
                 slot_x = int(tray_x + (x_off_px*math.cos(beta)) - (-y_off_px*math.sin(beta)))
                 slot_y = int(tray_y + (x_off_px*math.sin(beta)) + (-y_off_px*math.cos(beta)))
 
-                slot_info.occupied = self.check_occupied(table_image, (slot_x, slot_y))
+                # slot_info.occupied = self.check_occupied(table_image, (slot_x, slot_y))
 
                 tray_msg.slots.append(slot_info)
 
