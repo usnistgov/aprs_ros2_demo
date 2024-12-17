@@ -16,7 +16,7 @@ fanuc_robot_commander:
       pitch: 3.14159
 
     offsets:
-      pick: 0.0
+      pick: 0.025
       place: 0.01
       above_slot: 0.1
 

@@ -85,7 +85,7 @@ class DetectionArea(Node):
         share_path = get_package_share_directory('aprs_vision')
         calibration_filepath = os.path.join(share_path, 'config', f'{self.robot_name}_{self.location}_calibration.npz')
 
-        self.stream_handler = StreamHandler(video_stream, calibration_filepath)
+        self.stream_handler = StreamHandler(video_stream, calibration_filepath, self.location)
         self.current_frame: Optional[MatLike] = None
 
         # ArUco
