@@ -230,28 +230,28 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   sleep(motion_pause_);
 
-  actuate_gripper(true);
+  // actuate_gripper(true);
 
-  attached_part_name = slot_objects[slot_name];
-  attached_part_type = slot_types[slot_name];
+  // attached_part_name = slot_objects[slot_name];
+  // attached_part_type = slot_types[slot_name];
 
-  planning_interface_->attachObject(slot_objects[slot_name], end_effector_link_, touch_links_);
-  slot_objects[slot_name] = "";
-  slot_types[slot_name] = -1;
+  // planning_interface_->attachObject(slot_objects[slot_name], end_effector_link_, touch_links_);
+  // slot_objects[slot_name] = "";
+  // slot_types[slot_name] = -1;
 
-  sleep(motion_pause_);
+  // sleep(motion_pause_);
 
-  holding_part = true;
+  // holding_part = true;
 
-  // Move back up
-  plan = plan_cartesian(above_slot);
+  // // Move back up
+  // plan = plan_cartesian(above_slot);
   
-  if (!plan.first)
-    return std::make_pair(false, "Unable to plan to above slot");
+  // if (!plan.first)
+  //   return std::make_pair(false, "Unable to plan to above slot");
 
-  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
-    return std::make_pair(false, "Unable to move to above slot");
-  }
+  // if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+  //   return std::make_pair(false, "Unable to move to above slot");
+  // }
 
   return std::make_pair(true, "Successfully picked part");
 }

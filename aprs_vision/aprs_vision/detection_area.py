@@ -179,6 +179,8 @@ class DetectionArea(Node):
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
+        cv2.imwrite('hsv.jpg',hsv)
+
         thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, self.background_v_upper)) #type: ignore
 
         canvas = np.zeros((frame.shape[0], frame.shape[1]), dtype=np.uint8)
@@ -233,6 +235,7 @@ class DetectionArea(Node):
 
         if tray_area < 20000:
             raise DetectionException('Detected a partial tray')
+        print(tray_area)
 
         identifier = min({k: abs(v - tray_area) for (k,v) in self.tray_areas.items()}.items(), key=lambda x: x[1])[0]
 
