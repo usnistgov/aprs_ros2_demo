@@ -14,6 +14,7 @@ class StreamException(Exception):
 
 class StreamHandler:
     def __init__(self, video_stream: str, calibration_file: str, location: str):
+        self.location = location
         self.capture = cv2.VideoCapture(video_stream)
 
         ret, frame = self.capture.read()
@@ -25,9 +26,6 @@ class StreamHandler:
             raise StreamException(f"Calibration file not found at [{calibration_file}]")
 
         calibration: NpzFile = np.load(calibration_file)
-
-        if location == "conveyor":
-            frame = cv2.rotate(frame,cv2.ROTATE_180)
 
         try:
             self.map_x = calibration['map_x']
@@ -62,6 +60,9 @@ class StreamHandler:
             MatLike: Rotated, cropped, and remapped frame
         """
         ret, frame = self.capture.read()
+
+        if self.location == "conveyor":
+            frame = cv2.rotate(frame,cv2.ROTATE_180)
 
         if not ret:
             raise StreamException("Lost connection to camera")
