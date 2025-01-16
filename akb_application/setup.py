@@ -24,7 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'akb_application = akb_application.akb_application:main',
-            'dummy_pddl_server = akb_application.dummy_srv_server:main'
+            'test_server = akb_application.dummy_nodes:main'
         ],
     },
 )

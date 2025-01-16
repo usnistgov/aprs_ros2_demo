@@ -21,9 +21,13 @@ class LiveImage(ctk.CTkLabel):
     }
 
     def __init__(self, frame, detection_area: str, height=200):
-        super().__init__(frame, text="Image not found", fg_color="#C2C2C2", font=("UbuntuMono", 50))
+        super().__init__(frame)
 
         self.height = height 
+        self.width = height
+        self.detection_area = detection_area
+        
+        self.font = ctk.CTkFont("Roboto", 26, weight="bold")
 
         # Get calibration file
         share_path = get_package_share_directory('aprs_vision')
@@ -36,11 +40,11 @@ class LiveImage(ctk.CTkLabel):
             self.width = int(shape[1] * self.height / shape[0])
             self.image_height = shape[0]
 
-        except StreamException:
+        except StreamException as e:
             self.stream = None
             self.image_height = 100
-        
-        # self.configure(width=self.width, height=self.height)
+            self.configure(width=self.width, height=self.height)
+            print(f'Issue with {self.detection_area} camera: {e}')
         
         self.update_image()
 
@@ -54,18 +58,19 @@ class LiveImage(ctk.CTkLabel):
 
             return cv_image
             
-        except StreamException:
+        except StreamException as e:
+            print(f'Issue with {self.detection_area} camera: {e}')
             return None
 
     def update_image(self):
         cv_image = self.get_image()
         
         if cv_image is None:
-            self.configure(text="Image not found", fg_color="#C2C2C2")
+            area = self.detection_area.title().replace("_", " ")
+            self.configure(text=f"{area}\nimage not found", fg_color="#C2C2C2", font=self.font)
         else:
             self.configure(text="", image=ctk.CTkImage(Image.fromarray(cv_image), size=(self.width, self.height)), fg_color="transparent")
-        
-        self.after(50, self.update_image)
+            self.after(50, self.update_image)
 
     def get_shape(self) -> tuple[int, int]:
         return (self.width, self.height)

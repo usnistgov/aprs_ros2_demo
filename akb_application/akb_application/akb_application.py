@@ -1,4 +1,5 @@
 import threading
+import signal
 
 import rclpy
 
@@ -15,6 +16,9 @@ class AKBApplication(Node):
         super().__init__("akb_application")
 
         self.root = App(self)
+        
+    def handle_sigint(self, *args):
+        self.root.destroy()
 
 def main(args=None):
     rclpy.init(args=args)
@@ -26,9 +30,11 @@ def main(args=None):
 
     spin_thread = threading.Thread(target=executor.spin)
     spin_thread.start()
+    
+    signal.signal(signal.SIGINT, akb_app.handle_sigint)
 
     akb_app.root.mainloop()
-
+    
     executor.shutdown()
 
 if __name__ == '__main__':

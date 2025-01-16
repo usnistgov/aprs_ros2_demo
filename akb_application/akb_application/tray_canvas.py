@@ -1,28 +1,19 @@
 import math
 
 from typing import Optional
-from functools import partial
+from copy import copy
 
 from rclpy.node import Node
-from rclpy.task import Future
 from rclpy.qos import qos_profile_default
 
 from aprs_vision.conversions import euler_from_quaternion
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
-from aprs_interfaces.srv import Pick, Place
 from akb_application.canvas_tool_tip import CanvasTooltip
-from sensor_msgs.msg import JointState
-
 
 from customtkinter import CTkCanvas
+import tkinter as tk
 
-class Gear:
-    def __init__(self, frame_name: str, c_x: int, c_y: int, radius: float, occupied: bool):
-        self.frame_name = frame_name
-        self.c_x = c_x
-        self.c_y = c_y
-        self.radius = radius
-        self.occupied = occupied
+from akb_application.settings import *
 
 class TrayCanvas(CTkCanvas):
     tray_corners_ = {
@@ -84,12 +75,10 @@ class TrayCanvas(CTkCanvas):
     fiducial_square_measurements = (0.04, 0.04)
     radius = 0.03
     
-    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int, robot: Optional[str]=None):
-        super().__init__(frame, bd = 0, highlightthickness=0, height=height, width=width)
+    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int):
+        super().__init__(frame, bg="#C2C2C2", highlightthickness=0, height=height, width=width)
 
         self.node = node
-
-        self.robot: Optional[str] = robot
         
         actual_height = (img_height / 30.0) * 0.0254
         self.conversion_factor = height / actual_height
@@ -97,39 +86,25 @@ class TrayCanvas(CTkCanvas):
         self.node.create_subscription(Trays, topic, self.trays_info_cb, qos_profile_default)
 
         self.trays_info: Optional[Trays] = None
+        self.previous_trays_info: Optional[Trays] = None
+
+        self.gear_map: dict[int, str] = {}
 
         self.update_rate = 1000 #ms
-
-        self.gears_present: list[Gear] = []
-        
-        if self.robot is not None:
-            self.node.create_subscription(JointState, f"{self.robot}/joint_states", self.joint_states_cb, qos_profile_default)
-            self.pick_client = self.node.create_client(Pick, f"{robot}/pick_from_slot")
-            self.place_client = self.node.create_client(Place, f"{robot}/place_in_slot")
-            self.actively_picking = False
-            self.actively_placing = False
-            self.gripper_open = False
-
-            self.held_gear_type: Optional[str] = None
-            self.bind('<Button-1>', self.tray_canvas_clicked)
         
         self.update_canvas()
 
     def trays_info_cb(self, msg: Trays):
         self.trays_info = msg
     
-    def joint_states_cb(self, msg: JointState):
-        for i in range(len(msg.name)):
-            if "finger" in msg.name[i]:
-                self.gripper_open = msg.position[i] != 0.0
-                return
-    
     def update_canvas(self):
-        self.delete("all")
+        if self.trays_info is None:
+            pass
+        elif self.trays_info != self.previous_trays_info:
+            self.delete("all")
 
-        if self.trays_info is not None:
+            self.previous_trays_info = copy(self.trays_info)
             all_trays: list[Tray] = self.trays_info.kit_trays + self.trays_info.part_trays # type: ignore
-            self.gears_present.clear()
             for tray in all_trays:
                 if tray.identifier not in TrayCanvas.tray_corners_.keys():
                     continue
@@ -144,9 +119,6 @@ class TrayCanvas(CTkCanvas):
 
                 for slot in tray.slots:
                     slot: SlotInfo
-                    
-                    # if not slot.occupied:
-                    #     continue
                     
                     x_off = slot.slot_pose.pose.position.x
                     y_off = slot.slot_pose.pose.position.y
@@ -169,8 +141,8 @@ class TrayCanvas(CTkCanvas):
         
         canvas_points = self.get_canvas_points(translated_points)
         
-        tray_polygon = self.create_polygon(canvas_points, fill=TrayCanvas.tray_colors_[identifier], smooth=True, splinesteps=32)
-        tooltip = CanvasTooltip(self, tray_polygon, text=tray_name)
+        tray_polygon = self.create_polygon(canvas_points, fill=DARK_GRAY, smooth=True, splinesteps=32)
+        # tooltip = CanvasTooltip(self, tray_polygon, text=tray_name)
     
     def draw_gear(self, size: int, tray_center: tuple[float, float], tray_rotation: float, x_off: float, y_off: float, gear_name: str, occupied: bool):
         slot_center = [(x_off, y_off)]
@@ -187,9 +159,13 @@ class TrayCanvas(CTkCanvas):
 
         radius = self.gear_radii_[size] * self.conversion_factor
 
-        gear_oval = self.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill=("#40bd42" if occupied else "#616161"))
-        self.gears_present.append(Gear(gear_name, cx, cy, radius, occupied))
-        tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
+        gear_oval = self.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill=(GREEN if occupied else GRAY), activefill=(DARK_GREEN if occupied else GRAY))
+        
+        self.gear_map[gear_oval] = gear_name
+
+        self.tag_bind(gear_oval, sequence="<Enter>", func=self.slot_press_cb)
+        
+        # tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
 
     def round_points(self, points: list[tuple[float, float]]) -> list[tuple[float, float]]:
         rounded_points = []
@@ -232,104 +208,10 @@ class TrayCanvas(CTkCanvas):
         
         return canvas_points
     
-    def dist(self, p_1, p_2):
-        return math.sqrt(sum([(p_1[i]-p_2[i])**2 for i in range(len(p_1))]))
+    def slot_press_cb(self, event: tk.Event):
+        item = self.find_closest(event.x, event.y)
+        try:
+            print(self.gear_map[item[0]])
+        except KeyError:
+            pass
     
-    def tray_canvas_clicked(self, event):
-        self.node.get_logger().info("Canvas clicked. Gripper opened: " + str(self.gripper_open))
-        if self.robot is None:
-            return
-        
-        if self.gripper_open:
-            for gear in self.gears_present:
-                if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) < gear.radius:
-                    if not gear.occupied:
-                        self.node.get_logger().error("Tried to pick from unoccupied slot")
-                        return
-                    self.node.get_logger().info(f"Attempt pick {gear.frame_name}")
-                    self.pick_gear(gear.frame_name)
-                    return
-                    
-        
-        else:
-            for gear in self.gears_present:
-                if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) < gear.radius:
-                    if gear.occupied:
-                        self.node.get_logger().error("Tried to place in occupied slot")
-                        return
-                    self.place_gear(gear.frame_name)
-                    self.node.get_logger().info(f"Attempt place {gear.frame_name}")
-                    return
-
-        self.node.get_logger().info("Did not click gear")
-
-
-    
-    def pick_gear(self, frame_name):
-        if not self.pick_client.service_is_ready():
-            self.node.get_logger().error(f"Pick service not ready for {self.robot}")
-            return
-        
-        if self.actively_picking or self.actively_placing:
-            self.node.get_logger().error(f"Already picking or placing with {self.robot}")
-            return
-        
-        pick_request = Pick.Request()
-        pick_request.frame_name = frame_name
-
-        self.actively_picking = True
-
-        future = self.pick_client.call_async(pick_request)
-
-        future.add_done_callback(partial(self.pick_gear_done_cb, frame_name))
-
-    def pick_gear_done_cb(self, frame_name: str, future: Future):
-        result: Pick.Response = future.result()
-        self.actively_picking = False
-        if result.success:
-            self.node.get_logger().info(f"Successfully picked gear with {self.robot} on frame {frame_name}")
-            if "small" in frame_name or "sg" in frame_name:
-                self.held_gear_type = "small"
-            elif "medium" in frame_name or "mg" in frame_name:
-                self.held_gear_type = "medium"
-            else:
-                self.held_gear_type = "large"
-        else:
-            self.node.get_logger().error(f"{self.robot} could not pick from frame {frame_name}")
-    
-    def place_gear(self, frame_name):
-        if not self.pick_client.service_is_ready():
-            self.node.get_logger().error(f"Place service not ready for {self.robot}")
-            return
-        
-        if self.actively_picking or self.actively_placing:
-            self.node.get_logger().error(f"Already picking or placing with {self.robot}")
-            return
-        
-        if self.held_gear_type == "small" and "small" not in frame_name and "sg" not in frame_name:
-            self.node.get_logger().error(f"{self.robot} is holding a small gear. Cannot place in not small slot.")
-            return
-        elif self.held_gear_type == "medium" and "medium" not in frame_name and "mg" not in frame_name:
-            self.node.get_logger().error(f"{self.robot} is holding a medium gear. Cannot place in not medium slot.")
-            return
-        elif self.held_gear_type == "large" and "large" not in frame_name and "lg" not in frame_name:
-            self.node.get_logger().error(f"{self.robot} is holding a large gear. Cannot place in not large slot.")
-            return
-        
-        place_request = Place.Request()
-        place_request.frame_name = frame_name
-
-        self.actively_placing = True
-
-        future = self.place_client.call_async(place_request)
-
-        future.add_done_callback(partial(self.place_gear_done_cb, frame_name))
-
-    def place_gear_done_cb(self, frame_name: str, future: Future):
-        result: Place.Response = future.result()
-        self.actively_placing = False
-        if result.success:
-            self.node.get_logger().info(f"Successfully place gear with {self.robot} on frame {frame_name}")
-            self.held_gear_type = None
-        else:
-            self.node.get_logger().error(f"{self.robot} could not place from frame {frame_name}")
