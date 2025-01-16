@@ -59,8 +59,8 @@ def launch_setup(_):
     nodes_to_start = [
         fanuc_table_detection_area,
         motoman_table_detection_area,
-        # fanuc_conveyor_detection_area,
-        # motoman_conveyor_detection_area,
+        fanuc_conveyor_detection_area,
+        motoman_conveyor_detection_area,
         teach_table_detection_area
     ]
 

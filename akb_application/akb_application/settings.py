@@ -17,7 +17,7 @@ TRAYS_INFO_NAMES: dict[str, str] = {
 }
 
 REACHABLE_AREAS: dict[str, list[str]] = {
-    'fanuc': ['fanuc_table', 'fanuc_conveyor', 'motoman_table'],
+    'fanuc': ['fanuc_table', 'fanuc_conveyor'],
     'motoman': ['motoman_table', 'motoman_conveyor']
 }
 

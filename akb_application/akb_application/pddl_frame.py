@@ -34,16 +34,18 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_frame = PlanFrame(self, row=3, column=0, columnspan=3)
         
         self.plan_button = PlanButton(self, node, self.plan_received, row=2, column=0)
+        self.execute_button = ExecuteButton(self, node, self.execution_started, row=2, column=1)
+        self.reset_button = ResetButton(self, node, self.reset_occurred, row=2, column=2)
 
         self.plan_received.trace_add('write', self.update_plan)
         self.reset_occurred.trace_add('write', self.reset)
         self.execution_started.trace_add('write', self.executing)
 
-        # self.execute_button = ExecuteButton(self, node, row=2, column=1, plan_frame = self.plan_frame)
-        self.reset_button = ResetButton(self, node, self.reset_occurred, row=2, column=2)
-
+        
     def update_plan(self, *args):
         if self.plan_received.get():
+            self.execute_button.set_plan(self.plan_button.get_plan_items())
+
             self.plan_frame.new_plan(self.plan_button.get_plan_items())
 
             self.plan_button.configure(state=DISABLED)
@@ -57,6 +59,8 @@ class PDDLFrame(ctk.CTkFrame):
             self.plan_frame.clear_frame()
             self.plan_frame.plan_rows.clear()
             self.plan_frame.no_plan_label.grid(column=0, row=2, columnspan=5)
+
+            self.execute_button.set_plan([])
 
             self.reset_button.configure(state=DISABLED)
             self.plan_button.configure(state=NORMAL)
@@ -185,35 +189,19 @@ class PlanButton(ctk.CTkButton):
     def command_cb(self, *args):
         self.plan_items = []
 
-        # self.configure(fg_color=YELLOW, state=DISABLED)
+        self.configure(fg_color=YELLOW, state=DISABLED)
         
-        plan_item = PlanItem()
-        plan_item.duration = 5.0
-        plan_item.action = "(motoman_place medium_gear_tray_03_slot_2 medium motoman_conveyor)"
-        plan_item.time = 1.5
-        self.plan_items.append(plan_item)
-
-        plan_item = PlanItem()
-        plan_item.duration = 7.0
-        plan_item.action = "(fanuc_pick s2l2_kit_tray_lg_1 large fanuc_table)"
-        plan_item.time = 1.8
-        self.plan_items.append(plan_item)
-        self.plan_received.set(value=True)
+        request = GeneratePlan.Request()
         
-        # self.node.get_logger().info(str(self.parent_frame.plan))
+        if not self.client.service_is_ready():
+            self.node.get_logger().error(f"Generate plan service not ready.")
+            self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
+            self.after(3000, self.reset)
+            return
 
-        # self.plan_frame.new_plan()
-        # request = GeneratePlan.Request()
-        
-        # if not self.client.service_is_ready():
-        #     self.node.get_logger().error(f"Generate plan service not ready.")
-        #     self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-        #     self.after(3000, self.reset)
-        #     return
+        future = self.client.call_async(request)
 
-        # future = self.client.call_async(request)
-
-        # future.add_done_callback(self.srv_done_cb)
+        future.add_done_callback(self.srv_done_cb)
         
     def srv_done_cb(self, future: Future):
         result: GeneratePlan.Response = future.result() # type: ignore
@@ -257,19 +245,19 @@ class ResetButton(ctk.CTkButton):
     
     def command_cb(self, *args):
         self.reset_occurred.set(True)
-        # self.configure(fg_color=YELLOW, state=DISABLED)
+        self.configure(fg_color=YELLOW, state=DISABLED)
 
-        # request = ClearCurrentState.Request()
+        request = ClearCurrentState.Request()
         
-        # if not self.client.service_is_ready():
-        #     self.node.get_logger().error(f"Clears service not ready.")
-        #     self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-        #     self.after(3000, self.reset)
-        #     return
+        if not self.client.service_is_ready():
+            self.node.get_logger().error(f"Clears service not ready.")
+            self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
+            self.after(3000, self.reset)
+            return
 
-        # future = self.client.call_async(request)
+        future = self.client.call_async(request)
 
-        # future.add_done_callback(self.srv_done_cb)
+        future.add_done_callback(self.srv_done_cb)
         
     def srv_done_cb(self, future: Future):
         result: GeneratePlan.Response = future.result() # type: ignore
@@ -286,7 +274,7 @@ class ResetButton(ctk.CTkButton):
         self.configure(fg_color=BLUE, hover_color=DARK_BLUE, state=NORMAL)
         
 class ExecuteButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node, row: int, column: int, plan_frame: PlanFrame):
+    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, row: int, column: int):
         super().__init__(
             frame,
             text='Execute',
@@ -296,28 +284,35 @@ class ExecuteButton(ctk.CTkButton):
             hover_color=DARK_BLUE
         )
         
-        self.plan_frame = plan_frame
+        self.execution_started = execution_started
+        self.plan: Optional[Plan] = None
 
         self.already_set_keys: list[str] = []
-
-        self.parent_frame: PDDLFrame =frame
 
         self.node = node
         self.client = ActionClient(self.node, ExecutePlan, PDDL_NAMES['execute'])
         
         self.grid(row=row, column=column, padx=10, pady=10)
+
+    def set_plan(self, plan_items: list[PlanItem]):
+        if plan_items:
+            self.plan = Plan()
+            self.plan.items = plan_items
+        else:
+            self.plan = None
     
     def command_cb(self, *args):
-        self.configure(fg_color=YELLOW, state=DISABLED)
-        
-        if self.parent_frame.plan is None:
+        if self.plan is None:
             self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-            self.node.get_logger().error('No plan generated')
+            self.node.get_logger().error("No plan set")
             self.after(3000, self.reset)
-            return
+        
+        self.configure(fg_color=YELLOW, state=DISABLED)
+
+        self.execution_started.set(True)
 
         goal = ExecutePlan.Goal()
-        goal.plan = self.parent_frame.plan
+        goal.plan = self.plan
 
         try:
             send_goal_future = self.client.send_goal_async(goal, feedback_callback=self.feedback_callback)
@@ -327,18 +322,19 @@ class ExecuteButton(ctk.CTkButton):
             self.node.get_logger().error("Unable to send plan goal")
     
     def feedback_callback(self, feedback: ExecutePlan_FeedbackMessage):
-        action_execution_infos: list[ActionExecutionInfo] = feedback.feedback.action_execution_status # type: ignore
+        pass
+        # action_execution_infos: list[ActionExecutionInfo] = feedback.feedback.action_execution_status # type: ignore
         
-        if len(action_execution_infos) > 0:
-            total_progress = sum([info.completion for info in action_execution_infos])
-            for info in action_execution_infos:
-                key = info.action + "_" + info.arguments[0] # type: ignore
-                if key in self.already_set_keys:
-                    continue
-                if info.completion == 1:
-                    self.plan_frame.update_label(key)
-                    self.already_set_keys.append(key)
-            self.plan_frame.update_progress(total_progress/len(action_execution_infos))
+        # if len(action_execution_infos) > 0:
+        #     total_progress = sum([info.completion for info in action_execution_infos])
+        #     for info in action_execution_infos:
+        #         key = info.action + "_" + info.arguments[0] # type: ignore
+        #         if key in self.already_set_keys:
+        #             continue
+        #         if info.completion == 1:
+        #             self.plan_frame.update_label(key)
+        #             self.already_set_keys.append(key)
+        #     self.plan_frame.update_progress(total_progress/len(action_execution_infos))
 
     def goal_response_callback(self, future: Future):
         goal_handle: ClientGoalHandle = future.result() # type: ignore
