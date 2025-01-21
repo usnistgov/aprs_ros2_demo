@@ -35,7 +35,7 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_frame = PlanFrame(self, row=3, column=0, columnspan=3)
         
         self.plan_button = PlanButton(self, node, self.plan_received, row=2, column=0)
-        self.execute_button = ExecuteButton(self, node, self.execution_started, row=2, column=1)
+        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_results, row=2, column=1)
         self.reset_button = ResetButton(self, node, self.reset_occurred, row=2, column=2)
 
         self.plan_received.trace_add('write', self.update_plan)
