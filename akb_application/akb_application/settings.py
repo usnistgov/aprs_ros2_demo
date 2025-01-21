@@ -2,29 +2,29 @@
 
 DETECTION_AREAS: list[str] = [
     'fanuc_table',
-    'fanuc_conveyor',
+    # 'fanuc_conveyor',
     'motoman_table',
-    'motoman_conveyor',
+    # 'motoman_conveyor',
     'teach_table',
 ]
 
 TRAYS_INFO_NAMES: dict[str, str] = {
     'fanuc_table': 'fanuc/table_trays_info',
-    'fanuc_conveyor': 'fanuc/conveyor_trays_info',
+    # 'fanuc_conveyor': 'fanuc/conveyor_trays_info',
     'motoman_table': 'motoman/table_trays_info',
-    'motoman_conveyor': 'motoman/conveyor_trays_info',
+    # 'motoman_conveyor': 'motoman/conveyor_trays_info',
     'teach_table': 'teach/table_trays_info',
 }
 
-REACHABLE_AREAS: dict[str, list[str]] = {
-    'fanuc': ['fanuc_table', 'fanuc_conveyor'],
-    'motoman': ['motoman_table', 'motoman_conveyor']
-}
-
 # REACHABLE_AREAS: dict[str, list[str]] = {
-#     'fanuc': ['fanuc_table'],
-#     'motoman': ['motoman_table']
+#     'fanuc': ['fanuc_table', 'fanuc_conveyor'],
+#     'motoman': ['motoman_table', 'motoman_conveyor']
 # }
+
+REACHABLE_AREAS: dict[str, list[str]] = {
+    'fanuc': ['fanuc_table'],
+    'motoman': ['motoman_table']
+}
 
 LOCATE_TRAYS_NAMES: dict[str, str] = {
     'fanuc_table': 'fanuc/locate_trays_on_table',
