@@ -1,7 +1,5 @@
 from typing import Optional
 
-from time import sleep
-
 import customtkinter as ctk
 from tkinter.ttk import Separator
 from tkinter import NORMAL, DISABLED
@@ -213,8 +211,7 @@ class UpdateAllTraysButton(ctk.CTkButton):
         
         if self.locate_count == len(LOCATE_TRAYS_NAMES):
             self.planning_scene_count = 0
-            sleep(3)
-            self.call_initialize_planning_scene()
+            self.after(3000, self.call_initialize_planning_scene)
 
     def call_initialize_planning_scene(self):
         for robot, client in self.planning_scene_clients.items():
