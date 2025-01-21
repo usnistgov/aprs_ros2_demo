@@ -659,8 +659,8 @@ void RobotCommander::initialize_planning_scene_cb(
     all_trays.insert(all_trays.end(),table_trays_info.part_trays.begin(),table_trays_info.part_trays.end());
   }
   if (received_conveyor_tray_info){
-    all_trays.insert(all_trays.end(),conveyor_trays_info.kit_trays.begin(),conveyor_trays_info.kit_trays.end());
-    all_trays.insert(all_trays.end(),conveyor_trays_info.part_trays.begin(),conveyor_trays_info.part_trays.end());
+    // all_trays.insert(all_trays.end(),conveyor_trays_info.kit_trays.begin(),conveyor_trays_info.kit_trays.end());
+    // all_trays.insert(all_trays.end(),conveyor_trays_info.part_trays.begin(),conveyor_trays_info.part_trays.end());
   }
 
   // Add trays to planning scene
