@@ -70,7 +70,7 @@ class PDDLFrame(ctk.CTkFrame):
             self.reset_occurred.set(False)
     
     def execution_starting(self, *args):
-        if self.execution_starting.get():
+        if self.execution_started.get():
             for i in range(len(self.plan_frame.plan_rows)):
                 self.plan_frame.plan_row_in_progress(i)
     
