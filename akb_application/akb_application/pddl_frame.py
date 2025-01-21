@@ -22,6 +22,7 @@ class PDDLFrame(ctk.CTkFrame):
         
         self.grid(row=row, column=col, sticky="N")
         
+        self.node = node
         self.plan_received = ctk.BooleanVar(value=False)
         self.reset_occurred = ctk.BooleanVar(value=False)
         self.execution_started = ctk.BooleanVar(value=False)
@@ -68,7 +69,8 @@ class PDDLFrame(ctk.CTkFrame):
             self.plan_button.configure(state=NORMAL)
             self.reset_occurred.set(False)
     
-    def update_plan_frame_results(self):
+    def update_plan_frame_results(self, *args):
+        self.node.get_logger().info("Inside update_plan_frame_results")
         results_str = self.execution_results.get()
         for i in range(len(results_str)):
             if int(results_str[i]) == 0:
@@ -358,6 +360,8 @@ class ExecuteButton(ctk.CTkButton):
         if len(action_execution_infos) > 0:
             results_str = ""
             for info in action_execution_infos:
+                self.node.get_logger().info("\n\n\nExecution_action: " + info.action)
+                self.node.get_logger().info("Execution_completion: " + str(info.completion)+"\n\n\n")
                 results_str+=str(int(info.completion))
             if self.execution_results.get() != results_str:
                 self.execution_results.set(results_str)
