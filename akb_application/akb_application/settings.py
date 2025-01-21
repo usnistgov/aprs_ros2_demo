@@ -28,9 +28,9 @@ REACHABLE_AREAS: dict[str, list[str]] = {
 
 LOCATE_TRAYS_NAMES: dict[str, str] = {
     'fanuc_table': 'fanuc/locate_trays_on_table',
-    'fanuc_conveyor': 'fanuc/locate_trays_on_conveyor',
+    # 'fanuc_conveyor': 'fanuc/locate_trays_on_conveyor',
     'motoman_table': 'motoman/locate_trays_on_table',
-    'motoman_conveyor': 'motoman/locate_trays_on_conveyor',
+    # 'motoman_conveyor': 'motoman/locate_trays_on_conveyor',
     'teach_table': 'teach/locate_trays_on_table',
 }
 
