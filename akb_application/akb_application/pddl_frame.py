@@ -26,7 +26,7 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_received = ctk.BooleanVar(value=False)
         self.reset_occurred = ctk.BooleanVar(value=False)
         self.execution_started = ctk.BooleanVar(value=False)
-        self.execution_results = ctk.StringVar(value="")
+        self.execution_count = ctk.IntVar(value=0)
         
         title = ctk.CTkLabel(self, text="PDDL Panel", font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT))
         title.grid(row=0, column=0, columnspan=3, pady=5)
@@ -36,13 +36,13 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_frame = PlanFrame(self, row=3, column=0, columnspan=3)
         
         self.plan_button = PlanButton(self, node, self.plan_received, row=2, column=0)
-        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_results, row=2, column=1)
+        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_count, row=2, column=1)
         self.reset_button = ResetButton(self, node, self.reset_occurred, row=2, column=2)
 
         self.plan_received.trace_add('write', self.update_plan)
         self.reset_occurred.trace_add('write', self.reset)
-        # self.execution_started.trace_add('write', self.executing)
-        self.execution_results.trace_add('write', self.update_plan_frame_results)
+        self.execution_started.trace_add('write', self.execution_starting)
+        self.execution_count.trace_add('write', self.update_plan_frame_results)
 
         
     def update_plan(self, *args):
@@ -69,17 +69,17 @@ class PDDLFrame(ctk.CTkFrame):
             self.plan_button.configure(state=NORMAL)
             self.reset_occurred.set(False)
     
+    def execution_starting(self, *args):
+        if self.execution_starting.get():
+            for i in range(len(self.plan_frame.plan_rows)):
+                self.plan_frame.plan_row_in_progress(i)
+    
     def update_plan_frame_results(self, *args):
         self.node.get_logger().info("Inside update_plan_frame_results")
-        results_str = self.execution_results.get()
-        for i in range(len(results_str)):
-            if int(results_str[i]) == 0:
-                self.plan_frame.plan_row_in_progress(i)
-            elif int(results_str[i]) == 1:
-                self.plan_frame.plan_row_complete(i)
-            else:
-                self.plan_frame.plan_row_failed(i)
-        self.plan_frame.update_progress(results_str.count("1")/len(results_str))
+        results_num = self.execution_count.get()
+        for i in range(results_num):
+            self.plan_frame.plan_row_complete(i)
+        self.plan_frame.update_progress(results_num)
 
     # def executing(self, *args):
     #     if self.execution_started.get():
@@ -192,10 +192,10 @@ class PlanFrame(ctk.CTkFrame):
 
     def update_progress(self, value):
         if self.total_progress_bar is not None:
-            self.total_progress_bar.set(value)
+            self.total_progress_bar.set(value/len(self.plan_rows))
 
         if self.total_progress_label is not None:
-            self.total_progress_label.configure(text=f"Total progress: {int(value * 100)}%")
+            self.total_progress_label.configure(text=f"Total progress: {int(value/len(self.plan_rows) * 100)}%")
 
 
 class PlanButton(ctk.CTkButton):
@@ -306,7 +306,7 @@ class ResetButton(ctk.CTkButton):
         self.configure(fg_color=BLUE, hover_color=DARK_BLUE, state=NORMAL)
         
 class ExecuteButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, execution_results: ctk.StringVar, row: int, column: int):
+    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, execution_count: ctk.IntVar, row: int, column: int):
         super().__init__(
             frame,
             text='Execute',
@@ -317,7 +317,7 @@ class ExecuteButton(ctk.CTkButton):
         )
         
         self.execution_started = execution_started
-        self.execution_results = execution_results
+        self.execution_count = execution_count
         self.plan: Optional[Plan] = None
 
         self.already_set_keys: list[str] = []
@@ -358,13 +358,9 @@ class ExecuteButton(ctk.CTkButton):
         action_execution_infos: list[ActionExecutionInfo] = feedback.feedback.action_execution_status # type: ignore
         
         if len(action_execution_infos) > 0:
-            results_str = ""
-            for info in action_execution_infos:
-                self.node.get_logger().info("\n\n\nExecution_action: " + info.action)
-                self.node.get_logger().info("Execution_completion: " + str(info.completion)+"\n\n\n")
-                results_str+=str(int(info.completion))
-            if self.execution_results.get() != results_str:
-                self.execution_results.set(results_str)
+            num_complete = sum([info.completion for info in action_execution_infos])
+            if self.execution_count.get() != num_complete:
+                self.execution_count.set(num_complete)
 
     def goal_response_callback(self, future: Future):
         goal_handle: ClientGoalHandle = future.result() # type: ignore
@@ -384,7 +380,7 @@ class ExecuteButton(ctk.CTkButton):
             self.configure(fg_color=GREEN, hover_color=DARK_GREEN, state=NORMAL)
         else:
             self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-        
+        self.execution_started.set(False)
         self.after(3000, self.reset)
     
     def reset(self, *args):
