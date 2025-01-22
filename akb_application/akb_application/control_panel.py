@@ -380,7 +380,7 @@ class PickPlaceFrame(ctk.CTkFrame):
         self.place_button.configure(fg_color=YELLOW, state=DISABLED)
 
         request = Place.Request()
-        request.frame_name = self.place_slot.get()
+        request.frame_name = slot_name
 
         if not self.place_clients[self.robot.get()].service_is_ready():
             self.node.get_logger().error(f"Place service is not ready for {self.robot.get()}")
