@@ -10,12 +10,19 @@ from aprs_vision.conversions import euler_from_quaternion
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from akb_application.canvas_tool_tip import CanvasTooltip
 
-from customtkinter import CTkCanvas
+import customtkinter as ctk
 import tkinter as tk
 
 from akb_application.settings import *
 
-class TrayCanvas(CTkCanvas):
+class Gear:
+    def __init__(self, frame_name: str, c_x: int, c_y: int, radius: float):
+        self.frame_name = frame_name
+        self.c_x = c_x
+        self.c_y = c_y
+        self.radius = radius
+
+class TrayCanvas(ctk.CTkCanvas):
     tray_corners_ = {
         Tray.SMALL_GEAR_TRAY: [
             (-0.08, 0.08),
@@ -75,10 +82,17 @@ class TrayCanvas(CTkCanvas):
     fiducial_square_measurements = (0.04, 0.04)
     radius = 0.03
     
-    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int):
+    def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar):
         super().__init__(frame, bg="#C2C2C2", highlightthickness=0, height=height, width=width)
 
         self.node = node
+
+        self.select_mode_on = select_mode_on
+        self.selected_canvas_slot = selected_canvas_slot
+
+        self.topic = topic
+
+        self.gears_present: list[Gear] = []
         
         actual_height = (img_height / 30.0) * 0.0254
         self.conversion_factor = height / actual_height
@@ -94,6 +108,9 @@ class TrayCanvas(CTkCanvas):
         
         self.update_canvas()
 
+        if "teach" not in topic:
+            self.bind('<Button-1>', self.canvas_clicked)
+
     def trays_info_cb(self, msg: Trays):
         self.trays_info = msg
     
@@ -102,6 +119,8 @@ class TrayCanvas(CTkCanvas):
             pass
         elif self.trays_info != self.previous_trays_info:
             self.delete("all")
+
+            self.gears_present.clear()
 
             self.previous_trays_info = copy(self.trays_info)
             all_trays: list[Tray] = self.trays_info.kit_trays + self.trays_info.part_trays # type: ignore
@@ -163,6 +182,8 @@ class TrayCanvas(CTkCanvas):
         
         self.gear_map[gear_oval] = gear_name
 
+        self.gears_present.append(Gear(gear_name, cx, cy, radius))
+
         self.tag_bind(gear_oval, sequence="<Enter>", func=self.slot_press_cb)
         
         # tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
@@ -215,3 +236,17 @@ class TrayCanvas(CTkCanvas):
         except KeyError:
             pass
     
+    def dist(self, p_1, p_2):
+        return math.sqrt(sum([(p_1[i]-p_2[i])**2 for i in range(len(p_1))]))
+    
+    def canvas_clicked(self, event: tk.Event):
+        if not self.select_mode_on.get():
+            return
+        else:
+            area = ""
+            for key, topic in TRAYS_INFO_NAMES.items():
+                if topic == self.topic:
+                    area = key
+            for gear in self.gears_present:
+                if self.dist((event.x, event.y), (gear.c_x, gear.c_y)) <= gear.radius:
+                    self.selected_canvas_slot.set(area+"|"+gear.frame_name)

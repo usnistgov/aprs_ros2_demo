@@ -16,9 +16,12 @@ class App(ctk.CTk):
         
         self.title("Automated Kit Building Demo")
 
+        self.select_mode_on = ctk.BooleanVar(value=False)
+        self.selected_canvas_slot = ctk.StringVar(value="")
+
         # Widgets
-        VisualizationFrame(self, node, row=0, col=0)
+        VisualizationFrame(self, node, row=0, col=0, select_mode_on=self.select_mode_on, selected_canvas_slot=self.selected_canvas_slot)
         PDDLFrame(self, node,row=0, col=1)
-        ControlPanel(self, node, row=1, col=0)
+        ControlPanel(self, node, row=1, col=0, select_mode_on=self.select_mode_on, selected_canvas_slot=self.selected_canvas_slot)
         StatusPanel(self, node, row=1, col=1)
         

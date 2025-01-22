@@ -16,10 +16,13 @@ from akb_application.tray_canvas import TrayCanvas
 from akb_application.settings import *
 
 class VisualizationFrame(ctk.CTkFrame):
-    def __init__(self, frame, node: Node, row: int, col: int):
+    def __init__(self, frame, node: Node, row: int, col: int, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar):
         super().__init__(frame, fg_color="transparent")
 
         self.node = node
+
+        self.select_mode_on = select_mode_on
+        self.selected_canvas_slot = selected_canvas_slot
 
         # Variables                
         self.dropdown_selection = ctk.StringVar(value=DETECTION_AREAS[0])
@@ -39,7 +42,7 @@ class VisualizationFrame(ctk.CTkFrame):
         )
 
         self.live_images = {key: LiveImage(self, key, height=500) for key in DETECTION_AREAS}
-        self.canvases = {key: TrayCanvas(self, node, TRAYS_INFO_NAMES[key], *self.live_images[key].get_shape(), self.live_images[key].get_image_height()) for key in DETECTION_AREAS}
+        self.canvases = {key: TrayCanvas(self, node, TRAYS_INFO_NAMES[key], *self.live_images[key].get_shape(), self.live_images[key].get_image_height(), self.select_mode_on, self.selected_canvas_slot) for key in DETECTION_AREAS}
 
         update_selected_button = UpdateSelectedTraysButton(self, node, self.dropdown_selection)
         update_all_button = UpdateAllTraysButton(self, node)

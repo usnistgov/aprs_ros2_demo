@@ -14,7 +14,7 @@ from aprs_interfaces.msg import Trays, Tray, SlotInfo
 from akb_application.settings import *
 
 class ControlPanel(ctk.CTkFrame):
-    def __init__(self, frame, node: Node, row: int, col: int):
+    def __init__(self, frame, node: Node, row: int, col: int, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar):
         super().__init__(frame, fg_color="transparent")
 
         self.node = node
@@ -22,6 +22,9 @@ class ControlPanel(ctk.CTkFrame):
         self.grid(row=row, column=col, sticky='N', padx=20, pady=20)
         
         self.robot_selection = ctk.StringVar(value="fanuc")
+
+        self.select_mode_on = select_mode_on
+        self.selected_canvas_slot = selected_canvas_slot
         
         # Widgets
         ctk.CTkLabel(self, text="Control Panel", font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT)).grid(row=0, column=0, columnspan=4)
@@ -30,7 +33,7 @@ class ControlPanel(ctk.CTkFrame):
         ActuateGripperButton(self, node, row=3, column=0, enable=False, robot=self.robot_selection)
         ActuateGripperButton(self, node, row=4, column=0, enable=True, robot=self.robot_selection)
         MoveToPoseFrame(self, node, row=5, column=0, robot=self.robot_selection)
-        PickPlaceFrame(self, node, row=3, column=1, robot=self.robot_selection)
+        PickPlaceFrame(self, node, row=3, column=1, robot=self.robot_selection, select_mode_on=self.select_mode_on, selected_canvas_slot=self.selected_canvas_slot)
         
 class RobotSelectionSwitch(ctk.CTkFrame):
     def __init__(self, frame, row: int, column: int, robot: ctk.StringVar):
@@ -209,11 +212,14 @@ class MoveToPoseFrame(ctk.CTkFrame):
         self.button.configure(fg_color=PURPLE, hover_color=DARK_PURPLE, state=NORMAL)
         
 class PickPlaceFrame(ctk.CTkFrame):
-    def __init__(self, frame, node: Node, row: int, column: int, robot: ctk.StringVar):
+    def __init__(self, frame, node: Node, row: int, column: int, robot: ctk.StringVar, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar):
         super().__init__(frame, fg_color="transparent")
         
         self.robot = robot
         self.node = node
+
+        self.select_mode_on = select_mode_on
+        self.selected_canvas_slot = selected_canvas_slot
         
         self.pick_slot = ctk.StringVar()
         self.place_slot = ctk.StringVar()
@@ -301,6 +307,11 @@ class PickPlaceFrame(ctk.CTkFrame):
                                   
         self.holding_label.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
 
+        self.pick_slot.trace_add('write', self.check_select_mode)
+        self.place_slot.trace_add('write', self.check_select_mode)
+
+        self.selected_canvas_slot.trace_add('write', self.select_slot_clicked)
+
         self.after(1000, self.update_pick_place_options)
     
     def activate_deactivate_pick_button(self, *args):
@@ -339,25 +350,21 @@ class PickPlaceFrame(ctk.CTkFrame):
         if self.robot.get() == robot:
             if self.held_part[robot].get() == "None":
                 if sorted(self.pick_selection_menu.cget("values")) != self.reachable_occupied[robot]:
-                    self.pick_selection_menu.configure(values=self.reachable_occupied[robot])
+                    self.pick_selection_menu.configure(values=["select"]+self.reachable_occupied[robot])
                     self.place_selection_menu.configure(values=[])
                     self.place_slot.set("")
             else:
                 gear_size = self.held_part[robot].get().lower().split(" ")[0]
                 if sorted(self.place_selection_menu.cget("values")) != self.reachable_unoccupied[robot][gear_size]:
-                    self.place_selection_menu.configure(values=self.reachable_unoccupied[robot][gear_size])
+                    self.place_selection_menu.configure(values=["select"]+self.reachable_unoccupied[robot][gear_size])
                     self.pick_selection_menu.configure(values=[])
                     self.pick_slot.set("")
     
-    def pick_button_command_cb(self, *args):
-        if self.pick_slot.get() is None or self.pick_slot.get() == "":
-            print("No slot selected")
-            return
-
+    def request_pick_srv(self, slot_name):
         self.pick_button.configure(fg_color=YELLOW, state=DISABLED)
         
         request = Pick.Request()
-        request.frame_name = self.pick_slot.get()
+        request.frame_name = slot_name
         
         if not self.pick_clients[self.robot.get()].service_is_ready():
             self.node.get_logger().error(f"Pick service not ready for {self.robot.get()}")
@@ -367,13 +374,9 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         future = self.pick_clients[self.robot.get()].call_async(request)
 
-        future.add_done_callback(self.pick_srv_done_cb)
-        
-    def place_button_command_cb(self, *args):
-        if self.place_slot.get() is None or self.place_slot.get() == "":
-            print("No slot selected")
-            return
-        
+        future.add_done_callback(partial(self.pick_srv_done_cb, slot_name))
+    
+    def request_place_srv(self, slot_name):
         self.place_button.configure(fg_color=YELLOW, state=DISABLED)
 
         request = Place.Request()
@@ -388,22 +391,36 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         future.add_done_callback(self.place_srv_done_cb)
     
-    def pick_srv_done_cb(self, future: Future):
+    def pick_button_command_cb(self, *args):
+        if self.pick_slot.get() is None or self.pick_slot.get() == "":
+            print("No slot selected")
+            return
+        
+        self.request_pick_srv(self.pick_slot.get())
+        
+    def place_button_command_cb(self, *args):
+        if self.place_slot.get() is None or self.place_slot.get() == "":
+            print("No slot selected")
+            return
+        
+        self.request_place_srv(self.place_slot.get())
+    
+    def pick_srv_done_cb(self, slot_name, future: Future):
         result: Pick.Response = future.result() # type: ignore
         
         if result.success:
             self.pick_button.configure(state=DISABLED)
             self.place_button.configure(state=NORMAL)
             self.pick_button.configure(fg_color=GREEN, hover_color=DARK_GREEN)
-            if "small" in self.pick_slot.get() or "sg" in self.pick_slot.get():
+            if "small" in slot_name or "sg" in slot_name:
                 self.held_part[self.robot.get()].set('Small Gear')
-            elif "medium" in self.pick_slot.get() or "mg" in self.pick_slot.get():
+            elif "medium" in slot_name or "mg" in slot_name:
                 self.held_part[self.robot.get()].set('Medium Gear')
             else:
                 self.held_part[self.robot.get()].set('Large Gear')
         else:
             self.pick_button.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-            self.node.get_logger().error(f'Unable to pick {self.pick_slot.get()} using {self.robot.get()}')
+            self.node.get_logger().error(f'Unable to pick {slot_name} using {self.robot.get()}')
         self.after(3000, self.reset_pick_button)
             
     def place_srv_done_cb(self, future: Future):
@@ -416,7 +433,7 @@ class PickPlaceFrame(ctk.CTkFrame):
             self.place_button.configure(fg_color=GREEN, hover_color=DARK_GREEN)
         else:
             self.place_button.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-            self.node.get_logger().error(f'Unable to place {self.pick_slot.get()} using {self.robot.get()}')
+            self.node.get_logger().error(f'Unable to place gear')
         self.after(3000, self.reset_place_button)
                     
     def update_held_label_and_menu(self):
@@ -435,13 +452,13 @@ class PickPlaceFrame(ctk.CTkFrame):
         )
 
         if self.held_part[self.robot.get()].get() == "None":
-            self.pick_selection_menu.configure(values=self.reachable_occupied[self.robot.get()])
+            self.pick_selection_menu.configure(values=["select"]+self.reachable_occupied[self.robot.get()])
             self.place_selection_menu.configure(values=[])
             self.pick_slot.set("")
             self.place_slot.set("")
         else:
             holding_size = self.held_part[self.robot.get()].get().lower().split(" ")[0]
-            self.place_selection_menu.configure(values=self.reachable_unoccupied[self.robot.get()][holding_size])
+            self.place_selection_menu.configure(values=["select"]+self.reachable_unoccupied[self.robot.get()][holding_size])
             self.pick_selection_menu.configure(values=[])
             self.pick_slot.set("")
             self.place_slot.set("")
@@ -460,3 +477,30 @@ class PickPlaceFrame(ctk.CTkFrame):
     def reset_place_button(self, *args):
         self.place_button.configure(fg_color=PURPLE, hover_color=DARK_PURPLE)
     
+    def check_select_mode(self, *args):
+        if 'select' in [self.pick_slot.get(), self.place_slot.get()]:
+            self.select_mode_on.set(True)
+        else:
+            self.select_mode_on.set(False)
+    
+    def select_slot_clicked(self, *args):
+        if not self.select_mode_on.get() or self.selected_canvas_slot.get() == "":
+            return
+        
+        held_part = self.held_part[self.robot.get()].get()
+        split_info = self.selected_canvas_slot.get().split("|")
+        area = split_info[0]
+        slot = split_info[1]
+
+        if area not in REACHABLE_AREAS[self.robot.get()]:
+            return
+
+        if held_part == "None": # pick
+            if slot in self.reachable_occupied[self.robot.get()]:
+                self.request_pick_srv(slot)
+        else: # place
+            held_part_size = held_part.split(" ")[0].lower()
+            if slot in self.reachable_unoccupied[self.robot.get()][held_part_size]:
+                self.request_place_srv(slot)
+        
+        self.selected_canvas_slot.set("")
