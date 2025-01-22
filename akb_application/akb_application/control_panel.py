@@ -306,6 +306,21 @@ class PickPlaceFrame(ctk.CTkFrame):
             font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT),
             text_color=GRAY
         )
+
+        self.select_switch = ctk.CTkSwitch(
+            self,
+            text="Select mode " + "ON" if self.select_mode_on.get() else "OFF",
+            text_color=GREEN if self.select_mode_on.get() else RED,
+            onvalue=True,
+            offvalue=False,
+            variable=self.select_mode_on,
+            width=36,
+            progress_color=PURPLE,
+            fg_color=PURPLE,
+            button_color=DARK_PURPLE,
+            button_hover_color=DARK_PURPLE,
+            command=self.select_switch_switched
+        )
         
         self.pick_clients = {k: self.node.create_client(Pick, v) for k,v in PICK_NAMES.items()}
         self.place_clients = {k: self.node.create_client(Place, v) for k,v in PLACE_NAMES.items()}        
@@ -320,12 +335,20 @@ class PickPlaceFrame(ctk.CTkFrame):
                                   
         self.holding_label.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
 
+        self.select_switch.grid(row=3, column=0, columnspan=2, pady=10)
+
         self.pick_slot.trace_add('write', self.check_select_mode)
         self.place_slot.trace_add('write', self.check_select_mode)
 
         self.selected_canvas_slot.trace_add('write', self.select_slot_clicked)
 
         self.after(1000, self.update_pick_place_options)
+    
+    def select_switch_switched(self):
+        self.select_switch.configure(
+            text="Select mode " + "ON" if self.select_mode_on.get() else "OFF",
+            text_color=GREEN if self.select_mode_on.get() else RED
+        )
     
     def activate_deactivate_pick_button(self, *args):
         if self.pick_slot.get()=="":
