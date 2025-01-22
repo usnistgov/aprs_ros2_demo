@@ -1,5 +1,6 @@
 import random
 from functools import partial
+from typing import Optional
 
 import customtkinter as ctk
 from tkinter import DISABLED, NORMAL
@@ -23,6 +24,9 @@ class ControlPanel(ctk.CTkFrame):
         
         self.robot_selection = ctk.StringVar(value="fanuc")
 
+        self.open_gripper_pressed = ctk.BooleanVar(value=False)
+        self.open_gripper_pressed.trace_add('write', self.update_held_gear)
+
         self.select_mode_on = select_mode_on
         self.selected_canvas_slot = selected_canvas_slot
         
@@ -30,11 +34,16 @@ class ControlPanel(ctk.CTkFrame):
         ctk.CTkLabel(self, text="Control Panel", font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT)).grid(row=0, column=0, columnspan=4)
         Separator(self, orient='horizontal').grid(row=1, column=0, columnspan=2, sticky="WE")
         RobotSelectionSwitch(self, row=2, column=0, robot=self.robot_selection)
-        ActuateGripperButton(self, node, row=3, column=0, enable=False, robot=self.robot_selection)
+        ActuateGripperButton(self, node, row=3, column=0, enable=False, robot=self.robot_selection, open_gripper_pressed=self.open_gripper_pressed)
         ActuateGripperButton(self, node, row=4, column=0, enable=True, robot=self.robot_selection)
         MoveToPoseFrame(self, node, row=5, column=0, robot=self.robot_selection)
-        PickPlaceFrame(self, node, row=3, column=1, robot=self.robot_selection, select_mode_on=self.select_mode_on, selected_canvas_slot=self.selected_canvas_slot)
+        self.pick_place_frame = PickPlaceFrame(self, node, row=3, column=1, robot=self.robot_selection, select_mode_on=self.select_mode_on, selected_canvas_slot=self.selected_canvas_slot)
         
+    def update_held_gear(self, *args):
+        if self.open_gripper_pressed.get() == True:
+            self.pick_place_frame.held_part[self.robot_selection.get()].set("None")
+            self.open_gripper_pressed.set(False)
+
 class RobotSelectionSwitch(ctk.CTkFrame):
     def __init__(self, frame, row: int, column: int, robot: ctk.StringVar):
         super().__init__(frame, fg_color="transparent")
@@ -72,7 +81,7 @@ class RobotSelectionSwitch(ctk.CTkFrame):
             self.motoman_label.configure(text_color=PURPLE)
             
 class ActuateGripperButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node, row: int, column: int, enable: bool, robot: ctk.StringVar):
+    def __init__(self, frame, node: Node, row: int, column: int, enable: bool, robot: ctk.StringVar, open_gripper_pressed: Optional[ctk.BooleanVar]=None):
         super().__init__(
             frame,
             text=f'{"Close" if enable else "Open"} Gripper',
@@ -85,6 +94,8 @@ class ActuateGripperButton(ctk.CTkButton):
         self.node = node
         self.enable = enable
         self.robot = robot
+
+        self.open_gripper_pressed: Optional[ctk.BooleanVar] = open_gripper_pressed
         
         self.clients = {k: self.node.create_client(PneumaticGripperControl, v) for k,v in ACTUATE_GRIPPER_NAMES.items()}
         
@@ -115,6 +126,8 @@ class ActuateGripperButton(ctk.CTkButton):
         
         if result.success:
             self.configure(fg_color=GREEN, hover_color=DARK_GREEN, state=NORMAL)
+            if not self.enable and self.open_gripper_pressed is not None:
+                self.open_gripper_pressed.set(True)
         else:
             self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
             self.node.get_logger().error(f'Unable to {"close" if self.enable else "open"} gripper for {self.robot.get()}')
