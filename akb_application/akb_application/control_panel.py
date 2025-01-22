@@ -309,7 +309,7 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         self.select_switch = ctk.CTkSwitch(
             self,
-            text="Select mode " + "ON" if self.select_mode_on.get() else "OFF",
+            text="Select mode: " + ("ON" if self.select_mode_on.get() else "OFF"),
             text_color=GREEN if self.select_mode_on.get() else RED,
             onvalue=True,
             offvalue=False,
@@ -346,7 +346,7 @@ class PickPlaceFrame(ctk.CTkFrame):
     
     def select_switch_switched(self):
         self.select_switch.configure(
-            text="Select mode " + "ON" if self.select_mode_on.get() else "OFF",
+            text="Select mode " + ("ON" if self.select_mode_on.get() else "OFF"),
             text_color=GREEN if self.select_mode_on.get() else RED
         )
     
@@ -385,16 +385,18 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         if self.robot.get() == robot:
             if self.held_part[robot].get() == "None":
-                if sorted(self.pick_selection_menu.cget("values")) != self.reachable_occupied[robot]:
+                if sorted(self.pick_selection_menu.cget("values")) != sorted(['select']+self.reachable_occupied[robot]):
                     self.pick_selection_menu.configure(values=["select"]+self.reachable_occupied[robot])
                     self.place_selection_menu.configure(values=[])
-                    self.place_slot.set("")
+                    if self.place_slot.get() != "":
+                        self.place_slot.set("")
             else:
                 gear_size = self.held_part[robot].get().lower().split(" ")[0]
-                if sorted(self.place_selection_menu.cget("values")) != self.reachable_unoccupied[robot][gear_size]:
+                if sorted(self.place_selection_menu.cget("values")) != sorted(['select']+self.reachable_unoccupied[robot][gear_size]):
                     self.place_selection_menu.configure(values=["select"]+self.reachable_unoccupied[robot][gear_size])
                     self.pick_selection_menu.configure(values=[])
-                    self.pick_slot.set("")
+                    if self.pick_slot.get() != "":
+                        self.pick_slot.set("")
     
     def request_pick_srv(self, slot_name):
         self.pick_button.configure(fg_color=YELLOW, state=DISABLED)
@@ -514,6 +516,8 @@ class PickPlaceFrame(ctk.CTkFrame):
         self.place_button.configure(fg_color=PURPLE, hover_color=DARK_PURPLE)
     
     def check_select_mode(self, *args):
+        if [self.pick_slot.get(), self.place_slot.get()].count('')==2:
+            return
         if 'select' in [self.pick_slot.get(), self.place_slot.get()]:
             self.select_mode_on.set(True)
         else:
