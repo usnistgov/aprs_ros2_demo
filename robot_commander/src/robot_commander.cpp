@@ -638,10 +638,14 @@ void RobotCommander::robot_changeover_cb(
 void RobotCommander::joint_state_cb(
   const sensor_msgs::msg::JointState::ConstSharedPtr msg)
 {
-  for(int i=0; i<msg->name.size(); i++){
+  for(size_t i=0; i<msg->name.size(); i++){
     if(msg->name[i]==gripper_joint_name){
       gripper_open = msg->position[i]!=0;
     }
+  }
+  if(gripper_open && attached_part_name!=""){
+    planning_interface_->detachObject(attached_part_name);
+    attached_part_name = "";
   }
 }
 

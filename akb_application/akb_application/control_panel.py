@@ -243,8 +243,8 @@ class PickPlaceFrame(ctk.CTkFrame):
         self.held_part = {robot: ctk.StringVar(value="None") for robot in ["fanuc", "motoman"]}
 
         self.current_available_slots = {areas: [] for areas in TRAYS_INFO_NAMES.keys()}
-        self.reachable_occupied: dict[str: list[SlotInfo]] = {robot: [] for robot in REACHABLE_AREAS.keys()}
-        self.reachable_unoccupied:dict[str: dict[str: list[SlotInfo]]] = {robot: {} for robot in REACHABLE_AREAS.keys()}
+        self.reachable_occupied: dict[str: list[SlotInfo]] = {robot: [] for robot in REACHABLE_AREAS.keys()} # type:ignore
+        self.reachable_unoccupied: dict[str: dict[str: list[SlotInfo]]] = {robot: {} for robot in REACHABLE_AREAS.keys()} # type:ignore
         
         self.robot.trace_add("write", self.robot_trace_cb)
         self.held_part["fanuc"].trace_add("write", self.held_part_trace_cb)
@@ -371,7 +371,7 @@ class PickPlaceFrame(ctk.CTkFrame):
         self.after(1000, self.update_pick_place_options)
     
     def update_options_for_robot(self, robot: str):
-        all_reachable_trays = sum([self.most_recent_tray_infos[detection_area].kit_trays + self.most_recent_tray_infos[detection_area].part_trays for detection_area in REACHABLE_AREAS[robot]], [])
+        all_reachable_trays = sum([self.most_recent_tray_infos[detection_area].kit_trays + self.most_recent_tray_infos[detection_area].part_trays for detection_area in REACHABLE_AREAS[robot]], [])# type:ignore
         current_available_slots = sum([tray.slots for tray in all_reachable_trays], [])
         self.reachable_occupied[robot] = sorted([slot.name for slot in current_available_slots if slot.occupied])
         unoccupied_slots: list[SlotInfo] = [slot for slot in current_available_slots if not slot.occupied]
@@ -458,11 +458,11 @@ class PickPlaceFrame(ctk.CTkFrame):
                 self.held_part[self.robot.get()].set('Large Gear')
         else:
             self.pick_button.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
-            self.node.get_logger().error(f'Unable to pick {slot_name} using {self.robot.get()}')
+            self.node.get_logger().error(f'Unable to pick {slot_name} using {self.robot.get()}. Status: {result.status}')
         self.after(3000, self.reset_pick_button)
             
     def place_srv_done_cb(self, future: Future):
-        result: Place.Response = future.result()
+        result: Place.Response = future.result() # type:ignore
 
         if result.success:
             self.held_part[self.robot.get()].set("None")
