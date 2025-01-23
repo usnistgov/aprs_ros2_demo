@@ -71,11 +71,13 @@ class PDDLFrame(ctk.CTkFrame):
     
     def execution_starting(self, *args):
         if self.execution_started.get():
-            for i in range(len(self.plan_frame.plan_rows)):
-                self.plan_frame.plan_row_in_progress(i)
+            for key in self.plan_frame.plan_rows.keys():
+                self.plan_frame.plan_row_in_progress(key)
     
     def update_plan_frame_results(self, *args):
-        self.node.get_logger().info("Inside update_plan_frame_results")
+        self.node.get_logger().info("Inside update plan frame")
+        if len(self.execution_complete_keys.get())==0:
+            return
         results_seperated = self.execution_complete_keys.get().split("|")
         for key in results_seperated:
             self.plan_frame.plan_row_complete(key)
@@ -364,7 +366,9 @@ class ExecuteButton(ctk.CTkButton):
         for info in action_execution_infos:
             if info.completion == 1:
                 keys.append(info.action + "_" + info.arguments[0]) # type: ignore
-        self.execution_complete_keys.set("|".join(keys))
+        complete_keys = "|".join(keys)
+        if self.execution_complete_keys.get()!= complete_keys:
+            self.execution_complete_keys.set(complete_keys)
         # if len(action_execution_infos) > 0:
         #     num_complete = sum([info.completion for info in action_execution_infos])
         #     if self.execution_complete_keys.get() != num_complete:
