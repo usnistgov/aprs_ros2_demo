@@ -309,7 +309,7 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         self.select_switch = ctk.CTkSwitch(
             self,
-            text="Select mode: " + ("ON" if self.select_mode_on.get() else "OFF"),
+            text="Canvas select mode: " + ("ON" if self.select_mode_on.get() else "OFF"),
             text_color=GREEN if self.select_mode_on.get() else RED,
             onvalue=True,
             offvalue=False,
@@ -346,7 +346,7 @@ class PickPlaceFrame(ctk.CTkFrame):
     
     def select_switch_switched(self):
         self.select_switch.configure(
-            text="Select mode " + ("ON" if self.select_mode_on.get() else "OFF"),
+            text="Canvas select mode " + ("ON" if self.select_mode_on.get() else "OFF"),
             text_color=GREEN if self.select_mode_on.get() else RED
         )
     

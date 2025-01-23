@@ -26,7 +26,7 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_received = ctk.BooleanVar(value=False)
         self.reset_occurred = ctk.BooleanVar(value=False)
         self.execution_started = ctk.BooleanVar(value=False)
-        self.execution_count = ctk.IntVar(value=0)
+        self.execution_complete_keys = ctk.StringVar(value="")
         
         title = ctk.CTkLabel(self, text="PDDL Panel", font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT))
         title.grid(row=0, column=0, columnspan=3, pady=5)
@@ -36,13 +36,13 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_frame = PlanFrame(self, row=3, column=0, columnspan=3)
         
         self.plan_button = PlanButton(self, node, self.plan_received, row=2, column=0)
-        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_count, row=2, column=1)
+        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_complete_keys, row=2, column=1)
         self.reset_button = ResetButton(self, node, self.reset_occurred, row=2, column=2)
 
         self.plan_received.trace_add('write', self.update_plan)
         self.reset_occurred.trace_add('write', self.reset)
         self.execution_started.trace_add('write', self.execution_starting)
-        self.execution_count.trace_add('write', self.update_plan_frame_results)
+        self.execution_complete_keys.trace_add('write', self.update_plan_frame_results)
 
         
     def update_plan(self, *args):
@@ -76,10 +76,10 @@ class PDDLFrame(ctk.CTkFrame):
     
     def update_plan_frame_results(self, *args):
         self.node.get_logger().info("Inside update_plan_frame_results")
-        results_num = self.execution_count.get()
-        for i in range(results_num):
-            self.plan_frame.plan_row_complete(i)
-        self.plan_frame.update_progress(results_num)
+        results_seperated = self.execution_complete_keys.get().split("|")
+        for key in results_seperated:
+            self.plan_frame.plan_row_complete(key)
+        self.plan_frame.update_progress(len(results_seperated))
 
     # def executing(self, *args):
     #     if self.execution_started.get():
@@ -130,7 +130,7 @@ class PlanFrame(ctk.CTkFrame):
         area_label.grid(row=0, column=3)
         slot_label.grid(row=0, column=4)
 
-        self.plan_rows: list[PlanRow] = []
+        self.plan_rows: dict[str, PlanRow] = {}
 
         sep = ttk.Separator(self, orient='horizontal')
         sep.grid(column=0, row=1, columnspan=5, sticky="ew",)
@@ -142,8 +142,9 @@ class PlanFrame(ctk.CTkFrame):
 
 
     def clear_frame(self):
-        for row in self.plan_rows:
+        for row in self.plan_rows.items():
             row.grid_forget()
+        self.plan_rows = {}
         
         if self.total_progress_label is not None:
             self.total_progress_label.grid_forget()
@@ -170,7 +171,9 @@ class PlanFrame(ctk.CTkFrame):
             action_type = split_action[0].split("_")[1].capitalize()
             slot = split_action[1]
 
-            self.plan_rows.append(PlanRow(self, robot, gear_size, area, action_type, slot, current_row, 0, 5))
+            key = "_".join(split_action[:2])
+
+            self.plan_rows[key]= PlanRow(self, robot, gear_size, area, action_type, slot, current_row, 0, 5)
             current_row+=1
 
         self.total_progress_label = ctk.CTkLabel(self, text="Total progress: 0%")
@@ -181,14 +184,14 @@ class PlanFrame(ctk.CTkFrame):
         self.total_progress_bar.grid(row=current_row+1, column=0, columnspan=5, pady=0, sticky="s")
         
     
-    def plan_row_in_progress(self, index):
-        self.plan_rows[index].configure(fg_color=YELLOW)
+    def plan_row_in_progress(self, key):
+        self.plan_rows[key].configure(fg_color=YELLOW)
 
-    def plan_row_complete(self, index):
-        self.plan_rows[index].configure(fg_color=GREEN)
+    def plan_row_complete(self, key):
+        self.plan_rows[key].configure(fg_color=GREEN)
     
-    def plan_row_failed(self, index):
-        self.plan_rows[index].configure(fg_color=RED)
+    def plan_row_failed(self, key):
+        self.plan_rows[key].configure(fg_color=RED)
 
     def update_progress(self, value):
         if self.total_progress_bar is not None:
@@ -306,7 +309,7 @@ class ResetButton(ctk.CTkButton):
         self.configure(fg_color=BLUE, hover_color=DARK_BLUE, state=NORMAL)
         
 class ExecuteButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, execution_count: ctk.IntVar, row: int, column: int):
+    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, execution_complete_keys: ctk.StringVar, row: int, column: int):
         super().__init__(
             frame,
             text='Execute',
@@ -317,7 +320,7 @@ class ExecuteButton(ctk.CTkButton):
         )
         
         self.execution_started = execution_started
-        self.execution_count = execution_count
+        self.execution_complete_keys = execution_complete_keys
         self.plan: Optional[Plan] = None
 
         self.already_set_keys: list[str] = []
@@ -357,10 +360,15 @@ class ExecuteButton(ctk.CTkButton):
     def feedback_callback(self, feedback: ExecutePlan_FeedbackMessage):
         action_execution_infos: list[ActionExecutionInfo] = feedback.feedback.action_execution_status # type: ignore
         
-        if len(action_execution_infos) > 0:
-            num_complete = sum([info.completion for info in action_execution_infos])
-            if self.execution_count.get() != num_complete:
-                self.execution_count.set(num_complete)
+        keys = []
+        for info in action_execution_infos:
+            if info.completion == 1:
+                keys.append(info.action + "_" + info.arguments[0]) # type: ignore
+        self.execution_complete_keys.set("|".join(keys))
+        # if len(action_execution_infos) > 0:
+        #     num_complete = sum([info.completion for info in action_execution_infos])
+        #     if self.execution_complete_keys.get() != num_complete:
+        #         self.execution_count.set(num_complete)
 
     def goal_response_callback(self, future: Future):
         goal_handle: ClientGoalHandle = future.result() # type: ignore
