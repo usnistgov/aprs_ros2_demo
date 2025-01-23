@@ -14,6 +14,7 @@
 #include <geometric_shapes/shapes.h>
 #include <geometric_shapes/shape_operations.h>
 #include <shape_msgs/msg/mesh.h>
+#include <sensor_msgs/msg/joint_state.h>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -82,10 +83,12 @@ class RobotCommander : public rclcpp::Node
     rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_table_vision_sub_;
     rclcpp::Subscription<aprs_interfaces::msg::Trays>::SharedPtr trays_info_conveyor_vision_sub_;
     rclcpp::Subscription<aprs_interfaces::msg::RobotChangeover>::SharedPtr robot_changeover_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
     void table_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
     void conveyor_trays_info_cb(const aprs_interfaces::msg::Trays::ConstSharedPtr msg);
     void robot_changeover_cb(const aprs_interfaces::msg::RobotChangeover::ConstSharedPtr msg);
+    void joint_state_cb(const sensor_msgs::msg::JointState::ConstSharedPtr msg);
 
     // Services
     rclcpp::Service<aprs_interfaces::srv::Pick>::SharedPtr pick_srv_;
@@ -137,12 +140,14 @@ class RobotCommander : public rclcpp::Node
     bool holding_part = false;
     bool disabled = false;
     bool changeover_requested = false;
+    bool gripper_open = false;
     
     // Variables
     aprs_interfaces::msg::Trays table_trays_info;
     aprs_interfaces::msg::Trays conveyor_trays_info;
     std::string attached_part_name;
     int attached_part_type;
+    std::string gripper_joint_name;
 
     geometry_msgs::msg::Pose above_slot;
     geometry_msgs::msg::Pose pick_pose;
