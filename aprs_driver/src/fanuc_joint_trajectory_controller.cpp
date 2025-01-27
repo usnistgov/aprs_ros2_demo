@@ -28,52 +28,60 @@ namespace fanuc_controller {
     return config;
   }
 
+  void FanucJointTrajectoryController::send_trajectory_points(){
+    RCLCPP_INFO(get_node()->get_logger(), "Starting execution");
+    current_seq_ = 0;
+    goal_point_ = current_goal_->get_goal()->trajectory.points.back();
+    ready_for_next_point_ = true;
+
+    // Send all points in trajectory
+    for (auto point: current_goal_->get_goal()->trajectory.points) {
+      std::vector<float> positions;
+
+      for (auto p: point.positions) {
+        positions.push_back(float(p));
+      }
+
+      // Handle J23 Transform
+      positions[2] -= positions[1];
+      
+      simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
+
+      write_to_socket(motion_socket_, traj_point.to_bytes());
+
+      int length = get_packet_length(motion_socket_);
+      
+      read_from_socket(motion_socket_, length);
+
+      current_seq_++;
+    }
+    finished_sending_points_ = true;
+
+    RCLCPP_INFO(get_node()->get_logger(), "Finished sending points");
+  }
+
   controller_interface::return_type FanucJointTrajectoryController::update(
-    const rclcpp::Time &time,
+    const rclcpp::Time &,
     const rclcpp::Duration&) 
   {
     if (received_goal_) {
-      
-      RCLCPP_INFO(get_node()->get_logger(), "Starting execution");
-      trajectory_start_time_ = time;
+      send_traj_points_thread = std::thread(&FanucJointTrajectoryController::send_trajectory_points, this);
       received_goal_ = false;
-      executing_ = true;
-      current_seq_ = 0;
-      goal_point_ = current_goal_->get_goal()->trajectory.points.back();
-      ready_for_next_point_ = true;
-
-      // Send all points in trajectory
-      for (auto point: current_goal_->get_goal()->trajectory.points) {
-        std::vector<float> positions;
-
-        for (auto p: point.positions) {
-          positions.push_back(float(p));
-        }
-
-        // Handle J23 Transform
-        positions[2] -= positions[1];
-        
-        simple_message::JointTrajPt traj_point(current_seq_, positions, 0.1, 10.0); 
-
-        write_to_socket(motion_socket_, traj_point.to_bytes());
-
-        int length = get_packet_length(motion_socket_);
-        
-        read_from_socket(motion_socket_, length);
-
-        current_seq_++;
-      }
     }
 
-    if (executing_) {
+    if (finished_sending_points_) {
+      if (send_traj_points_thread.joinable()){
+        send_traj_points_thread.join();
+        RCLCPP_INFO(get_node()->get_logger(), "Thread joined");
+      }
+
       if (cancel_requsted_) {
         auto result = std::make_shared<FollowJointTrajectory::Result>();
         result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
         result->error_string = "Goal canceled";
         current_goal_->abort(result);
-        executing_ = false;
+        finished_sending_points_ = false;
       }
-
 
       // Check if goal is reached
       std::vector<double> joint_errors;
@@ -84,7 +92,7 @@ namespace fanuc_controller {
       }
 
       if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {        
-        executing_ = false;
+        finished_sending_points_ = false;
         RCLCPP_INFO(get_node()->get_logger(), "Finished execution");
         auto result = std::make_shared<FollowJointTrajectory::Result>();
         result->error_code = control_msgs::action::FollowJointTrajectory::Result::SUCCESSFUL;
@@ -94,7 +102,11 @@ namespace fanuc_controller {
 
     auto status = std_msgs::msg::Bool();
     status.data = true;
-    fanuc_joint_trajectory_controller_status_pub_->publish(status);
+    if ((rclcpp::Clock{}.now()-last_publish_time).nanoseconds() >= 1e9){
+      fanuc_joint_trajectory_controller_status_pub_->publish(status);
+      last_publish_time = rclcpp::Clock{}.now();
+    }
+
     return controller_interface::return_type::OK;
   
   }
@@ -163,18 +175,20 @@ namespace fanuc_controller {
       RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
       status.data = false;
       fanuc_joint_trajectory_controller_status_pub_->publish(status);
+      last_publish_time = rclcpp::Clock{}.now();
       return CallbackReturn::FAILURE;
     }
 
     status.data = true;
     fanuc_joint_trajectory_controller_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
     return CallbackReturn::SUCCESS;
   }
 
   rclcpp_action::GoalResponse FanucJointTrajectoryController::handle_goal(const rclcpp_action::GoalUUID&, std::shared_ptr<const FollowJointTrajectory::Goal>)
   {
     // Check if a goal is being executed
-    if (executing_) {
+    if (finished_sending_points_) {
       RCLCPP_WARN(get_node()->get_logger(), "Goal already being executed");
       return rclcpp_action::GoalResponse::REJECT;
     }
@@ -210,6 +224,7 @@ namespace fanuc_controller {
     auto status = std_msgs::msg::Bool();
     status.data = false;
     fanuc_joint_trajectory_controller_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
 
     return CallbackReturn::SUCCESS;
   }

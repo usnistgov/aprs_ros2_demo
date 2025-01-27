@@ -16,13 +16,15 @@ from akb_application.tray_canvas import TrayCanvas
 from akb_application.settings import *
 
 class VisualizationFrame(ctk.CTkFrame):
-    def __init__(self, frame, node: Node, row: int, col: int, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar):
+    def __init__(self, frame, node: Node, row: int, col: int, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar, areas_updated: dict[str, ctk.BooleanVar]):
         super().__init__(frame, fg_color="transparent")
 
         self.node = node
 
         self.select_mode_on = select_mode_on
         self.selected_canvas_slot = selected_canvas_slot
+
+        self.areas_updated: dict[str, ctk.BooleanVar] = areas_updated
 
         # Variables                
         self.dropdown_selection = ctk.StringVar(value=DETECTION_AREAS[0])
@@ -44,8 +46,8 @@ class VisualizationFrame(ctk.CTkFrame):
         self.live_images = {key: LiveImage(self, key, height=500) for key in DETECTION_AREAS}
         self.canvases = {key: TrayCanvas(self, node, TRAYS_INFO_NAMES[key], *self.live_images[key].get_shape(), self.live_images[key].get_image_height(), self.select_mode_on, self.selected_canvas_slot) for key in DETECTION_AREAS}
 
-        update_selected_button = UpdateSelectedTraysButton(self, node, self.dropdown_selection)
-        update_all_button = UpdateAllTraysButton(self, node)
+        update_selected_button = UpdateSelectedTraysButton(self, node, self.dropdown_selection, self.areas_updated)
+        update_all_button = UpdateAllTraysButton(self, node, self.areas_updated)
 
         # Layout
         self.grid(row=row, column=col, sticky="N")
@@ -74,7 +76,7 @@ class VisualizationFrame(ctk.CTkFrame):
         self.current_area = self.dropdown_selection.get()
 
 class UpdateSelectedTraysButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node, selected_area: ctk.StringVar):
+    def __init__(self, frame, node: Node, selected_area: ctk.StringVar, areas_updated: dict[str, ctk.BooleanVar]):
         super().__init__(
             frame,
             text="Update",
@@ -87,6 +89,7 @@ class UpdateSelectedTraysButton(ctk.CTkButton):
         self.node = node
         self.selected_area = selected_area
         self.locate_trays_client: Optional[Client] = None
+        self.areas_updated = areas_updated
         
         self.count = 0
         
@@ -132,6 +135,7 @@ class UpdateSelectedTraysButton(ctk.CTkButton):
         if response.success:
             if self.selected_area.get() == 'teach_table':
                 self.configure(fg_color=GREEN, hover_color=DARK_GREEN, state=NORMAL)
+                self.areas_updated[self.selected_area.get()].set(True)
             else:
                 self.call_initialize_planning_scene()
                 
@@ -154,8 +158,9 @@ class UpdateSelectedTraysButton(ctk.CTkButton):
     
     def initalize_planning_scene_done_cb(self, future: Future):
         response: LocateTrays.Response = future.result() # type: ignore
-        
+
         if response.success:
+            self.areas_updated[self.selected_area.get()].set(True)
             self.count += 1
             if self.count == 2:
                 self.configure(fg_color=GREEN, hover_color=DARK_GREEN, state=NORMAL)
@@ -165,7 +170,7 @@ class UpdateSelectedTraysButton(ctk.CTkButton):
         
 
 class UpdateAllTraysButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node):
+    def __init__(self, frame, node: Node, areas_updated: dict[str, ctk.BooleanVar]):
         super().__init__(
             frame,
             text="Update All",
@@ -176,6 +181,8 @@ class UpdateAllTraysButton(ctk.CTkButton):
         )
         
         self.node = node
+
+        self.areas_updated = areas_updated
 
         self.clients = {k: self.node.create_client(LocateTrays, v) for k,v in LOCATE_TRAYS_NAMES.items()}
         
@@ -213,6 +220,7 @@ class UpdateAllTraysButton(ctk.CTkButton):
             self.node.get_logger().warn(f"{response.message}")
         
         if self.locate_count == len(LOCATE_TRAYS_NAMES):
+            self.areas_updated["teach_table"].set(True)
             self.planning_scene_count = 0
             self.after(3000, self.call_initialize_planning_scene)
 
@@ -236,6 +244,9 @@ class UpdateAllTraysButton(ctk.CTkButton):
             self.planning_scene_count += 1
             if self.planning_scene_count == 2:
                 self.configure(fg_color=GREEN, hover_color=DARK_GREEN, state=NORMAL)
+                for area in DETECTION_AREAS:
+                    if "teach" not in area:
+                        self.areas_updated[area].set(True)
         else:
             self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
             self.node.get_logger().warn(f"{response.message}")

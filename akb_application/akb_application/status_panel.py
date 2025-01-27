@@ -4,7 +4,8 @@ import customtkinter as ctk
 from tkinter.ttk import Separator
 
 from rclpy.node import Node
-from rclpy.time import Time
+from rclpy.time import Time, Duration
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 from std_msgs.msg import Bool
 
@@ -57,9 +58,13 @@ class RobotStatusFrame(ctk.CTkFrame):
         # ROS Subscriptions
         topic_names = CONTROLLER_STATUS_NAMES[robot_name]
 
-        self.node.create_subscription(Bool, topic_names["state"], self.state_cb, 1)
-        self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1)
-        self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1)
+        state_cb_group = MutuallyExclusiveCallbackGroup()
+        command_cb_group = MutuallyExclusiveCallbackGroup()
+        gripper_cb_group = MutuallyExclusiveCallbackGroup()
+
+        self.node.create_subscription(Bool, topic_names["state"], self.state_cb, 1, callback_group=state_cb_group)
+        self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1, callback_group=command_cb_group)
+        self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1, callback_group=gripper_cb_group)
 
         # Widgets
         font = ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, TITLE_FONT_WEIGHT)
@@ -78,31 +83,42 @@ class RobotStatusFrame(ctk.CTkFrame):
         
     def state_cb(self, msg: Bool):
         self.last_update_time['state'] = self.node.get_clock().now()
-        self.state_status.set(msg.data)
+        if self.state_status.get() != msg.data:
+            self.state_status.set(msg.data)
         
     def command_cb(self, msg: Bool):
         self.last_update_time['command'] = self.node.get_clock().now()
-        self.command_status.set(msg.data)
+        if self.command_status.get() != msg.data:
+            self.command_status.set(msg.data)
         
     def gripper_cb(self, msg: Bool):
         self.last_update_time['gripper'] = self.node.get_clock().now()
-        self.gripper_status.set(msg.data)
+        if self.gripper_status.get() != msg.data:
+            self.gripper_status.set(msg.data)
 
     def update(self, *args):
         # Reset status to INACTIVE if topic is not published for 3 seconds
-        for key, time in self.last_update_time.items():
-            if time is None:
+        current_time = self.node.get_clock().now()
+
+        for key, last_update in self.last_update_time.items():
+            if last_update is None:
                 continue
 
-            if (self.node.get_clock().now() - time).nanoseconds > 3E9:
+            duration = (current_time - last_update).nanoseconds/1E9
+            
+            if  duration >= 3:
+                self.node.get_logger().info(f'Time since last update for {key} is {duration}')
                 if key == 'state':
-                    self.state_status.set(False)
+                    if self.state_status.get():
+                        self.state_status.set(False)
                 elif key == 'command':
-                    self.command_status.set(False)
+                    if self.command_status.get():
+                        self.command_status.set(False)
                 elif key == 'gripper':
-                    self.gripper_status.set(False)
+                    if self.gripper_status.get():
+                        self.gripper_status.set(False)
 
-        self.after(100, self.update)
+        self.after(500, self.update)
         
 
 class ControllerStatus(ctk.CTkFrame):
@@ -111,6 +127,7 @@ class ControllerStatus(ctk.CTkFrame):
 
         # Add trace to status variable
         self.status = status
+        self.last_status = status.get()
         self.status.trace_add('write', self.update_label)
 
         # Layout

@@ -133,7 +133,7 @@ class CanvasTooltip: # https://stackoverflow.com/questions/40538204/how-i-can-ma
 
         self.tw.wm_geometry("+%d+%d" % (x, y))
 
-        self.canvas.after(self.waittime + 1000, self.hide)
+        self.canvas.after(self.waittime + 400, self.hide)
 
     def hide(self):
         if self.tw:

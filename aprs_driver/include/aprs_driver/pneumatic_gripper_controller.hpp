@@ -52,6 +52,8 @@ namespace pneumatic_controller {
 
     std::string robot_name_ = "";
 
+    rclcpp::Time last_publish_time;
+
     int gripper_socket;
   };
 }  // namespace aprs_controllers

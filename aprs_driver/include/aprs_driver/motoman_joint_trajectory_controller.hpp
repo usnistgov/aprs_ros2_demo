@@ -64,6 +64,8 @@ class MotomanJointTrajectoryController : public controller_interface::Controller
 
   rclcpp_action::Server<FollowJointTrajectory>::SharedPtr action_server_;
 
+  rclcpp::Time last_publish_time;
+
   // Socket communication
   const char *robot_ip_ = "192.168.1.33";
   const int motion_port_ = 50240;

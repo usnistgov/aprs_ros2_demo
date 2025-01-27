@@ -152,7 +152,7 @@ class TrayCanvas(ctk.CTkCanvas):
         canvas_points = self.get_canvas_points(translated_points)
         
         tray_polygon = self.create_polygon(canvas_points, fill=DARK_GRAY, smooth=True, splinesteps=32)
-        tooltip = CanvasTooltip(self, tray_polygon, text=tray_name)
+        # tooltip = CanvasTooltip(self, tray_polygon, text=tray_name)
     
     def draw_gear(self, size: int, tray_center: tuple[float, float], tray_rotation: float, x_off: float, y_off: float, gear_name: str, occupied: bool):
         slot_center = [(x_off, y_off)]
@@ -177,7 +177,7 @@ class TrayCanvas(ctk.CTkCanvas):
 
         self.tag_bind(gear_oval, sequence="<Enter>", func=self.slot_press_cb)
         
-        tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
+        # tooltip = CanvasTooltip(self, gear_oval, text=gear_name)
 
     def round_points(self, points: list[tuple[float, float]]) -> list[tuple[float, float]]:
         rounded_points = []

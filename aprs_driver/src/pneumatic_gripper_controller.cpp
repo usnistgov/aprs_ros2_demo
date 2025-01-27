@@ -37,7 +37,10 @@ namespace pneumatic_controller {
 
     auto controller_status = std_msgs::msg::Bool();
     controller_status.data = true;
-    pneumatic_gripper_controller_status_pub_->publish(controller_status);
+    if ((rclcpp::Clock{}.now()-last_publish_time).nanoseconds() >= 1e9){
+      pneumatic_gripper_controller_status_pub_->publish(controller_status);
+      last_publish_time = rclcpp::Clock{}.now();
+    }
 
     return controller_interface::return_type::OK;
   }
@@ -103,6 +106,9 @@ namespace pneumatic_controller {
       RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
       controller_status.data = false;
       pneumatic_gripper_controller_status_pub_->publish(controller_status);
+
+      last_publish_time = rclcpp::Clock{}.now();
+
       return CallbackReturn::FAILURE;
     }
 
@@ -124,6 +130,9 @@ namespace pneumatic_controller {
         RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Unknown value recieved for fanuc gripper get state. Recieved: " << status);
         controller_status.data = false;
         pneumatic_gripper_controller_status_pub_->publish(controller_status);
+
+        last_publish_time = rclcpp::Clock{}.now();
+
         return CallbackReturn::FAILURE;
       }
     
@@ -148,11 +157,16 @@ namespace pneumatic_controller {
       RCLCPP_ERROR(get_node()->get_logger(), "Robot name invalid");
       controller_status.data = false;
       pneumatic_gripper_controller_status_pub_->publish(controller_status);
+
+      last_publish_time = rclcpp::Clock{}.now();
+
       return CallbackReturn::FAILURE;
     }
 
     controller_status.data = true;
     pneumatic_gripper_controller_status_pub_->publish(controller_status);
+
+    last_publish_time = rclcpp::Clock{}.now();
 
     return CallbackReturn::SUCCESS;
   }
@@ -179,6 +193,7 @@ namespace pneumatic_controller {
     auto controller_status = std_msgs::msg::Bool();
     controller_status.data = false;
     pneumatic_gripper_controller_status_pub_->publish(controller_status);
+    last_publish_time = rclcpp::Clock{}.now();
 
     return CallbackReturn::SUCCESS;
   }
@@ -266,6 +281,7 @@ namespace pneumatic_controller {
     auto status = std_msgs::msg::Bool();
     status.data = false;
     pneumatic_gripper_controller_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
     on_deactivate(rclcpp_lifecycle::State());
   }
 

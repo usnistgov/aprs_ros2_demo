@@ -17,7 +17,7 @@ from aprs_interfaces.action._execute_plan import ExecutePlan_FeedbackMessage
 from akb_application.settings import *
 
 class PDDLFrame(ctk.CTkFrame):
-    def __init__(self, frame, node: Node, row: int, col: int):
+    def __init__(self, frame, node: Node, row: int, col: int, areas_updated: dict[str, ctk.BooleanVar]):
         super().__init__(frame, fg_color="transparent")
         
         self.grid(row=row, column=col, sticky="N")
@@ -26,7 +26,10 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_received = ctk.BooleanVar(value=False)
         self.reset_occurred = ctk.BooleanVar(value=False)
         self.execution_started = ctk.BooleanVar(value=False)
-        self.execution_complete_keys = ctk.StringVar(value="")
+        self.execution_complete = ctk.BooleanVar(value=False)
+        self.execution_keys = ctk.StringVar(value="")
+
+        self.areas_updated = areas_updated
         
         title = ctk.CTkLabel(self, text="PDDL Panel", font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT))
         title.grid(row=0, column=0, columnspan=3, pady=5)
@@ -36,49 +39,82 @@ class PDDLFrame(ctk.CTkFrame):
         self.plan_frame = PlanFrame(self, row=3, column=0, columnspan=3)
         
         self.plan_button = PlanButton(self, node, self.plan_received, row=2, column=0)
-        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_complete_keys, row=2, column=1)
+        self.execute_button = ExecuteButton(self, node, self.execution_started, self.execution_complete, self.execution_keys, row=2, column=1)
         self.reset_button = ResetButton(self, node, self.reset_occurred, row=2, column=2)
 
         self.plan_received.trace_add('write', self.update_plan)
         self.reset_occurred.trace_add('write', self.reset)
         self.execution_started.trace_add('write', self.execution_starting)
-        self.execution_complete_keys.trace_add('write', self.update_plan_frame_results)
+        self.execution_keys.trace_add('write', self.update_plan_frame_results)
 
+        self.after(300, self.activate_generate_plan_button)
+
+    def activate_generate_plan_button(self):
+        if all([val.get() for val in self.areas_updated.values()]):
+            self.reset_occurred.set(False)
+            self.plan_button.configure(state=NORMAL)
+            self.execute_button.configure(state=DISABLED)
+            self.reset_button.configure(state=DISABLED)
+        
+        if self.plan_received.get():
+            self.plan_button.configure(state=DISABLED)
+            self.execute_button.configure(state=NORMAL)
+            self.reset_button.configure(state=NORMAL)
+        
+        if self.execution_started.get():
+            self.plan_button.configure(state=DISABLED)
+            self.execute_button.configure(state=DISABLED)
+            self.reset_button.configure(state=DISABLED)
+        
+        if self.execution_complete.get():
+            self.plan_button.configure(state=DISABLED)
+            self.execute_button.configure(state=DISABLED)
+            self.reset_button.configure(state=NORMAL)
+        
+        if self.reset_occurred.get():
+            self.plan_button.configure(state=DISABLED)
+            self.execute_button.configure(state=DISABLED)
+            self.reset_button.configure(state=DISABLED)
+        
+        self.after(300, self.activate_generate_plan_button)
         
     def update_plan(self, *args):
         if self.plan_received.get():
+            for var in self.areas_updated.values():
+                var.set(False)
+            
             self.execute_button.set_plan(self.plan_button.get_plan_items())
 
             self.plan_frame.new_plan(self.plan_button.get_plan_items())
 
-            self.plan_button.configure(state=DISABLED)
-            self.reset_button.configure(state=NORMAL)
+            # self.plan_button.configure(state=DISABLED)
+            # self.reset_button.configure(state=NORMAL)
 
-            self.plan_received.set(False)
+            # self.plan_received.set(False)
 
 
     def reset(self, *args):
         if self.reset_occurred.get():
+            self.plan_received.set(False)
+            self.execution_complete.set(False)
             self.plan_frame.clear_frame()
             self.plan_frame.plan_rows.clear()
             self.plan_frame.no_plan_label.grid(column=0, row=2, columnspan=5)
 
             self.execute_button.set_plan([])
 
-            self.reset_button.configure(state=DISABLED)
-            self.plan_button.configure(state=NORMAL)
-            self.reset_occurred.set(False)
     
     def execution_starting(self, *args):
         if self.execution_started.get():
+            self.plan_received.set(False)
             for key in self.plan_frame.plan_rows.keys():
                 self.plan_frame.plan_row_in_progress(key)
     
     def update_plan_frame_results(self, *args):
         self.node.get_logger().info("Inside update plan frame")
-        if len(self.execution_complete_keys.get())==0:
+        if len(self.execution_keys.get())==0:
             return
-        results_seperated = self.execution_complete_keys.get().split("|")
+        results_seperated = self.execution_keys.get().split("|")
         for key in results_seperated:
             self.plan_frame.plan_row_complete(key)
         self.plan_frame.update_progress(len(results_seperated))
@@ -211,7 +247,8 @@ class PlanButton(ctk.CTkButton):
             command=self.command_cb,
             font=ctk.CTkFont(FONT_FAMILY, BUTTON_FONT_SIZE, weight=BUTTON_FONT_WEIGHT),
             fg_color=BLUE,
-            hover_color=DARK_BLUE
+            hover_color=DARK_BLUE,
+            state=DISABLED
         )
 
         self.node = node
@@ -311,18 +348,20 @@ class ResetButton(ctk.CTkButton):
         self.configure(fg_color=BLUE, hover_color=DARK_BLUE, state=NORMAL)
         
 class ExecuteButton(ctk.CTkButton):
-    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, execution_complete_keys: ctk.StringVar, row: int, column: int):
+    def __init__(self, frame, node: Node, execution_started: ctk.BooleanVar, execution_complete: ctk.BooleanVar, execution_keys: ctk.StringVar, row: int, column: int):
         super().__init__(
             frame,
             text='Execute',
             command=self.command_cb,
             font=ctk.CTkFont(FONT_FAMILY, BUTTON_FONT_SIZE, weight=BUTTON_FONT_WEIGHT),
             fg_color=BLUE,
-            hover_color=DARK_BLUE
+            hover_color=DARK_BLUE,
+            state=DISABLED
         )
         
         self.execution_started = execution_started
-        self.execution_complete_keys = execution_complete_keys
+        self.execution_complete = execution_complete
+        self.execution_keys = execution_keys
         self.plan: Optional[Plan] = None
 
         self.already_set_keys: list[str] = []
@@ -367,11 +406,11 @@ class ExecuteButton(ctk.CTkButton):
             if info.completion == 1:
                 keys.append(info.action + "_" + info.arguments[0]) # type: ignore
         complete_keys = "|".join(keys)
-        if self.execution_complete_keys.get()!= complete_keys:
-            self.execution_complete_keys.set(complete_keys)
+        if self.execution_keys.get()!= complete_keys:
+            self.execution_keys.set(complete_keys)
         # if len(action_execution_infos) > 0:
         #     num_complete = sum([info.completion for info in action_execution_infos])
-        #     if self.execution_complete_keys.get() != num_complete:
+        #     if self.execution_keys.get() != num_complete:
         #         self.execution_count.set(num_complete)
 
     def goal_response_callback(self, future: Future):
@@ -393,6 +432,7 @@ class ExecuteButton(ctk.CTkButton):
         else:
             self.configure(fg_color=RED, hover_color=DARK_RED, state=NORMAL)
         self.execution_started.set(False)
+        self.execution_complete.set(True)
         self.after(3000, self.reset)
     
     def reset(self, *args):

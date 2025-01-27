@@ -61,6 +61,7 @@ namespace motoman_hardware {
       RCLCPP_INFO(get_logger(), "Unable to connect to socket");
       status.data = false;
       motoman_joint_state_broadcaster_status_pub_->publish(status);
+      last_publish_time = rclcpp::Clock{}.now();
       return hardware_interface::CallbackReturn::FAILURE;
     }
 
@@ -85,6 +86,7 @@ namespace motoman_hardware {
 
     status.data = true;
     motoman_joint_state_broadcaster_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -98,6 +100,7 @@ namespace motoman_hardware {
     auto status = std_msgs::msg::Bool();
     status.data = false;
     motoman_joint_state_broadcaster_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -124,6 +127,14 @@ namespace motoman_hardware {
       hw_accelerations_[i] = joint_accelerations[i];
     }
 
+    auto status = std_msgs::msg::Bool();
+    status.data = true;
+
+    if ((rclcpp::Clock{}.now()-last_publish_time).nanoseconds() >= 1e9){
+      motoman_joint_state_broadcaster_status_pub_->publish(status);
+      last_publish_time = rclcpp::Clock{}.now();
+    }
+
     return hardware_interface::return_type::OK;
   }
 
@@ -134,10 +145,6 @@ namespace motoman_hardware {
 
     hw_positions_[7] = hw_commands_[7];
     hw_positions_[8] = hw_commands_[8];
-
-    auto status = std_msgs::msg::Bool();
-    status.data = true;
-    motoman_joint_state_broadcaster_status_pub_->publish(status);
 
     return hardware_interface::return_type::OK;
   }

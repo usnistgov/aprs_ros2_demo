@@ -56,6 +56,8 @@ namespace fanuc_hardware {
     const int state_port_ = 11002;
     const int num_urdf_joints_ = 8;
     const int num_robot_joints_ = 6;
+
+    rclcpp::Time last_publish_time;
   
     struct sockaddr_in state_socket_address_;
     int state_socket_ = 0;

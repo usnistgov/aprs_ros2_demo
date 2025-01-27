@@ -61,6 +61,8 @@ namespace motoman_hardware {
     struct sockaddr_in state_socket_address_;
     int state_socket_ = 0;
 
+    rclcpp::Time last_publish_time;
+    
     bool activated_ = false;
 
     simple_message::Status current_status_;

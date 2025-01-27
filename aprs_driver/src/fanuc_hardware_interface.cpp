@@ -57,6 +57,7 @@ namespace fanuc_hardware {
       RCLCPP_INFO(get_logger(), "Unable to connect to socket");
       status.data = false;
       fanuc_joint_state_broadcaster_status_pub_->publish(status);
+      last_publish_time = rclcpp::Clock{}.now();
       return hardware_interface::CallbackReturn::FAILURE;
     }
 
@@ -77,6 +78,7 @@ namespace fanuc_hardware {
 
     status.data = true;
     fanuc_joint_state_broadcaster_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -90,6 +92,7 @@ namespace fanuc_hardware {
     auto status = std_msgs::msg::Bool();
     status.data = false;
     fanuc_joint_state_broadcaster_status_pub_->publish(status);
+    last_publish_time = rclcpp::Clock{}.now();
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -113,6 +116,13 @@ namespace fanuc_hardware {
     {
       hw_positions_[i] = joint_data[i];
     }
+    
+    auto status = std_msgs::msg::Bool();
+    status.data = true;
+    if ((rclcpp::Clock{}.now()-last_publish_time).nanoseconds() >= 1e9){
+      fanuc_joint_state_broadcaster_status_pub_->publish(status);
+      last_publish_time = rclcpp::Clock{}.now();
+    }
 
     return hardware_interface::return_type::OK;
   }
@@ -124,10 +134,6 @@ namespace fanuc_hardware {
 
     hw_positions_[6] = hw_commands_[6];
     hw_positions_[7] = hw_commands_[7];
-
-    auto status = std_msgs::msg::Bool();
-    status.data = true;
-    fanuc_joint_state_broadcaster_status_pub_->publish(status);
 
     return hardware_interface::return_type::OK;
   }
