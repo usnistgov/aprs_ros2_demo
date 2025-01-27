@@ -70,16 +70,7 @@ class TrayCanvas(ctk.CTkCanvas):
         SlotInfo.SMALL: 0.032,
         SlotInfo.MEDIUM: 0.04,
         SlotInfo.LARGE: 0.05}
-    
-    tray_colors_ = {
-        Tray.SMALL_GEAR_TRAY: "#3b3a3a",
-        Tray.MEDIUM_GEAR_TRAY: "#3b3a3a",
-        Tray.LARGE_GEAR_TRAY: "#3b3a3a",
-        Tray.M2L1_KIT_TRAY: "#3b3a3a",
-        Tray.S2L2_KIT_TRAY: "#3b3a3a"
-    }
 
-    fiducial_square_measurements = (0.04, 0.04)
     radius = 0.03
     
     def __init__(self, frame, node: Node, topic: str, width: int, height: int, img_height: int, select_mode_on: ctk.BooleanVar, selected_canvas_slot: ctk.StringVar):
