@@ -144,7 +144,7 @@ class PlanFrame(ctk.CTkFrame):
 
 
     def clear_frame(self):
-        for row in self.plan_rows.items():
+        for row in self.plan_rows.values():
             row.grid_forget()
         self.plan_rows = {}
         
