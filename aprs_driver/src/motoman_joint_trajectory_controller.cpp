@@ -61,7 +61,7 @@ namespace motoman_controller {
       simple_message::MotoMotionReply reply;
       reply.init(read_from_socket(motion_socket_, get_packet_length(motion_socket_)));
 
-      // RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
+      RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
 
       if (!reply.is_successful()) {
         auto result = std::make_shared<FollowJointTrajectory::Result>();
@@ -104,7 +104,7 @@ namespace motoman_controller {
       simple_message::MotoMotionReply reply;
       reply.init(read_from_socket(motion_socket_, get_packet_length(motion_socket_)));
 
-      // RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
+      RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
 
       // Verify that point was recieved by controller properly
       if (reply.is_successful()) {

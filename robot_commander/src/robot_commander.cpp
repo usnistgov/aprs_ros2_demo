@@ -57,8 +57,6 @@ RobotCommander::RobotCommander()
     above_slot_offset_
   };
 
-  gripper_joint_name = robot_name_ + "_left_finger_joint";
-
   if ( std::any_of(string_params.begin(), string_params.end(), [](std::string s){return s == "";}) )
   {
     RCLCPP_ERROR(get_logger(), "Parameters not set properly");
@@ -127,10 +125,6 @@ RobotCommander::RobotCommander()
   robot_changeover_sub_ = this->create_subscription<aprs_interfaces::msg::RobotChangeover>(
       "/robot_changeover_requested", rclcpp::SensorDataQoS(),
       std::bind(&RobotCommander::robot_changeover_cb, this, std::placeholders::_1));
-
-  joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-      "/" + robot_name_ +"/joint_states", rclcpp::SensorDataQoS(),
-      std::bind(&RobotCommander::joint_state_cb, this, std::placeholders::_1));
 
   // Create clients
   gripper_client_ = create_client<aprs_interfaces::srv::PneumaticGripperControl>("/" + robot_name_ + "/actuate_gripper");    
@@ -468,13 +462,11 @@ void RobotCommander::pick_from_slot_cb(
   const std::shared_ptr<aprs_interfaces::srv::Pick::Request> request,
   std::shared_ptr<aprs_interfaces::srv::Pick::Response> response)
 {
-  if (holding_part && !gripper_open) {
+  if (holding_part) {
     response->status = "Unable to pick, already holding a part";
     response->success = false;
     return;
   }
-
-  holding_part = false;
 
   auto result = pick_part(request->frame_name);
 
@@ -486,13 +478,11 @@ void RobotCommander::place_in_slot_cb(
   const std::shared_ptr<aprs_interfaces::srv::Place::Request> request,
   std::shared_ptr<aprs_interfaces::srv::Place::Response> response)
 {
-  if (!holding_part && gripper_open) {
+  if (!holding_part) {
     response->status = "Unable to place, not holding a part";
     response->success = false;
     return;
   }
-
-  holding_part = true;
 
   auto result = place_part(request->frame_name);
 
@@ -635,20 +625,6 @@ void RobotCommander::robot_changeover_cb(
   }
 }
 
-void RobotCommander::joint_state_cb(
-  const sensor_msgs::msg::JointState::ConstSharedPtr msg)
-{
-  for(size_t i=0; i<msg->name.size(); i++){
-    if(msg->name[i]==gripper_joint_name){
-      gripper_open = msg->position[i]!=0;
-    }
-  }
-  if(gripper_open && attached_part_name!=""){
-    planning_interface_->detachObject(attached_part_name);
-    attached_part_name = "";
-  }
-}
-
 void RobotCommander::initialize_planning_scene_cb(
   const std::shared_ptr<example_interfaces::srv::Trigger::Request>,
   std::shared_ptr<example_interfaces::srv::Trigger::Response> response)
@@ -683,8 +659,8 @@ void RobotCommander::initialize_planning_scene_cb(
     all_trays.insert(all_trays.end(),table_trays_info.part_trays.begin(),table_trays_info.part_trays.end());
   }
   if (received_conveyor_tray_info){
-    // all_trays.insert(all_trays.end(),conveyor_trays_info.kit_trays.begin(),conveyor_trays_info.kit_trays.end());
-    // all_trays.insert(all_trays.end(),conveyor_trays_info.part_trays.begin(),conveyor_trays_info.part_trays.end());
+    all_trays.insert(all_trays.end(),conveyor_trays_info.kit_trays.begin(),conveyor_trays_info.kit_trays.end());
+    all_trays.insert(all_trays.end(),conveyor_trays_info.part_trays.begin(),conveyor_trays_info.part_trays.end());
   }
 
   // Add trays to planning scene
