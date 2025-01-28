@@ -26,6 +26,7 @@ namespace simple_message {
     
   public:
     bool update(char* input);
+    bool is_estopped();
     std::string output();
 
     static const int PACKET_LENGTH = 40;

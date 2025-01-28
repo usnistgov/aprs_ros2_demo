@@ -98,6 +98,10 @@ namespace motoman_hardware {
 
     update_from_robot_controller();
 
+    if(current_status_.is_estopped()){
+      return hardware_interface::return_type::DEACTIVATE;
+    }
+
     auto joint_positions = current_joint_feedback_.get_joint_positions();
     auto joint_velocities = current_joint_feedback_.get_joint_accelerations();
     auto joint_accelerations = current_joint_feedback_.get_joint_accelerations();

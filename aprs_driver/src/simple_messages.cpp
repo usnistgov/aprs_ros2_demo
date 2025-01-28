@@ -43,6 +43,10 @@ namespace simple_message {
     return true;
   }
 
+  bool Status::is_estopped(){
+    return e_stopped!=0;
+  }
+
   std::string Status::output()
   {
     std::stringstream s;
