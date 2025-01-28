@@ -141,7 +141,6 @@ class TrayCanvas(ctk.CTkCanvas):
                     self.draw_gear(slot.size, (x, y), tray_rotation, x_off, y_off, slot.name, slot.occupied)
         
         self.new_trays_recieved.set(False)
-        # self.after(self.update_rate, self.update_canvas)
     
     def draw_tray(self, identifier: int, center: tuple[float, float], rotation: float, tray_name: str):
         corners = TrayCanvas.tray_corners_[identifier]

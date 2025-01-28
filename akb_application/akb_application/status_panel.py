@@ -7,6 +7,10 @@ from tkinter.ttk import Separator
 from rclpy.node import Node
 from rclpy.time import Time, Duration
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.task import Future
+
+from controller_manager_msgs.srv import ListControllers
+from controller_manager_msgs.msg import ControllerState
 
 from std_msgs.msg import Bool
 
@@ -43,6 +47,8 @@ class RobotStatusFrame(ctk.CTkFrame):
         super().__init__(master=frame, fg_color="transparent")
         self.node = node
 
+        self.robot_name = robot_name
+
         # Layout
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure((2, 3, 4), weight=1)
@@ -54,20 +60,22 @@ class RobotStatusFrame(ctk.CTkFrame):
         # Timing
         self.last_update_time: dict[str, Optional[Time]] = {s: None for s in ['state', 'command', 'gripper']}
 
+        self.list_controller_client = self.node.create_client(ListControllers, f"/{robot_name}/controller_manager/list_controllers")
+
         # ROS Subscriptions
-        topic_names = CONTROLLER_STATUS_NAMES[robot_name]
+        # topic_names = CONTROLLER_STATUS_NAMES[robot_name]
 
-        state_cb_group = MutuallyExclusiveCallbackGroup()
-        command_cb_group = MutuallyExclusiveCallbackGroup()
-        gripper_cb_group = MutuallyExclusiveCallbackGroup()
+        # state_cb_group = MutuallyExclusiveCallbackGroup()
+        # command_cb_group = MutuallyExclusiveCallbackGroup()
+        # gripper_cb_group = MutuallyExclusiveCallbackGroup()
 
-        self.node.create_subscription(Bool, topic_names["state"], self.state_cb, 1, callback_group=state_cb_group)
-        self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1, callback_group=command_cb_group)
-        self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1, callback_group=gripper_cb_group)
+        # self.node.create_subscription(Bool, topic_names["state"], self.state_cb, 1, callback_group=state_cb_group)
+        # self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1, callback_group=command_cb_group)
+        # self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1, callback_group=gripper_cb_group)
 
-        self.state_after: Optional[str] = None
-        self.command_after: Optional[str] = None
-        self.gripper_after: Optional[str] = None
+        # self.state_after: Optional[str] = None
+        # self.command_after: Optional[str] = None
+        # self.gripper_after: Optional[str] = None
 
         # Widgets
         font = ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, TITLE_FONT_WEIGHT)
@@ -82,30 +90,38 @@ class RobotStatusFrame(ctk.CTkFrame):
         ControllerStatus(self, "Command", self.statuses['command'], row=3)
         ControllerStatus(self, "Gripper", self.statuses['gripper'], row=4)
         
-    def state_cb(self, msg: Bool):
-        if self.statuses['state'].get() != msg.data:
-            self.statuses['state'].set(msg.data)
-        if self.state_after is not None:
-            self.after_cancel(self.state_after)
-        self.state_after = self.after(3000, partial(self.update_test, 'state'))
-        
-    def command_cb(self, msg: Bool):
-        if self.statuses['command'].get() != msg.data:
-            self.statuses['command'].set(msg.data)
-        if self.command_after is not None:
-            self.after_cancel(self.command_after)
-        self.command_after = self.after(3000, partial(self.update_test, 'command'))
-        
-    def gripper_cb(self, msg: Bool):
-        if self.statuses['gripper'].get() != msg.data:
-            self.statuses['gripper'].set(msg.data)
-        if self.gripper_after is not None:
-            self.after_cancel(self.gripper_after)
-        self.gripper_after = self.after(3000, partial(self.update_test, 'gripper'))
+    def call_list_robot_controllers(self):
+        if not self.list_controller_client.service_is_ready():
+            self.node.get_logger().error(f"List controller service not ready for {self.robot_name}")
+            self.after(100, self.call_list_robot_controllers)
+            return
 
-    def update_test(self, key: str):
-        if self.statuses[key].get():
-            self.statuses[key].set(False)
+        list_request = ListControllers.Request()
+
+        future = self.list_controller_client.call_async(list_request)
+        future.add_done_callback(self.list_controllers_done)
+    
+    def list_controllers_done(self, future: Future):
+        result: ListControllers.Response = future.result() # type: ignore
+
+        for controller in result.controller:
+            controller: ControllerState
+            match(controller.name):
+                case 'joint_trajectory_controller':
+                    state = controller.state.lower()=="active"
+                    if self.statuses['state'].get() != state:
+                        self.statuses['state'].set(state)
+                case 'joint_state_broadcaster':
+                    state = controller.state.lower()=="active"
+                    if self.statuses['state'].get() != state:
+                        self.statuses['state'].set(state)
+                case 'pneumatic_gripper_controller':
+                    state = controller.state.lower()=="active"
+                    if self.statuses['gripper'].get() != state:
+                        self.statuses['gripper'].set(state)
+                case _:
+                    self.node.get_logger().error("Unknown driver found with name: " + controller.name)
+        self.after(100, self.call_list_robot_controllers)
 
 class ControllerStatus(ctk.CTkFrame):
     def __init__(self, frame, controller_name: str, status: ctk.BooleanVar, row):
