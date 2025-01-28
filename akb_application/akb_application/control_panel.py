@@ -251,6 +251,7 @@ class PickPlaceFrame(ctk.CTkFrame):
         self.held_part["motoman"].trace_add("write", self.held_part_trace_cb)
         
         self.most_recent_tray_infos = {k: Trays() for k in TRAYS_INFO_NAMES.keys()}
+        self.tray_info_update = ctk.IntVar(value=0)
         for area, topic in TRAYS_INFO_NAMES.items():
             self.node.create_subscription(Trays, topic, partial(self.trays_cb, area), 10)
 
@@ -342,7 +343,9 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         # self.selected_canvas_slot.trace_add('write', self.select_slot_clicked)
 
-        self.after(1000, self.update_pick_place_options)
+        # self.after(1000, self.update_pick_place_options)
+
+        self.tray_info_update.trace_add('write', self.update_pick_place_options)
     
     def select_switch_switched(self):
         self.select_switch.configure(
@@ -363,12 +366,14 @@ class PickPlaceFrame(ctk.CTkFrame):
             self.place_button.configure(state=NORMAL)
     
     def trays_cb(self, detection_area, msg: Trays):
-        self.most_recent_tray_infos[detection_area] = msg
+        if self.most_recent_tray_infos[detection_area] != msg:
+            self.most_recent_tray_infos[detection_area] = msg
+            self.tray_info_update.set((self.tray_info_update.get()+1)%2)
     
     def update_pick_place_options(self, *args):
         self.update_options_for_robot("fanuc")
         self.update_options_for_robot("motoman")
-        self.after(1000, self.update_pick_place_options)
+        # self.after(1000, self.update_pick_place_options)
     
     def update_options_for_robot(self, robot: str):
         all_reachable_trays = sum([self.most_recent_tray_infos[detection_area].kit_trays + self.most_recent_tray_infos[detection_area].part_trays for detection_area in REACHABLE_AREAS[robot]], [])# type:ignore

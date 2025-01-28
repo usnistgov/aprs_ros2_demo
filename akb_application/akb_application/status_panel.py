@@ -65,9 +65,9 @@ class RobotStatusFrame(ctk.CTkFrame):
         self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1, callback_group=command_cb_group)
         self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1, callback_group=gripper_cb_group)
 
-        self.state_after: Optional[str] = None
-        self.command_after: Optional[str] = None
-        self.gripper_after: Optional[str] = None
+        self.state_after: str = ""
+        self.command_after: str = ""
+        self.gripper_after: str = ""
 
         # Widgets
         font = ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, TITLE_FONT_WEIGHT)
@@ -81,57 +81,28 @@ class RobotStatusFrame(ctk.CTkFrame):
         ControllerStatus(self, "State", self.statuses['state'], row=2)
         ControllerStatus(self, "Command", self.statuses['command'], row=3)
         ControllerStatus(self, "Gripper", self.statuses['gripper'], row=4)
-
-        # self.update()
         
     def state_cb(self, msg: Bool):
         if self.statuses['state'].get() != msg.data:
             self.statuses['state'].set(msg.data)
-        if self.state_after is not None:
-            self.after_cancel(self.state_after)
+        self.after_cancel(self.state_after)
         self.state_after = self.after(3000, partial(self.update_test, 'state'))
         
     def command_cb(self, msg: Bool):
         if self.statuses['command'].get() != msg.data:
             self.statuses['command'].set(msg.data)
-        if self.command_after is not None:
-            self.after_cancel(self.command_after)
+        self.after_cancel(self.command_after)
         self.command_after = self.after(3000, partial(self.update_test, 'command'))
         
     def gripper_cb(self, msg: Bool):
         if self.statuses['gripper'].get() != msg.data:
             self.statuses['gripper'].set(msg.data)
-        if self.gripper_after is not None:
-            self.after_cancel(self.gripper_after)
+        self.after_cancel(self.gripper_after)
         self.gripper_after = self.after(3000, partial(self.update_test, 'gripper'))
 
     def update_test(self, key: str):
         if self.statuses[key].get():
             self.statuses[key].set(False)
-    
-    # def update(self, *args):
-    #     # Reset status to INACTIVE if topic is not published for 3 seconds
-    #     current_time = self.node.get_clock().now()
-
-    #     for key, last_update in self.last_update_time.items():
-    #         if last_update is None:
-    #             continue
-
-    #         duration = (current_time - last_update).nanoseconds/1E9
-            
-    #         if  duration >= 3:
-    #             self.node.get_logger().info(f'Time since last update for {key} is {duration}')
-    #             if key == 'state':
-    #                 if self.state_status.get():
-    #                     self.state_status.set(False)
-    #             elif key == 'command':
-    #                 if self.command_status.get():
-    #                     self.command_status.set(False)
-    #             elif key == 'gripper':
-    #                 if self.gripper_status.get():
-    #                     self.gripper_status.set(False)
-
-    #     self.after(500, self.update)
         
 
 class ControllerStatus(ctk.CTkFrame):
