@@ -96,6 +96,9 @@ class TrayCanvas(ctk.CTkCanvas):
         self.gear_map: dict[int, str] = {}
 
         self.update_rate = 1000 #ms
+
+        self.new_trays_recieved = ctk.BooleanVar(value=False)
+        self.new_trays_recieved.trace_add('write', self.update_canvas)
         
         self.update_canvas()
 
@@ -103,9 +106,13 @@ class TrayCanvas(ctk.CTkCanvas):
             self.bind('<Button-1>', self.canvas_clicked)
 
     def trays_info_cb(self, msg: Trays):
-        self.trays_info = msg
+        if self.trays_info!=msg:
+            self.trays_info = msg
+            self.new_trays_recieved.set(True)
     
-    def update_canvas(self):
+    def update_canvas(self, *args):
+        if not self.new_trays_recieved:
+            return
         if self.trays_info is None:
             pass
         elif self.trays_info != self.previous_trays_info:
@@ -135,7 +142,8 @@ class TrayCanvas(ctk.CTkCanvas):
                     
                     self.draw_gear(slot.size, (x, y), tray_rotation, x_off, y_off, slot.name, slot.occupied)
         
-        self.after(self.update_rate, self.update_canvas)
+        self.new_trays_recieved.set(False)
+        # self.after(self.update_rate, self.update_canvas)
     
     def draw_tray(self, identifier: int, center: tuple[float, float], rotation: float, tray_name: str):
         corners = TrayCanvas.tray_corners_[identifier]

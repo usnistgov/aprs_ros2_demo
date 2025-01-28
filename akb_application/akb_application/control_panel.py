@@ -343,8 +343,6 @@ class PickPlaceFrame(ctk.CTkFrame):
 
         # self.selected_canvas_slot.trace_add('write', self.select_slot_clicked)
 
-        # self.after(1000, self.update_pick_place_options)
-
         self.tray_info_update.trace_add('write', self.update_pick_place_options)
     
     def select_switch_switched(self):
