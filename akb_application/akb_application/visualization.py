@@ -63,14 +63,19 @@ class VisualizationFrame(ctk.CTkFrame):
         update_selected_button.grid(row=3, column=2, padx=20, pady=10)
         update_all_button.grid(row=3, column=3, padx=20, pady=10)
 
+        self.live_images[self.dropdown_selection.get()].continue_updating.set(True)
         self.live_images[self.dropdown_selection.get()].grid(row=2, column=0, columnspan=2, padx=20, pady=10)
         self.canvases[self.dropdown_selection.get()].grid(row=2, column=2, columnspan=2, padx=20, pady=10)
         self.current_area = self.dropdown_selection.get()
             
     def dropdown_cb(self, *args):
+        for live_image in self.live_images.values():
+            live_image.continue_updating.set(False)
+
         self.live_images[self.current_area].grid_remove()
         self.canvases[self.current_area].grid_remove()
        
+        self.live_images[self.dropdown_selection.get()].continue_updating.set(True)
         self.live_images[self.dropdown_selection.get()].grid(row=2, column=0, columnspan=2, padx=20, pady=20)
         self.canvases[self.dropdown_selection.get()].grid(row=2, column=2, columnspan=2, padx=20, pady=20)
         self.current_area = self.dropdown_selection.get()
