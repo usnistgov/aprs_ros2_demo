@@ -373,7 +373,6 @@ class PickPlaceFrame(ctk.CTkFrame):
     def update_pick_place_options(self, *args):
         self.update_options_for_robot("fanuc")
         self.update_options_for_robot("motoman")
-        # self.after(1000, self.update_pick_place_options)
     
     def update_options_for_robot(self, robot: str):
         all_reachable_trays = sum([self.most_recent_tray_infos[detection_area].kit_trays + self.most_recent_tray_infos[detection_area].part_trays for detection_area in REACHABLE_AREAS[robot]], [])# type:ignore

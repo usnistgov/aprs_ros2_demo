@@ -65,9 +65,9 @@ class RobotStatusFrame(ctk.CTkFrame):
         self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1, callback_group=command_cb_group)
         self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1, callback_group=gripper_cb_group)
 
-        self.state_after: str = ""
-        self.command_after: str = ""
-        self.gripper_after: str = ""
+        self.state_after: Optional[str] = None
+        self.command_after: Optional[str] = None
+        self.gripper_after: Optional[str] = None
 
         # Widgets
         font = ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, TITLE_FONT_WEIGHT)
@@ -85,25 +85,27 @@ class RobotStatusFrame(ctk.CTkFrame):
     def state_cb(self, msg: Bool):
         if self.statuses['state'].get() != msg.data:
             self.statuses['state'].set(msg.data)
-        self.after_cancel(self.state_after)
+        if self.state_after is not None:
+            self.after_cancel(self.state_after)
         self.state_after = self.after(3000, partial(self.update_test, 'state'))
         
     def command_cb(self, msg: Bool):
         if self.statuses['command'].get() != msg.data:
             self.statuses['command'].set(msg.data)
-        self.after_cancel(self.command_after)
+        if self.command_after is not None:
+            self.after_cancel(self.command_after)
         self.command_after = self.after(3000, partial(self.update_test, 'command'))
         
     def gripper_cb(self, msg: Bool):
         if self.statuses['gripper'].get() != msg.data:
             self.statuses['gripper'].set(msg.data)
-        self.after_cancel(self.gripper_after)
+        if self.gripper_after is not None:
+            self.after_cancel(self.gripper_after)
         self.gripper_after = self.after(3000, partial(self.update_test, 'gripper'))
 
     def update_test(self, key: str):
         if self.statuses[key].get():
             self.statuses[key].set(False)
-        
 
 class ControllerStatus(ctk.CTkFrame):
     def __init__(self, frame, controller_name: str, status: ctk.BooleanVar, row):
