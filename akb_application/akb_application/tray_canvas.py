@@ -111,10 +111,8 @@ class TrayCanvas(ctk.CTkCanvas):
             self.new_trays_recieved.set(True)
     
     def update_canvas(self, *args):
-        if not self.new_trays_recieved:
+        if not self.new_trays_recieved or self.trays_info is None:
             return
-        if self.trays_info is None:
-            pass
         elif self.trays_info != self.previous_trays_info:
             self.delete("all")
 
