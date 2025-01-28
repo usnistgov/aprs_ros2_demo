@@ -87,11 +87,6 @@ class PDDLFrame(ctk.CTkFrame):
 
             self.plan_frame.new_plan(self.plan_button.get_plan_items())
 
-            # self.plan_button.configure(state=DISABLED)
-            # self.reset_button.configure(state=NORMAL)
-
-            # self.plan_received.set(False)
-
 
     def reset(self, *args):
         if self.reset_occurred.get():
