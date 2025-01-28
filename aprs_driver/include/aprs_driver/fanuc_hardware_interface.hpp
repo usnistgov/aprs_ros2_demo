@@ -44,8 +44,6 @@ namespace fanuc_hardware {
     ~FanucHardwareInterface() {on_deactivate(rclcpp_lifecycle::State());};
 
   private:
-    rclcpp::Node::SharedPtr node_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr fanuc_joint_state_broadcaster_status_pub_;
     rclcpp::Logger get_logger();
     void update_from_robot_controller();
 
@@ -56,8 +54,6 @@ namespace fanuc_hardware {
     const int state_port_ = 11002;
     const int num_urdf_joints_ = 8;
     const int num_robot_joints_ = 6;
-
-    rclcpp::Time last_publish_time;
   
     struct sockaddr_in state_socket_address_;
     int state_socket_ = 0;

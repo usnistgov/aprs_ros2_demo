@@ -38,7 +38,6 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
   ~FanucJointTrajectoryController();
 
  private:
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr fanuc_joint_trajectory_controller_status_pub_;
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const FollowJointTrajectory::Goal> goal);

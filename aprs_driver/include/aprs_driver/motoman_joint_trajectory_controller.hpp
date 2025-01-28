@@ -36,7 +36,6 @@ class MotomanJointTrajectoryController : public controller_interface::Controller
   ~MotomanJointTrajectoryController();
 
  private:
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr motoman_joint_trajectory_controller_status_pub_;
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const FollowJointTrajectory::Goal> goal);
@@ -63,8 +62,6 @@ class MotomanJointTrajectoryController : public controller_interface::Controller
   std::shared_ptr<GoalHandleFollowJointTrajectory> current_goal_;
 
   rclcpp_action::Server<FollowJointTrajectory>::SharedPtr action_server_;
-
-  rclcpp::Time last_publish_time;
 
   // Socket communication
   const char *robot_ip_ = "192.168.1.33";

@@ -33,13 +33,13 @@ namespace motoman_controller {
     const rclcpp::Duration&) 
   {
     if (received_goal_) {
-      // RCLCPP_INFO(get_node()->get_logger(), "\n\nRECEIVED GOAL");
+      RCLCPP_INFO(get_node()->get_logger(), "\n\nRECEIVED GOAL");
       current_seq_ = 0;
       received_goal_ = false;
 
-      // for (auto name : current_goal_->get_goal()->trajectory.joint_names) {
-      //   RCLCPP_INFO_STREAM(get_node()->get_logger(), name);
-      // }
+      for (auto name : current_goal_->get_goal()->trajectory.joint_names) {
+        RCLCPP_INFO_STREAM(get_node()->get_logger(), name);
+      }
 
       // Construct initial point
       std::vector<float> current_positions;
@@ -60,8 +60,6 @@ namespace motoman_controller {
       // Get reply    
       simple_message::MotoMotionReply reply;
       reply.init(read_from_socket(motion_socket_, get_packet_length(motion_socket_)));
-
-      // RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
 
       if (!reply.is_successful()) {
         auto result = std::make_shared<FollowJointTrajectory::Result>();
@@ -104,7 +102,7 @@ namespace motoman_controller {
       simple_message::MotoMotionReply reply;
       reply.init(read_from_socket(motion_socket_, get_packet_length(motion_socket_)));
 
-      // RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
+      RCLCPP_INFO_STREAM(get_node()->get_logger(), reply.output());
 
       // Verify that point was recieved by controller properly
       if (reply.is_successful()) {
@@ -154,13 +152,6 @@ namespace motoman_controller {
       }
     }
 
-    auto status = std_msgs::msg::Bool();
-    status.data = true;
-    if ((rclcpp::Clock{}.now()-last_publish_time).nanoseconds() >= 1e9){
-      motoman_joint_trajectory_controller_status_pub_->publish(status);
-      last_publish_time = rclcpp::Clock{}.now();
-    }
-
     return controller_interface::return_type::OK;  
   }
 
@@ -174,10 +165,6 @@ namespace motoman_controller {
       fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
       return CallbackReturn::ERROR;
     }
-
-    motoman_joint_trajectory_controller_status_pub_ = get_node()->create_publisher<std_msgs::msg::Bool>(
-      "joint_trajectory_controller_status", rclcpp::QoS(1)
-    );
 
     return CallbackReturn::SUCCESS;
   }
@@ -228,12 +215,8 @@ namespace motoman_controller {
     int length = get_packet_length(motion_socket_);
     reply.init(read_from_socket(motion_socket_, length));
 
-    auto status = std_msgs::msg::Bool();
     if(!reply.is_successful()){
       RCLCPP_ERROR(get_node()->get_logger(), "\n\nUnable to start trajectory controller");
-      status.data = false;
-      motoman_joint_trajectory_controller_status_pub_->publish(status);
-      last_publish_time = rclcpp::Clock{}.now();
       return CallbackReturn::FAILURE;
     }
 
@@ -244,9 +227,6 @@ namespace motoman_controller {
 
       joint_states_.push_back(position_interface.get_value());
     }
-    status.data = true;
-    motoman_joint_trajectory_controller_status_pub_->publish(status);
-    last_publish_time = rclcpp::Clock{}.now();
     return CallbackReturn::SUCCESS;
   }
 
@@ -296,11 +276,6 @@ namespace motoman_controller {
     read_from_socket(motion_socket_, length); 
 
     close(motion_socket_);
-
-    auto status = std_msgs::msg::Bool();
-    status.data = false;
-    motoman_joint_trajectory_controller_status_pub_->publish(status);
-    last_publish_time = rclcpp::Clock{}.now();
 
     return CallbackReturn::SUCCESS;
   }

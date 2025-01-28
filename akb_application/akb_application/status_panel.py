@@ -89,6 +89,8 @@ class RobotStatusFrame(ctk.CTkFrame):
         ControllerStatus(self, "State", self.statuses['state'], row=2)
         ControllerStatus(self, "Command", self.statuses['command'], row=3)
         ControllerStatus(self, "Gripper", self.statuses['gripper'], row=4)
+
+        self.call_list_robot_controllers()
         
     def call_list_robot_controllers(self):
         if not self.list_controller_client.service_is_ready():
@@ -113,8 +115,8 @@ class RobotStatusFrame(ctk.CTkFrame):
                         self.statuses['state'].set(state)
                 case 'joint_state_broadcaster':
                     state = controller.state.lower()=="active"
-                    if self.statuses['state'].get() != state:
-                        self.statuses['state'].set(state)
+                    if self.statuses['command'].get() != state:
+                        self.statuses['command'].set(state)
                 case 'pneumatic_gripper_controller':
                     state = controller.state.lower()=="active"
                     if self.statuses['gripper'].get() != state:

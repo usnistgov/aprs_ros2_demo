@@ -43,8 +43,6 @@ namespace motoman_hardware {
     ~MotomanHardwareInterface() {on_deactivate(rclcpp_lifecycle::State());};
 
   private:
-    rclcpp::Node::SharedPtr node_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr motoman_joint_state_broadcaster_status_pub_;
     rclcpp::Logger get_logger();
     void update_from_robot_controller();
 
@@ -61,8 +59,6 @@ namespace motoman_hardware {
     struct sockaddr_in state_socket_address_;
     int state_socket_ = 0;
 
-    rclcpp::Time last_publish_time;
-    
     bool activated_ = false;
 
     simple_message::Status current_status_;

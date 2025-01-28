@@ -100,13 +100,6 @@ namespace fanuc_controller {
       }
     }
 
-    auto status = std_msgs::msg::Bool();
-    status.data = true;
-    if ((rclcpp::Clock{}.now()-last_publish_time).nanoseconds() >= 1e9){
-      fanuc_joint_trajectory_controller_status_pub_->publish(status);
-      last_publish_time = rclcpp::Clock{}.now();
-    }
-
     return controller_interface::return_type::OK;
   
   }
@@ -121,10 +114,6 @@ namespace fanuc_controller {
       fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
       return CallbackReturn::ERROR;
     }
-
-    fanuc_joint_trajectory_controller_status_pub_ = get_node()->create_publisher<std_msgs::msg::Bool>(
-      "joint_trajectory_controller_status", rclcpp::QoS(1)
-    );
 
     return CallbackReturn::SUCCESS;
   }
@@ -170,18 +159,11 @@ namespace fanuc_controller {
 
     int connection_success = connect(motion_socket_, (struct sockaddr *)&motion_socket_address_, sizeof(motion_socket_address_));
     
-    auto status = std_msgs::msg::Bool();
     if (connection_success < 0){
       RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
-      status.data = false;
-      fanuc_joint_trajectory_controller_status_pub_->publish(status);
-      last_publish_time = rclcpp::Clock{}.now();
       return CallbackReturn::FAILURE;
     }
 
-    status.data = true;
-    fanuc_joint_trajectory_controller_status_pub_->publish(status);
-    last_publish_time = rclcpp::Clock{}.now();
     return CallbackReturn::SUCCESS;
   }
 
@@ -220,11 +202,6 @@ namespace fanuc_controller {
     (void)previous_state; 
 
     close(motion_socket_);
-
-    auto status = std_msgs::msg::Bool();
-    status.data = false;
-    fanuc_joint_trajectory_controller_status_pub_->publish(status);
-    last_publish_time = rclcpp::Clock{}.now();
 
     return CallbackReturn::SUCCESS;
   }
