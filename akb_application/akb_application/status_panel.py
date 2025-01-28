@@ -94,7 +94,6 @@ class RobotStatusFrame(ctk.CTkFrame):
         
     def call_list_robot_controllers(self):
         if not self.list_controller_client.service_is_ready():
-            self.node.get_logger().error(f"List controller service not ready for {self.robot_name}")
             self.after(100, self.call_list_robot_controllers)
             return
 
