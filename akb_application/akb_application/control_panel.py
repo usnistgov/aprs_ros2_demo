@@ -308,20 +308,20 @@ class PickPlaceFrame(ctk.CTkFrame):
             text_color=GRAY
         )
 
-        # self.select_switch = ctk.CTkSwitch(
-        #     self,
-        #     text="Canvas select mode: " + ("ON" if self.select_mode_on.get() else "OFF"),
-        #     text_color=GREEN if self.select_mode_on.get() else RED,
-        #     onvalue=True,
-        #     offvalue=False,
-        #     variable=self.select_mode_on,
-        #     width=36,
-        #     progress_color=PURPLE,
-        #     fg_color=PURPLE,
-        #     button_color=DARK_PURPLE,
-        #     button_hover_color=DARK_PURPLE,
-        #     command=self.select_switch_switched
-        # )
+        self.select_switch = ctk.CTkSwitch(
+            self,
+            text="Canvas select mode: " + ("ON" if self.select_mode_on.get() else "OFF"),
+            text_color=GREEN if self.select_mode_on.get() else RED,
+            onvalue=True,
+            offvalue=False,
+            variable=self.select_mode_on,
+            width=36,
+            progress_color=PURPLE,
+            fg_color=PURPLE,
+            button_color=DARK_PURPLE,
+            button_hover_color=DARK_PURPLE,
+            command=self.select_switch_switched
+        )
         
         self.pick_clients = {k: self.node.create_client(Pick, v) for k,v in PICK_NAMES.items()}
         self.place_clients = {k: self.node.create_client(Place, v) for k,v in PLACE_NAMES.items()}        
@@ -336,12 +336,9 @@ class PickPlaceFrame(ctk.CTkFrame):
                                   
         self.holding_label.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
 
-        # self.select_switch.grid(row=3, column=0, columnspan=2, pady=10)
+        self.select_switch.grid(row=3, column=0, columnspan=2, pady=10)
 
-        # self.pick_slot.trace_add('write', self.check_select_mode)
-        # self.place_slot.trace_add('write', self.check_select_mode)
-
-        # self.selected_canvas_slot.trace_add('write', self.select_slot_clicked)
+        self.selected_canvas_slot.trace_add('write', self.select_slot_clicked)
 
         self.tray_info_update.trace_add('write', self.update_pick_place_options)
     
@@ -525,24 +522,26 @@ class PickPlaceFrame(ctk.CTkFrame):
     #     else:
     #         self.select_mode_on.set(False)
     
-    # def select_slot_clicked(self, *args):
-    #     if not self.select_mode_on.get() or self.selected_canvas_slot.get() == "":
-    #         return
+    def select_slot_clicked(self, *args):
+        if not self.select_mode_on.get() or self.selected_canvas_slot.get() == "":
+            return
         
-    #     held_part = self.held_part[self.robot.get()].get()
-    #     split_info = self.selected_canvas_slot.get().split("|")
-    #     area = split_info[0]
-    #     slot = split_info[1]
+        held_part = self.held_part[self.robot.get()].get()
+        split_info = self.selected_canvas_slot.get().split("|")
+        area = split_info[0]
+        slot = split_info[1]
 
-    #     if area not in REACHABLE_AREAS[self.robot.get()]:
-    #         return
+        if area not in REACHABLE_AREAS[self.robot.get()]:
+            return
 
-    #     if held_part == "None": # pick
-    #         if slot in self.reachable_occupied[self.robot.get()]:
-    #             self.request_pick_srv(slot)
-    #     else: # place
-    #         held_part_size = held_part.split(" ")[0].lower()
-    #         if slot in self.reachable_unoccupied[self.robot.get()][held_part_size]:
-    #             self.request_place_srv(slot)
+        if held_part == "None": # pick
+            if slot in self.reachable_occupied[self.robot.get()]:
+                self.pick_slot.set(slot)
+                # self.request_pick_srv(slot)
+        else: # place
+            held_part_size = held_part.split(" ")[0].lower()
+            if slot in self.reachable_unoccupied[self.robot.get()][held_part_size]:
+                self.place_slot.set(slot)
+                # self.request_place_srv(slot)
         
-    #     self.selected_canvas_slot.set("")
+        self.selected_canvas_slot.set("")
