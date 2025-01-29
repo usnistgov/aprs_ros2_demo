@@ -13,8 +13,16 @@ class App(ctk.CTk):
     def __init__(self, node: Node):
         super().__init__()
 
+        self.grid_columnconfigure((0,1),weight=1)
+        self.grid_rowconfigure((0,1),weight=1)
+
         ctk.set_appearance_mode("light")
-        
+
+        self.geometry("2022x894")
+
+        self.resizable(False, False)
+
+        self.node = node
         self.title("Automated Kit Building Demo")
 
         areas_updated = {area: ctk.BooleanVar(value=False) for area in DETECTION_AREAS}

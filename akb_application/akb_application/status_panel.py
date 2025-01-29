@@ -27,7 +27,7 @@ class StatusPanel(ctk.CTkFrame):
         title = ctk.CTkLabel(self, text="Status Panel", font=ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, weight=TITLE_FONT_WEIGHT))
 
         horizontal_sep = Separator(self, orient='horizontal')
-        vertical_sep = Separator(self, orient='horizontal')
+        vertical_sep = Separator(self, orient='vertical')
 
         RobotStatusFrame(self, self.node, "fanuc", row=2, col=0)
         RobotStatusFrame(self, self.node, "motoman", row=2, col=2)
@@ -39,7 +39,7 @@ class StatusPanel(ctk.CTkFrame):
 
         title.grid(row=0, column=0, columnspan=3)
         horizontal_sep.grid(row=1, column=0, columnspan=3, sticky="WE")
-        vertical_sep.grid(row=2, column=1)
+        vertical_sep.grid(row=2, column=1, sticky="NS")
 
 
 class RobotStatusFrame(ctk.CTkFrame):
@@ -94,7 +94,7 @@ class RobotStatusFrame(ctk.CTkFrame):
         
     def call_list_robot_controllers(self):
         if not self.list_controller_client.service_is_ready():
-            self.after(100, self.call_list_robot_controllers)
+            self.after(250, self.call_list_robot_controllers)
             return
 
         list_request = ListControllers.Request()
@@ -122,7 +122,7 @@ class RobotStatusFrame(ctk.CTkFrame):
                         self.statuses['gripper'].set(state)
                 case _:
                     self.node.get_logger().error("Unknown driver found with name: " + controller.name)
-        self.after(100, self.call_list_robot_controllers)
+        self.after(250, self.call_list_robot_controllers)
 
 class ControllerStatus(ctk.CTkFrame):
     def __init__(self, frame, controller_name: str, status: ctk.BooleanVar, row):
