@@ -1,94 +1,67 @@
 import os
-import math
+
+from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    OpaqueFunction,
-)
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
-from launch.conditions import IfCondition
 
-def launch_setup(context, *args, **kwargs):
+from launch.actions import OpaqueFunction
 
-    fanuc_vision = Node(
+def launch_setup(_):
+
+    parameters = os.path.join(get_package_share_directory('aprs_vision'), 'config', 'parameters.yaml')
+
+    fanuc_table_detection_area = Node(
         package='aprs_vision',
-        executable='fanuc_vision_node.py',
+        executable='detection_area_node.py',
+        name='table_detection_area',
+        namespace='fanuc',
+        parameters=[parameters],
         output='screen',
     )
 
-    teach_table_vision = Node(
+    motoman_table_detection_area = Node(
         package='aprs_vision',
-        executable='teach_table_vision_node.py',
-        output='screen'
+        executable='detection_area_node.py',
+        name='table_detection_area',
+        namespace='motoman',
+        parameters=[parameters],
+        output='screen',
     )
 
-    motoman_vision = Node(
+    fanuc_conveyor_detection_area = Node(
         package='aprs_vision',
-        executable='motoman_vision_node.py',
-        output='screen'
+        executable='detection_area_node.py',
+        name='conveyor_detection_area',
+        namespace='fanuc',
+        parameters=[parameters],
+        output='screen',
     )
 
-    motoman_conveyer_vision = Node(
+    motoman_conveyor_detection_area = Node(
         package='aprs_vision',
-        executable='motoman_conveyer_node.py',
-        output='screen'
+        executable='detection_area_node.py',
+        name='conveyor_detection_area',
+        namespace='motoman',
+        parameters=[parameters],
+        output='screen',
     )
 
-    fanuc_conveyer_vision = Node(
+    teach_table_detection_area = Node(
         package='aprs_vision',
-        executable='fanuc_conveyer_node.py',
-        output='screen'
+        executable='detection_area_node.py',
+        name='teach_table_detection_area',
+        namespace='teach',
+        parameters=[parameters],
+        output='screen',
     )
 
-    fanuc_base_static_transform = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=[
-            "--x" , f"{30 * .0254}", 
-            "--y" , f"{7 * .0254}",
-            "--frame-id" , "world",
-            "--child-frame-id" , "fanuc_base_link",
-        ]
-        # extarguments=[
-        #     {"FRAME_ID": 'world'},
-        #     {'CHILD_FRAME_ID': 'fanuc_base_link'},
-        #     {'X': 0},
-        #     {'Y': 0},
-        #     {'Z': 0},
-        # ]
-
-    )
-
-    motoman_base_static_transform = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=[
-            "--x" , f"{77.5 * .0254}", 
-            "--y" , f"{6.5 * .0254}",
-            "--yaw" , f"{math.pi}",
-            "--frame-id" , "world",
-            "--child-frame-id" , "motoman_base_link",
-        ]
-        # arguments=[
-        #     {"FRAME_ID": 'world'},
-        #     {'CHILD_FRAME_ID': 'motoman_base_link'},
-        #     {'X': 0},
-        #     {'Y': 0},
-        #     {'Z': 0},
-        # ]
-
-    )
-    
     nodes_to_start = [
-        fanuc_vision,
-        teach_table_vision,
-        motoman_vision,
-        motoman_conveyer_vision,
-        fanuc_conveyer_vision,
-        motoman_base_static_transform,
-        fanuc_base_static_transform
+        fanuc_table_detection_area,
+        motoman_table_detection_area,
+        fanuc_conveyor_detection_area,
+        motoman_conveyor_detection_area,
+        teach_table_detection_area
     ]
 
     return nodes_to_start

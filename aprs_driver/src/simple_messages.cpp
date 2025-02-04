@@ -151,7 +151,7 @@ namespace simple_message {
     }
 
     i=0;
-    s << "\velocities:\n";
+    s << "\tvelocities:\n";
     for (float v : velocities){
       s << "\t\tjoint" << i << ": " << v << "\n";
       i++;
@@ -369,7 +369,7 @@ namespace simple_message {
   {
     std::stringstream s;
 
-    s << "JOINT FEEDBACK MESSAGE\n";
+    s << "\n\nMOTO MOTION REPLY\n";
     s << "\trobot id: " << robot_id << "\n";
     s << "\tvalid fields: " << sequence << "\n";
 
@@ -379,7 +379,7 @@ namespace simple_message {
       s << "\tcommand: " << "NOT_FOUND (" << command << ")\n";
 
     if (result_codes.find(result) != result_codes.end())
-      s << "\rresult: " << result_codes[result] << "\n";
+      s << "\tresult: " << result_codes[result] << "\n";
     else
       s << "\tresult: " << "NOT_FOUND (" << result << ")\n";
 

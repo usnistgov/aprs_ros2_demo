@@ -32,11 +32,9 @@ ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_N
 
 # Install Python executables
 install(PROGRAMS
-  nodes/fanuc_vision_node.py
-  nodes/teach_table_vision_node.py
-  nodes/motoman_vision_node.py
-  nodes/motoman_conveyer_node.py
-  nodes/fanuc_conveyer_node.py
+  nodes/detection_area_node.py
+  nodes/calibration_tool_node.py
+  nodes/publish_dummy_trays.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

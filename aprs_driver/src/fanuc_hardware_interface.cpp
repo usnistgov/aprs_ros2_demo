@@ -90,7 +90,14 @@ namespace fanuc_hardware {
 
     update_from_robot_controller();
 
+    if(current_status_.should_stop()){
+      RCLCPP_INFO(get_logger(), "Should stop true, deactivating fanuc driver");
+      return hardware_interface::return_type::DEACTIVATE;
+    }
+
     auto joint_data = current_joint_position_.get_joint_data();
+
+    joint_data[2] += joint_data[1];
 
     for (int i = 0; i < num_robot_joints_; i++)
     {

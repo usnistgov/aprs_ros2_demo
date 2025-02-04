@@ -1,4 +1,3 @@
-bool overwrite False
 ---
 bool success
 string message

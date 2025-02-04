@@ -26,6 +26,7 @@ namespace simple_message {
     
   public:
     bool update(char* input);
+    bool should_stop(){return (e_stopped==1 || in_error==1);};
     std::string output();
 
     static const int PACKET_LENGTH = 40;
@@ -126,6 +127,8 @@ namespace simple_message {
       bool init(char* input);
       std::string output();
       bool is_successful(){return result == 0;};
+      bool is_busy(){return result == 1;};
+      int get_result_num(){return result;};
       std::string get_result(){return result_codes[result];};
       std::string get_subcode(){return subcodes[subcode];};
     private:
@@ -137,12 +140,12 @@ namespace simple_message {
       int robot_id;
       int sequence;
       int command;
-      int result;
+      int result = -1;
       int subcode;
       std::vector<float> data;
 
       std::map<int, std::string> command_codes = {
-        {14, "CHECK_MOTION_READY"},
+        {14, "JOINT_TRAJ_POINT_FULL"},
         {200101, "CHECK_MOTION_READY"}, 
         {200102, "CHECK_QUEUE_CNT"}, 
         {200111, "STOP_MOTION"}, 

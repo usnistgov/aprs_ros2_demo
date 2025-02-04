@@ -1,4 +1,6 @@
-
+plansys2_msgs/Plan plan
 ---
-
+bool success
+string status
 ---
+plansys2_msgs/ActionExecutionInfo[] action_execution_status

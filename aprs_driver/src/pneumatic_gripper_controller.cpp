@@ -92,6 +92,7 @@ namespace pneumatic_controller {
 
     if (connection_success < 0){
       RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
+
       return CallbackReturn::FAILURE;
     }
 
@@ -111,6 +112,7 @@ namespace pneumatic_controller {
         gripper_state_ = 0.0;
       } else {
         RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Unknown value recieved for fanuc gripper get state. Recieved: " << status);
+
         return CallbackReturn::FAILURE;
       }
     
@@ -125,12 +127,15 @@ namespace pneumatic_controller {
       reply.init(read_from_socket(gripper_socket, length));
 
       if(reply.get_value() == 1){
+        RCLCPP_INFO(get_node()->get_logger(), "Gripper starting open");
         gripper_state_ = gripper_strokes_[robot_name_];
       } else {
+        RCLCPP_INFO(get_node()->get_logger(), "Gripper starting closed");
         gripper_state_ = 0.0;
       }
     } else {
       RCLCPP_ERROR(get_node()->get_logger(), "Robot name invalid");
+
       return CallbackReturn::FAILURE;
     }
 

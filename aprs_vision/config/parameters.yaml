@@ -1,0 +1,78 @@
+fanuc:
+  table_detection_area:
+    ros__parameters:
+      robot_name: fanuc
+      location: table
+      video_stream: http://192.168.1.104/mjpg/video.mjpg
+      publish_frames: True
+      background_value_threshold: 190
+      transform:
+        parent_frame: world
+        child_frame: fanuc_table_image
+        rotation:
+          roll: 0.0
+          pitch: 3.14159
+          yaw: 0.0
+        translation:
+          x: 1.0414 # 41"
+          y: 0.381 # 15"
+          z: 0.0
+
+  conveyor_detection_area:
+    ros__parameters:
+      robot_name: fanuc
+      location: conveyor
+      video_stream: http://192.168.1.108/mjpg/video.mjpg
+      publish_frames: True
+      background_value_threshold: 150
+      transform:
+        parent_frame: world
+        child_frame: fanuc_conveyor_image
+        rotation:
+          roll: 0.0
+          pitch: 3.14159
+          yaw: -0.01
+        translation:
+          x: 1.147132
+          y: -0.615 
+          z: 0.062 #2.25"
+
+motoman:
+  table_detection_area:
+    ros__parameters:
+      robot_name: motoman
+      location: table
+      video_stream: http://192.168.1.110/mjpg/video.mjpg
+      publish_frames: True
+      background_value_threshold: 90
+      transform:
+        parent_frame: world
+        child_frame: motoman_table_image
+        rotation:
+          roll: 0.0
+          pitch: 3.14159
+          yaw: 0.0
+        translation:
+          x: 1.6764 # 66"
+          y: 0.127 # 5" 
+          z: 0.0
+
+  conveyor_detection_area:
+    ros__parameters:
+      robot_name: motoman
+      location: conveyor
+      video_stream: http://192.168.1.107/mjpg/video.mjpg
+      publish_frames: True
+      background_value_threshold: 150
+      transform:
+        parent_frame: world
+        child_frame: fanuc_conveyor_image
+
+teach:
+  teach_table_detection_area:
+    ros__parameters: 
+      robot_name: teach
+      location: table
+      video_stream: http://192.168.1.105/mjpg/video.mjpg
+      publish_frames: False
+      background_value_threshold: 150

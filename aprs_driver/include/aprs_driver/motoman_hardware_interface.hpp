@@ -15,6 +15,7 @@
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 namespace motoman_hardware {
 

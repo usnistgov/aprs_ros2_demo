@@ -1,5 +1,0 @@
-bool save_background_image
-string filepath
----
-bool success
-string message

@@ -11,6 +11,9 @@
 #include <aprs_driver/network_utilities.hpp>
 #include <aprs_driver/simple_messages.hpp>
 
+#include <std_msgs/msg/bool.hpp>
+
+
 #include <exception>
 #include <string>
 

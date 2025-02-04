@@ -3,6 +3,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/publisher.hpp>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -10,6 +12,7 @@
 #include <controller_interface/controller_interface.hpp>
 
 #include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
@@ -30,6 +33,9 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
   CallbackReturn on_init() override;
   CallbackReturn on_configure(const rclcpp_lifecycle::State& previous_state) override;
   CallbackReturn on_activate(const rclcpp_lifecycle::State& previous_state) override;
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State& previous_state) override;
+
+  ~FanucJointTrajectoryController();
 
  private:
   rclcpp_action::GoalResponse handle_goal(
@@ -41,10 +47,14 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
 
   void handle_accepted(const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle);
 
+  void send_trajectory_points();
+
+  std::thread send_traj_points_thread;
+
   std::vector<std::string> joint_names_;
   std::vector<double> joint_states_;
 
-  bool executing_ = false;
+  bool finished_sending_points_ = false;
   bool received_goal_ = false;
   bool cancel_requsted_ = false;
   rclcpp::Time trajectory_start_time_;
@@ -56,6 +66,8 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
   // trajectory_msgs::msg::JointTrajectory current_trajectory_;
 
   rclcpp_action::Server<FollowJointTrajectory>::SharedPtr action_server_;
+
+  rclcpp::Time last_publish_time;
 
   // Socket communication
   const char *robot_ip_ = "192.168.1.34";

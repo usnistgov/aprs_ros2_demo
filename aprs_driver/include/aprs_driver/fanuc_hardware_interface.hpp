@@ -3,6 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/state.hpp>
+#include <rclcpp/node.hpp>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -15,6 +16,7 @@
 
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 namespace fanuc_hardware {
 

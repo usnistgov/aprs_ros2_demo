@@ -1,4 +1,4 @@
 ---
 bool success
-string plan
+plansys2_msgs/Plan plan
 string status

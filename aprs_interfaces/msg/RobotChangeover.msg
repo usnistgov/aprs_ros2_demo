@@ -1,0 +1,2 @@
+bool fanuc
+bool motoman
