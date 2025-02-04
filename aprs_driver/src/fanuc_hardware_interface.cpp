@@ -90,7 +90,8 @@ namespace fanuc_hardware {
 
     update_from_robot_controller();
 
-    if(current_status_.is_estopped()){
+    if(current_status_.should_stop()){
+      RCLCPP_INFO(get_logger(), "Should stop true, deactivating fanuc driver");
       return hardware_interface::return_type::DEACTIVATE;
     }
 

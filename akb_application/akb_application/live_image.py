@@ -50,11 +50,11 @@ class LiveImage(ctk.CTkLabel):
         
         self.update_image()
 
-        self.continue_updating.trace_add('write', self.start_updating)
+        # self.continue_updating.trace_add('write', self.start_updating)
 
-    def start_updating(self, *args):
-        if self.continue_updating.get():
-            self.update_image()
+    # def start_updating(self, *args):
+    #     if self.continue_updating.get():
+    #         self.update_image()
     
     def get_image(self):
         if self.stream is None:
@@ -78,8 +78,8 @@ class LiveImage(ctk.CTkLabel):
             self.configure(text=f"{area}\nimage not found", fg_color="#C2C2C2", font=self.font)
         else:
             self.configure(text="", image=ctk.CTkImage(Image.fromarray(cv_image), size=(self.width, self.height)), fg_color="transparent")
-            if self.continue_updating.get():
-                self.after(50, self.update_image)
+            # if self.continue_updating.get():
+            self.after(50, self.update_image)
 
     def get_shape(self) -> tuple[int, int]:
         return (self.width, self.height)

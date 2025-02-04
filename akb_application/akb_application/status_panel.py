@@ -62,6 +62,8 @@ class RobotStatusFrame(ctk.CTkFrame):
 
         self.list_controller_client = self.node.create_client(ListControllers, f"/{robot_name}/controller_manager/list_controllers")
 
+        self.after_call: Optional[str] = None
+
         # ROS Subscriptions
         # topic_names = CONTROLLER_STATUS_NAMES[robot_name]
 
@@ -99,10 +101,23 @@ class RobotStatusFrame(ctk.CTkFrame):
 
         list_request = ListControllers.Request()
 
-        future = self.list_controller_client.call_async(list_request)
-        future.add_done_callback(self.list_controllers_done)
+        self.future = self.list_controller_client.call_async(list_request)
+        self.future.add_done_callback(self.list_controllers_done)
+
+        self.after_call = self.after(500, self.list_controllers_timeout)
+    
+    def list_controllers_timeout(self):
+        for status in self.statuses.values():
+            status.set(False)
+        
+        self.list_controller_client.remove_pending_request(self.future)
+        self.call_list_robot_controllers()
     
     def list_controllers_done(self, future: Future):
+        if self.after_call is not None:
+            self.after_cancel(self.after_call)
+            self.after_call = None
+
         result: ListControllers.Response = future.result() # type: ignore
 
         for controller in result.controller:

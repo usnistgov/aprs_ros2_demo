@@ -489,13 +489,13 @@ class PickPlaceFrame(ctk.CTkFrame):
         )
 
         if self.held_part[self.robot.get()].get() == "None":
-            self.pick_selection_menu.configure(values=["select"]+self.reachable_occupied[self.robot.get()])
+            self.pick_selection_menu.configure(values=self.reachable_occupied[self.robot.get()])
             self.place_selection_menu.configure(values=[])
             self.pick_slot.set("")
             self.place_slot.set("")
         else:
             holding_size = self.held_part[self.robot.get()].get().lower().split(" ")[0]
-            self.place_selection_menu.configure(values=["select"]+self.reachable_unoccupied[self.robot.get()][holding_size])
+            self.place_selection_menu.configure(values=self.reachable_unoccupied[self.robot.get()][holding_size])
             self.pick_selection_menu.configure(values=[])
             self.pick_slot.set("")
             self.place_slot.set("")
