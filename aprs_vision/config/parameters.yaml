@@ -67,6 +67,14 @@ motoman:
       transform:
         parent_frame: world
         child_frame: motoman_conveyor_image
+        rotation:
+          roll: 3.14159
+          pitch: 0.0
+          yaw: 0.0
+        translation:
+          x: 1.4704
+          y: -0.129
+          z: 0.062 #2.25"
 
 teach:
   teach_table_detection_area:

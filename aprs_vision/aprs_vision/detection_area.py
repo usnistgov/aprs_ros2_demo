@@ -235,7 +235,6 @@ class DetectionArea(Node):
 
         if tray_area < 20000:
             raise DetectionException('Detected a partial tray')
-        print(tray_area)
 
         identifier = min({k: abs(v - tray_area) for (k,v) in self.tray_areas.items()}.items(), key=lambda x: x[1])[0]
 
@@ -275,8 +274,18 @@ class DetectionArea(Node):
             tray_msg.identifier = identifier
             tray_msg.name = f'{self.tray_names[identifier]}_{tray_id:02}'
 
+            if self.location == "conveyor":
+                if self.robot_name == "motoman":
+                    adjustment_factor = 0.01
+                elif self.robot_name == "fanuc":
+                    adjustment_factor = 0.005
+                height, width = table_image.shape[:2]
+                correction_factor = (tray_x - width/2)/(width/2) * adjustment_factor
+            else:
+                correction_factor = 0
+
             tray_center = Point(
-                x=(tray_x * self.conversion_factor) / 1000,
+                x=(tray_x * self.conversion_factor) / 1000 + correction_factor,
                 y=(tray_y * self.conversion_factor) / 1000,
                 z=-self.tray_height
             )

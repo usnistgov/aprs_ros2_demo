@@ -183,6 +183,10 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   double joint_1_pos = planning_interface_->getCurrentJointValues()[0];
   RCLCPP_INFO_STREAM(get_logger(),joint_1_pos);
 
+  if (robot_name_ == "motoman"){
+    joint_1_pos = joint_1_pos * -1;
+  }
+
   if (slot_t.translation.y < 0 && joint_1_pos > 0){
     RCLCPP_INFO(get_logger(),"Moving to Above Conveyor");
     auto result = move_to_named_pose("above_conveyor");
@@ -230,7 +234,7 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
 
   sleep(motion_pause_);
 
-  // actuate_gripper(true);
+  actuate_gripper(true);
 
   // attached_part_name = slot_objects[slot_name];
   // attached_part_type = slot_types[slot_name];
@@ -239,19 +243,19 @@ std::pair<bool, std::string> RobotCommander::pick_part(const std::string &slot_n
   // slot_objects[slot_name] = "";
   // slot_types[slot_name] = -1;
 
-  // sleep(motion_pause_);
+  sleep(motion_pause_);
 
   // holding_part = true;
 
-  // // Move back up
-  // plan = plan_cartesian(above_slot);
+  // Move back up
+  plan = plan_cartesian(above_slot);
   
-  // if (!plan.first)
-  //   return std::make_pair(false, "Unable to plan to above slot");
+  if (!plan.first)
+    return std::make_pair(false, "Unable to plan to above slot");
 
-  // if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
-  //   return std::make_pair(false, "Unable to move to above slot");
-  // }
+  if (planning_interface_->execute(plan.second) != moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
+    return std::make_pair(false, "Unable to move to above slot");
+  }
 
   return std::make_pair(true, "Successfully picked part");
 }
@@ -308,24 +312,24 @@ std::pair<bool, std::string> RobotCommander::place_part(const std::string &slot_
 
   actuate_gripper(false);
 
-  planning_interface_->detachObject(attached_part_name);
+  // planning_interface_->detachObject(attached_part_name);
 
   sleep(motion_pause_);
 
-  moveit_msgs::msg::CollisionObject gear;
-  gear.header.frame_id = "world";
-  gear.header.stamp = now();
-  gear.id = attached_part_name;
-  gear.pose = planning_scene_->getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
-  gear.pose.position.z -= (place_offset_-pick_offset_);
-  gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
-  planning_scene_->applyCollisionObject(gear, get_object_color(attached_part_type));
-  slot_objects[slot_name] = attached_part_name;
-  slot_types[slot_name] = attached_part_type;
-  attached_part_name = "";
-  attached_part_type = -1;
+  // moveit_msgs::msg::CollisionObject gear;
+  // gear.header.frame_id = "world";
+  // gear.header.stamp = now();
+  // gear.id = attached_part_name;
+  // gear.pose = planning_scene_->getObjectPoses(std::vector<std::string>{attached_part_name})[attached_part_name];
+  // gear.pose.position.z -= (place_offset_-pick_offset_);
+  // gear.operation = moveit_msgs::msg::CollisionObject::MOVE;
+  // planning_scene_->applyCollisionObject(gear, get_object_color(attached_part_type));
+  // slot_objects[slot_name] = attached_part_name;
+  // slot_types[slot_name] = attached_part_type;
+  // attached_part_name = "";
+  // attached_part_type = -1;
 
-  holding_part = false;
+  // holding_part = false;
 
   // Move back up
   plan = plan_cartesian(above_slot);
@@ -362,11 +366,11 @@ void RobotCommander::place_in_slot_cb(
   const std::shared_ptr<aprs_interfaces::srv::Place::Request> request,
   std::shared_ptr<aprs_interfaces::srv::Place::Response> response)
 {
-  if (!holding_part) {
-    response->status = "Unable to place, not holding a part";
-    response->success = false;
-    return;
-  }
+  // if (!holding_part) {
+  //   response->status = "Unable to place, not holding a part";
+  //   response->success = false;
+  //   return;
+  // }
 
   auto result = place_part(request->frame_name);
 
