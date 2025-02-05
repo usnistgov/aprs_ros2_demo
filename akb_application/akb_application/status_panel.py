@@ -104,7 +104,7 @@ class RobotStatusFrame(ctk.CTkFrame):
         self.future = self.list_controller_client.call_async(list_request)
         self.future.add_done_callback(self.list_controllers_done)
 
-        self.after_call = self.after(500, self.list_controllers_timeout)
+        self.after_call = self.after(1000, self.list_controllers_timeout)
     
     def list_controllers_timeout(self):
         for status in self.statuses.values():
