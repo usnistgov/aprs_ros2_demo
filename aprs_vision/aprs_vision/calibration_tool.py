@@ -77,6 +77,9 @@ class CalibrationTool(Node):
         if not ret:
             raise CameraException('Unable to connect to camera stream')
 
+        if self.camera_name == "fanuc_conveyor" or self.camera_name =="motoman_conveyor":
+            self.frame = cv2.rotate(self.frame,cv2.ROTATE_180)
+
         # Variables
         self.rotation_angle = 0
         self.start_corner: Optional[tuple[int, int]] = None

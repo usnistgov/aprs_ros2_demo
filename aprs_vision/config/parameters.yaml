@@ -24,17 +24,17 @@ fanuc:
       location: conveyor
       video_stream: http://192.168.1.108/mjpg/video.mjpg
       publish_frames: True
-      background_value_threshold: 150
+      background_value_threshold: 180
       transform:
         parent_frame: world
         child_frame: fanuc_conveyor_image
         rotation:
-          roll: 0.0
-          pitch: 3.14159
+          roll: 3.14159
+          pitch: 0.0
           yaw: -0.01
         translation:
-          x: 1.147132
-          y: -0.615 
+          x: 0.302
+          y: -0.129
           z: 0.062 #2.25"
 
 motoman:
@@ -66,7 +66,15 @@ motoman:
       background_value_threshold: 150
       transform:
         parent_frame: world
-        child_frame: fanuc_conveyor_image
+        child_frame: motoman_conveyor_image
+        rotation:
+          roll: 3.14159
+          pitch: 0.0
+          yaw: 0.0
+        translation:
+          x: 1.4704
+          y: -0.129
+          z: 0.062 #2.25"
 
 teach:
   teach_table_detection_area:
