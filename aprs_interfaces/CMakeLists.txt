@@ -26,6 +26,7 @@ set(srv_files
   "srv/ClearCurrentState.srv"
   "srv/LocateTrays.srv"
   "srv/PneumaticGripperControl.srv"
+  "srv/MoveConveyor.srv"
 )
 
 set(action_files
