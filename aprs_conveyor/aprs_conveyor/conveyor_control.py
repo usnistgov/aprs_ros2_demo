@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from conveyor_controller.conveyor_controller import ConveyorController
+
 from conveyor_interfaces.srv import EnableConveyor, SetConveyorState
 import rclpy
 import threading
@@ -55,8 +55,8 @@ class DemoConveyorControl(Node):
         calibration_filepath_fanuc = os.path.join(share_path, 'config', 'fanuc_conveyor_calibration.npz')
         calibration_filepath_motoman = os.path.join(share_path, 'config', 'motoman_conveyor_calibration.npz')
 
-        self.fanuc_conveyor = StreamHandler('http://192.168.1.108/mjpg/video.mjpg', calibration_filepath_fanuc, 'conveyor')
-        self.motoman_conveyor = StreamHandler('http://192.168.1.107/mjpg/video.mjpg', calibration_filepath_motoman, 'conveyor')
+        self.fanuc_conveyor = StreamHandler('http://192.168.1.108/mjpg/video.mjpg', calibration_filepath_fanuc)
+        self.motoman_conveyor = StreamHandler('http://192.168.1.107/mjpg/video.mjpg', calibration_filepath_motoman)
 
         self.get_frame()
 
@@ -330,6 +330,10 @@ def main(args=None):
     # try:
     #     while conveyor_control.result_image is None:
     #         time.sleep(0.1)
+    #     while True:
+    #         cv2.imshow('fanuc', conveyor_control.fanuc_frame)
+    #         cv2.imshow('motoman', conveyor_control.motoman_frame)
+    #         cv2.waitKey(1)
 
     # except KeyboardInterrupt:
     #     cv2.destroyAllWindows()

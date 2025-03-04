@@ -85,7 +85,7 @@ class DetectionArea(Node):
         share_path = get_package_share_directory('aprs_vision')
         calibration_filepath = os.path.join(share_path, 'config', f'{self.robot_name}_{self.location}_calibration.npz')
 
-        self.stream_handler = StreamHandler(video_stream, calibration_filepath, self.location)
+        self.stream_handler = StreamHandler(video_stream, calibration_filepath)
         self.current_frame: Optional[MatLike] = None
 
         # ArUco
@@ -180,6 +180,9 @@ class DetectionArea(Node):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
         thresh = cv2.inRange(hsv, (0, 0, 0), (255, 255, self.background_v_upper)) #type: ignore
+
+        if 'conveyor' in self.location:
+            thresh[0:thresh.shape[0], 0:40] = 0
 
         canvas = np.zeros((frame.shape[0], frame.shape[1]), dtype=np.uint8)
 

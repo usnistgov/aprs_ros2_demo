@@ -13,9 +13,10 @@ class StreamException(Exception):
     pass
 
 class StreamHandler:
-    def __init__(self, video_stream: str, calibration_file: str, location: str):
+    def __init__(self, video_stream: str, calibration_file: str):
         self.capture = cv2.VideoCapture(video_stream)
-        self.location = location
+        self.location = os.path.basename(calibration_file).split('_')[1]
+    
 
         ret, frame = self.capture.read()
 
