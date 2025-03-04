@@ -35,15 +35,11 @@ def launch_setup(context, *args, **kwargs):
         namespace='fanuc',
         parameters=[robot_controllers],
         output="both",
-        remappings=[
-            ("~/robot_description", "/fanuc/robot_description"),
-        ],
     )
 
     joint_state_broadcaster = Node(
         package="controller_manager",
         executable="spawner",
-        namespace='fanuc',
         arguments=['joint_state_broadcaster', '-c', '/fanuc/controller_manager'],
     )
 
@@ -64,7 +60,7 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher,
         joint_state_broadcaster,
         joint_trajectory_controller,
-        pneumatic_gripper_controller,
+        # pneumatic_gripper_controller,
     ]
 
     return nodes_to_start
