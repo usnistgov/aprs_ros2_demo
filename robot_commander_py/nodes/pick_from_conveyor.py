@@ -19,22 +19,25 @@ def main(args=None):
 
     executor.add_node(commander)
 
-    # executor.spin()
+    executor.spin()
 
-    spin_thread = threading.Thread(target=executor.spin)
-    spin_thread.start()
+    # spin_thread = threading.Thread(target=executor.spin)
+    # spin_thread.start()
 
-    sleep(1)
+    # while not commander.planning_scene_ready:
+    #     sleep(0.1)
 
-    commander.planning_component.set_goal_state(configuration_name="home")
+    # Wait for planning scene to be ready
 
-    commander.plan_and_execute()
+    # Move the robot to conveyor configuration
 
-    commander.planning_component.set_goal_state(configuration_name="above_table")
+    # Move to above gear
 
-    commander.plan_and_execute()
+    # Move to gear
 
-    executor.shutdown()
+    # Close gripper
+
+    # Move to above gear
 
 if __name__ == '__main__':
     main()

@@ -15,6 +15,7 @@ ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_N
 # Install Python executables
 install(PROGRAMS
   nodes/test_moveit.py
+  nodes/pick_from_conveyor.py
 DESTINATION lib/${PROJECT_NAME}
 )
 

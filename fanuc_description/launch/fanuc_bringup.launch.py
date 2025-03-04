@@ -60,7 +60,7 @@ def launch_setup(context, *args, **kwargs):
         robot_state_publisher,
         joint_state_broadcaster,
         joint_trajectory_controller,
-        # pneumatic_gripper_controller,
+        pneumatic_gripper_controller,
     ]
 
     return nodes_to_start
