@@ -16,6 +16,7 @@ from moveit.core.planning_interface import MotionPlanResponse
 from moveit.core.controller_manager import ExecutionStatus
 from moveit.core.planning_scene import PlanningScene
 from moveit.core.robot_state import RobotState
+from moveit.core.robot_model import RobotModel, JointModelGroup
 
 from moveit.planning import MoveItPy, PlanningComponent, PlanningSceneMonitor, PlanRequestParameters
 
@@ -42,6 +43,8 @@ class RobotCommander(Node):
         # Initialize planning components
         self.planning_component: PlanningComponent = self.moveit_py.get_planning_component("fanuc_arm")
         self.planning_scene_monitor: PlanningSceneMonitor = self.moveit_py.get_planning_scene_monitor()
+        self.robot_model: RobotModel = self.moveit_py.get_robot_model()
+        self.joint_group: JointModelGroup = self.robot_model.get_joint_model_group('fanuc_arm')
 
         # TF 
         self.tf_buffer = Buffer()
@@ -60,7 +63,7 @@ class RobotCommander(Node):
         # Timer
         self.planning_scene_timer = self.create_timer(0.2, self.update_planning_scene_timer_cb)
 
-    def plan_and_execute(self):
+    def plan_and_execute(self) -> bool:
         # Set start state to current state
         with self.planning_scene_monitor.read_only() as scene:
             scene: PlanningScene
@@ -78,15 +81,53 @@ class RobotCommander(Node):
         plan: MotionPlanResponse = self.planning_component.plan(single_plan_parameters=single_plan_parameters)
         plan_result: MoveItErrorCodes = plan.error_code
 
-        if plan_result.val == MoveItErrorCodes.SUCCESS:
-            
-            execution: ExecutionStatus =  self.moveit_py.execute(plan.trajectory, controllers=[])
-            
-            if not execution.status == "SUCCEEDED":
-                self.get_logger().error(f'Unable to complete trajectory. Error: {execution.status}')
-                
-        else:
+        if not plan_result.val == MoveItErrorCodes.SUCCESS:
             self.get_logger().error(f'Unable to plan trajectory. Error code: {plan_result.val}')
+            return False
+            
+        execution: ExecutionStatus =  self.moveit_py.execute(plan.trajectory, controllers=[])
+        
+        if not execution.status == "SUCCEEDED":
+            self.get_logger().error(f'Unable to complete trajectory. Error: {execution.status}')
+            return False
+                
+        return True
+
+    def move_to_named_configuration(self, configuration) -> bool:
+        if not configuration in self.planning_component.named_target_states:
+            return False
+        
+        self.planning_component.set_goal_state(configuration_name=configuration)
+
+        return self.plan_and_execute()
+
+    def pick_from_slot(self, slot_name: str):
+        try:
+            transform = self.tf_buffer.lookup_transform('world', slot_name, Time())
+        except Exception as e:
+            self.get_logger().error(e)
+            return
+        
+        part_on_conveyor = transform.transform.translation.y < 0
+        robot_above_table = self.get_joint_value('joint_1') > 0 
+
+        if part_on_conveyor and robot_above_table:
+            self.move_to_named_configuration('conveyor_home')
+
+    def get_joint_value(self, joint_name: str) -> float:
+        active_joints: list[str] = self.joint_group.active_joint_model_names
+
+        if not joint_name in active_joints:
+            self.get_logger().error(f'{joint_name} does not exist in active joints.')
+            raise Exception(f'{joint_name} does not exist in active joints.')
+
+        with self.planning_scene_monitor.read_only() as scene:
+            scene: PlanningScene
+            state: RobotState = scene.current_state
+
+            current_state = state.get_joint_group_positions("fanuc_arm")
+                
+            return current_state[active_joints.index(joint_name)]
 
     def add_trays_to_planning_scene(self, trays: Trays):
         objects: list[PlanningSceneObjectInfo] = []

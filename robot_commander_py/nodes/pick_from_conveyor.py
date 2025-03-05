@@ -19,13 +19,15 @@ def main(args=None):
 
     executor.add_node(commander)
 
-    executor.spin()
+    # executor.spin()
 
-    # spin_thread = threading.Thread(target=executor.spin)
-    # spin_thread.start()
+    spin_thread = threading.Thread(target=executor.spin)
+    spin_thread.start()
 
-    # while not commander.planning_scene_ready:
-    #     sleep(0.1)
+    while not commander.planning_scene_ready:
+        sleep(0.1)
+
+    commander.pick_from_slot('m2l1_kit_tray_02_lg_1')
 
     # Wait for planning scene to be ready
 
