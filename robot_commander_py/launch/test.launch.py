@@ -22,30 +22,19 @@ def launch_setup(context, *args, **kwargs):
         .moveit_cpp(file_path="config/moveit_cpp.yaml")
         .to_moveit_configs()
     )
-    
-    # Move group node
-    move_group_node = Node(
-        package="moveit_ros_move_group",
-        executable="move_group",
-        namespace='fanuc',
-        output="screen",
-        parameters=[
-            moveit_config.to_dict(),
-        ],
-    )   
 
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        output="log",
+    # MoveItPy node
+    moveit_py_test = Node(
+        package="robot_commander_py",
+        executable="test_moveit.py",
+        output="screen",
         parameters=[
             moveit_config.to_dict(),
         ],
     )
 
     nodes_to_start = [
-        move_group_node,
-        rviz_node
+        moveit_py_test
     ]
 
     return nodes_to_start
