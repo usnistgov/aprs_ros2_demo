@@ -7,7 +7,7 @@ from typing import Optional
 import PyKDL
 import pyassimp
 
-from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
+from moveit_msgs.msg import CollisionObject, AttachedCollisionObject, ObjectColor
 
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped, Transform
 
@@ -19,6 +19,9 @@ from ament_index_python import get_package_share_directory
 
 
 class PlanningSceneObjectInfo:
+    TABLE = 20
+    CONVEYOR = 21
+
     def __init__(self, name: str, identifier: int, pose: Pose):
         self.name_ = name
         self.pose_ = pose
@@ -33,8 +36,27 @@ class PlanningSceneObjectInfo:
             Tray.MEDIUM_GEAR_TRAY: 'medium_gear_part_tray',
             Tray.LARGE_GEAR_TRAY: 'large_gear_part_tray',
             Tray.S2L2_KIT_TRAY: 's2l2_kit_tray',
-            Tray.M2L1_KIT_TRAY: 'm2l1_kit_tray'
+            Tray.M2L1_KIT_TRAY: 'm2l1_kit_tray',
+            PlanningSceneObjectInfo.TABLE: 'optical_table',
+            PlanningSceneObjectInfo.CONVEYOR: 'conveyor'
         }
+
+        self.color_ = ObjectColor()
+        self.color_.id = name
+        self.color_.color.a = 1.0
+
+        if 'tray' in identifier_names[identifier]:
+            self.color_.color.r = 0.1
+            self.color_.color.g = 0.1
+            self.color_.color.b = 0.1
+        elif 'gear' in identifier_names[identifier]:
+            self.color_.color.r = 0.3
+            self.color_.color.g = 0.7
+            self.color_.color.b = 0.3
+        else:
+            self.color_.color.r = 0.8
+            self.color_.color.g = 0.8
+            self.color_.color.b = 0.8
 
         self.stl_path_ = os.path.join(share_dir, 'meshes', f'{identifier_names[identifier]}.stl')
     
@@ -49,6 +71,10 @@ class PlanningSceneObjectInfo:
     @property
     def stl_path(self):
         return self.stl_path_
+    
+    @property
+    def color(self):
+        return self.color_
     
 
 def create_mesh_from_stl(stl_path: str) -> Optional[Mesh]:

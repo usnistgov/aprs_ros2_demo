@@ -1,9 +1,11 @@
-from launch import LaunchDescription
-from launch.actions import OpaqueFunction
-
 import os
 
+from launch import LaunchDescription
+from launch.actions import OpaqueFunction
+from launch.substitutions import PathJoinSubstitution
+
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -32,7 +34,11 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             moveit_config.to_dict(),
         ],
-    )   
+    ) 
+
+    rviz_config_file = PathJoinSubstitution(
+        [FindPackageShare("fanuc_moveit_config"), "config", "fanuc.rviz"]
+    )
 
     rviz_node = Node(
         package="rviz2",
@@ -41,6 +47,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             moveit_config.to_dict(),
         ],
+        arguments=["-d", rviz_config_file],
     )
 
     nodes_to_start = [

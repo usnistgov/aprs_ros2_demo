@@ -2,6 +2,8 @@ from typing import Optional
 
 from copy import deepcopy
 
+from time import sleep
+
 from rclpy.node import Node
 from rclpy.time import Time
 from rclpy.qos import qos_profile_default
@@ -17,9 +19,9 @@ from moveit.core.robot_state import RobotState
 
 from moveit.planning import MoveItPy, PlanningComponent, PlanningSceneMonitor, PlanRequestParameters
 
-from moveit_msgs.msg import MoveItErrorCodes
+from moveit_msgs.msg import MoveItErrorCodes, ObjectColor
 
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Pose
 
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
 
@@ -56,7 +58,7 @@ class RobotCommander(Node):
         self.create_subscription(Trays, '/fanuc/conveyor_trays_info', self.conveyor_trays_info_cb, qos_profile_default)
 
         # Timer
-        self.planning_scene_timer = self.create_timer(1.0, self.update_planning_scene_timer_cb)
+        self.planning_scene_timer = self.create_timer(0.2, self.update_planning_scene_timer_cb)
 
     def plan_and_execute(self):
         # Set start state to current state
@@ -93,18 +95,12 @@ class RobotCommander(Node):
         
         for tray in all_trays:
             try:
-                transform = self.tf_buffer.lookup_transform('world', tray.tray_pose.header.frame_id, Time())
-                # self.get_logger().info(transform.header.frame_id)
-                # self.get_logger().info(f'x: {transform.transform.translation.x}, y: {transform.transform.translation.y}, z: {transform.transform.translation.z}')
+                transform = self.tf_buffer.lookup_transform('world', tray.tray_pose.header.frame_id, Time())    
             except Exception as e:
                 self.get_logger().error(f'{e}')
                 transform = TransformStamped()
 
-            # self.get_logger().info(tray.tray_pose.header.frame_id)
-
             tray_world_pose = multiply_pose(convert_transform_to_pose(transform.transform), tray.tray_pose.pose)
-
-            # self.get_logger().info(f'x: {tray_world_pose.position.x}, y: {tray_world_pose.position.y}, z: {tray_world_pose.position.z}')
 
             objects.append(PlanningSceneObjectInfo(tray.name, tray.identifier, tray_world_pose))
 
@@ -118,15 +114,26 @@ class RobotCommander(Node):
 
                 objects.append(PlanningSceneObjectInfo(slot.name, slot.size, slot_world_pose))
         
-        for object in objects:            
+        
+        objects.append(PlanningSceneObjectInfo('table', PlanningSceneObjectInfo.TABLE, Pose()))
+
+        conveyor_belt_pose = Pose()
+        conveyor_belt_pose.position.x = -0.3937
+        conveyor_belt_pose.position.y = -0.0762
+        conveyor_belt_pose.position.z = 0.0625
+
+        objects.append(PlanningSceneObjectInfo('conveyor', PlanningSceneObjectInfo.CONVEYOR, conveyor_belt_pose))
+
+        for object in objects:      
             collision_object = build_collision_object(object)
-            
-            self.planning_scene_monitor.process_collision_object(collision_object)
             
             with self.planning_scene_monitor.read_write() as scene:
                 scene: PlanningScene
-                scene.apply_collision_object(collision_object)
+                scene.apply_collision_object(collision_object, object.color)
 
+            self.planning_scene_monitor.process_collision_object(collision_object)
+            sleep(0.5)
+            
         self.get_logger().info("Planning scene updated")
             
 
@@ -138,6 +145,10 @@ class RobotCommander(Node):
             return
         
         if not self.planning_scene_ready or self.trays_info['conveyor'] != self.previous_trays_info['conveyor']:
+            with self.planning_scene_monitor.read_write() as scene:
+                scene: PlanningScene
+                scene.remove_all_collision_objects()
+
             self.add_trays_to_planning_scene(self.trays_info['conveyor'])
             self.previous_trays_info['conveyor'] = deepcopy(self.trays_info['conveyor'])
             self.planning_scene_ready = True
