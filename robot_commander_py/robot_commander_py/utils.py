@@ -9,7 +9,7 @@ import pyassimp
 
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject, ObjectColor
 
-from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped, Transform
+from geometry_msgs.msg import Pose, Point, Quaternion, PoseStamped, Transform, TransformStamped
 
 from shape_msgs.msg import Mesh, MeshTriangle
 
@@ -194,3 +194,35 @@ def convert_transform_to_pose(t: Transform) -> Pose:
     pose.orientation = t.rotation
 
     return pose
+
+def convert_transform_stamped_to_pose_stamped(t: TransformStamped) -> PoseStamped:
+    pose = PoseStamped()
+
+    pose.header = t.header
+
+    pose.pose.position.x = t.transform.translation.x
+    pose.pose.position.y = t.transform.translation.y
+    pose.pose.position.z = t.transform.translation.z
+    
+    pose.pose.orientation = t.transform.rotation
+
+    return pose
+
+def build_robot_pose(pose: Pose) -> Pose:
+
+    robot_pose = Pose()
+
+    robot_pose.position = pose.position
+  
+    roll = 0.0
+    pitch = 3.14159
+
+    # Create a rotation object from Euler angles specifying axes of rotation
+    quat = quaternion_from_euler(roll, pitch, 0.0)
+
+    robot_pose.orientation.x = quat.x
+    robot_pose.orientation.y = quat.y
+    robot_pose.orientation.z = quat.z
+    robot_pose.orientation.w = quat.w
+
+    return robot_pose

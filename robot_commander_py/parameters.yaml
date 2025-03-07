@@ -1,0 +1,43 @@
+fanuc_robot_commander:
+  ros__parameters:
+    robot_name: fanuc
+    planning_group_name: fanuc_arm
+    end_effector_link: fanuc_tool0
+    touch_links:
+      - fanuc_left_finger
+      - fanuc_right_finger
+
+    velocity_scaling_factor: 0.1
+    acceleration_scaling_factor: 0.1
+    motion_pause: 0.5
+
+    gripper_rotation:
+      roll: 0.0
+      pitch: 3.14159
+
+    offsets:
+      pick: 0.0
+      place: 0.01
+      above_slot: 0.1
+
+motoman_robot_commander:
+  ros__parameters:
+    robot_name: motoman
+    planning_group_name: motoman_arm
+    end_effector_link: motoman_tool0
+    touch_links:
+      - motoman_left_finger
+      - motoman_right_finger
+
+    velocity_scaling_factor: 0.3
+    acceleration_scaling_factor: 0.3
+    motion_pause: 1.0
+
+    gripper_rotation:
+      roll: 0.0
+      pitch: 3.14159
+
+    offsets:
+      pick: 0.005
+      place: 0.01
+      above_slot: 0.1

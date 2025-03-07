@@ -34,7 +34,7 @@ fanuc:
           yaw: -0.01
         translation:
           x: 0.302
-          y: -0.129
+          y: -0.124
           z: 0.062 #2.25"
 
 motoman:
