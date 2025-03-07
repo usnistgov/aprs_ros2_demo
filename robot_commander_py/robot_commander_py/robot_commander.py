@@ -43,6 +43,8 @@ class RobotCommander(Node):
     def __init__(self):
         super().__init__('robot_commander')
 
+        # TODO: remove mentions of fanuc and replace with a robot variable, same with fanuc arm and replace with a group_name variable
+
         # Initialize MoveItPy
         self.moveit_py = MoveItPy(node_name="moveit_py", name_space='fanuc')
 
@@ -110,6 +112,7 @@ class RobotCommander(Node):
         return True
     
     def cartesian_plan_and_execute(self, pose: Pose) -> bool:
+        #TODO: remove hard coding of fanuc_arm for group name
         result = self.plan_cartesian_trajectory("fanuc_arm", pose)
         
         if result.fraction < 1.0:
@@ -169,7 +172,7 @@ class RobotCommander(Node):
         part_on_conveyor = transform.transform.translation.y < 0
         robot_above_table = self.get_joint_value('joint_1') > 0 
 
-        if part_on_conveyor and robot_above_table:
+        if (part_on_conveyor and robot_above_table) or (not part_on_conveyor and not robot_above_table):
             self.move_to_named_configuration('conveyor_home')
 
         # Set variables for testing:
@@ -217,10 +220,12 @@ class RobotCommander(Node):
             self.get_logger().error(e)
             return False
         
+        # TODO: remove hardcoding on joint_1
+
         part_on_conveyor = transform.transform.translation.y < 0
         robot_above_table = self.get_joint_value('joint_1') > 0 
 
-        if part_on_conveyor and robot_above_table:
+        if (part_on_conveyor and robot_above_table) or (not part_on_conveyor and not robot_above_table):
             self.move_to_named_configuration('conveyor_home')
 
         # Set variables for testing:
@@ -272,6 +277,7 @@ class RobotCommander(Node):
             scene: PlanningScene
             state: RobotState = scene.current_state
 
+            # TODO: remove group name hard coding
             current_state = state.get_joint_group_positions("fanuc_arm")
                 
             return current_state[active_joints.index(joint_name)]
