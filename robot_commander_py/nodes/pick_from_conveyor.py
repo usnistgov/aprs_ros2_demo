@@ -23,8 +23,6 @@ def main(args=None):
 
     executor.add_node(commander)
 
-    executor.spin()
-
     # stop_event = threading.Event()
 
     # spin_thread = threading.Thread(target=run, args=(executor, stop_event))
@@ -42,10 +40,19 @@ def main(args=None):
 
     # if not commander.place_in_slot('m2l1_kit_tray_02_mg_2'):
     #     return
-    
+
     # stop_event.set()
 
     # spin_thread.join()
+    
+    try:
+        while True:
+            executor.spin_once()
+    except:
+        executor.remove_node(commander)
+        del commander.trajectory_execution_manager
+        commander.moveit_py.shutdown()
+        executor.shutdown()         
 
 if __name__ == '__main__':
     main()
