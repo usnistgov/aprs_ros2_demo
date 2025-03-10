@@ -1,0 +1,9 @@
+# Goal
+string slot_name
+---
+# Result
+bool success
+string message
+---
+# Feedback
+uint8 state

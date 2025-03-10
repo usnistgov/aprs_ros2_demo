@@ -31,6 +31,7 @@ set(srv_files
 
 set(action_files
   "action/ExecutePlan.action"
+  "action/PickFromSlot.action"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

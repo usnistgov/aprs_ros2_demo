@@ -23,39 +23,29 @@ def main(args=None):
 
     executor.add_node(commander)
 
-    stop_event = threading.Event()
+    executor.spin()
 
-    spin_thread = threading.Thread(target=run, args=(executor, stop_event))
-    spin_thread.start()
+    # stop_event = threading.Event()
 
-    while not commander.planning_scene_ready:
-        sleep(0.1)
+    # spin_thread = threading.Thread(target=run, args=(executor, stop_event))
+    # spin_thread.start()
 
-    sleep(1)
+    # while not commander.planning_scene_ready:
+    #     sleep(0.1)
 
-    # commander.move_to_named_configuration('home')
+    # sleep(1)
 
-    if not commander.pick_from_slot('m2l1_kit_tray_02_mg_1'):
-        return 
+    # # commander.move_to_named_configuration('home')
 
-    if not commander.place_in_slot('m2l1_kit_tray_02_mg_2'):
-        return
+    # if not commander.pick_from_slot('m2l1_kit_tray_02_mg_1'):
+    #     return 
+
+    # if not commander.place_in_slot('m2l1_kit_tray_02_mg_2'):
+    #     return
     
-    stop_event.set()
+    # stop_event.set()
 
-    spin_thread.join()
-
-    # Wait for planning scene to be ready
-
-    # Move the robot to conveyor configuration
-
-    # Move to above gear
-
-    # Move to gear
-
-    # Close gripper
-
-    # Move to above gear
+    # spin_thread.join()
 
 if __name__ == '__main__':
     main()

@@ -7,6 +7,8 @@ from time import sleep
 from rclpy.node import Node
 from rclpy.time import Time
 from rclpy.qos import qos_profile_default
+from rclpy.action import ActionServer
+from rclpy.action.server import ServerGoalHandle
 
 from tf2_ros import TransformException # type: ignore
 from tf2_ros import Buffer
@@ -28,7 +30,8 @@ from moveit_msgs.srv import GetCartesianPath
 from geometry_msgs.msg import TransformStamped, Pose, PoseStamped
 
 from aprs_interfaces.msg import Trays, Tray, SlotInfo
-from aprs_interfaces.srv import PneumaticGripperControl
+from aprs_interfaces.srv import PneumaticGripperControl, MoveToNamedPose
+from aprs_interfaces.action import PickFromSlot
 
 from robot_commander_py.utils import (
     PlanningSceneObjectInfo, 
@@ -55,6 +58,7 @@ class RobotCommander(Node):
         self.joint_group: JointModelGroup = self.robot_model.get_joint_model_group('fanuc_arm')
         self.trajectory_execution_manager: TrajectoryExecutionManager = self.moveit_py.get_trajectory_execution_manager()
 
+
         # TF 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -79,6 +83,33 @@ class RobotCommander(Node):
 
         # Timer
         self.planning_scene_timer = self.create_timer(0.2, self.update_planning_scene_timer_cb)
+
+        # Action Servers
+        self.pick_action_server = ActionServer(self, PickFromSlot, '/fanuc/pick_from_slot', self.pick_action_cb)
+
+        # Service Servers
+        self.move_to_named_configuration_server = self.create_service(MoveToNamedPose, 'fanuc/move_to_named_pose', self.move_to_named_configuration_cb)
+
+    def pick_action_cb(self, goal_handle: ServerGoalHandle) -> PickFromSlot.Result:
+        result = PickFromSlot.Result()
+
+        goal: PickFromSlot.Goal = goal_handle.request
+
+        if self.pick_from_slot(goal.slot_name):
+            result.success = True
+            result.message = f"Successfully picked a gear from slot: {goal.slot_name}"
+            goal_handle.succeed()
+        else:
+            result.success = False
+            result.message = f"Unable to pick gear from slot: {goal.slot_name}"
+            goal_handle.abort()
+
+        return result
+    
+    def move_to_named_configuration_cb(self, request: MoveToNamedPose.Request, response: MoveToNamedPose.Response) -> MoveToNamedPose.Response:
+        response.success = self.move_to_named_configuration(request.name)
+
+        return response
 
     def plan_and_execute(self) -> bool:
         # Set start state to current state
