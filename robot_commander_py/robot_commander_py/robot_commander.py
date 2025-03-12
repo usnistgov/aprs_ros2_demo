@@ -86,6 +86,7 @@ class RobotCommander(Node):
 
         # Action Servers
         self.pick_action_server = ActionServer(self, PickFromSlot, '/fanuc/pick_from_slot', self.pick_action_cb)
+        self.place_action_server = ActionServer(self, PickFromSlot, '/fanuc/place_in_slot', self.place_action_cb)
 
         # Service Servers
         self.move_to_named_configuration_server = self.create_service(MoveToNamedPose, 'fanuc/move_to_named_pose', self.move_to_named_configuration_cb)
@@ -106,12 +107,34 @@ class RobotCommander(Node):
 
         return result
     
+    def place_action_cb(self, goal_handle: ServerGoalHandle) -> PickFromSlot.Result:
+        result = PickFromSlot.Result()
+
+        goal: PickFromSlot.Goal = goal_handle.request
+
+        if self.place_in_slot(goal.slot_name):
+            result.success = True
+            result.message = f"Successfully placed a gear in slot: {goal.slot_name}"
+            goal_handle.succeed()
+        else:
+            result.success = False
+            result.message = f"Unable to place gear in slot: {goal.slot_name}"
+            goal_handle.abort()
+
+        return result
+    
     def move_to_named_configuration_cb(self, request: MoveToNamedPose.Request, response: MoveToNamedPose.Response) -> MoveToNamedPose.Response:
-        response.success = self.move_to_named_configuration(request.name)
+        plan = self.plan_to_named_configuration(request.name)
+        if plan is None:
+            self.get_logger().error(f'Unable to plan to {request.name}')
+            response.success = False
+            return response
+
+        response.success = self.general_execute(plan)
 
         return response
-
-    def plan_and_execute(self) -> bool:
+    
+    def general_plan(self) -> Optional[RobotTrajectory]:
         # Set start state to current state
         with self.planning_scene_monitor.read_only() as scene:
             scene: PlanningScene
@@ -132,9 +155,13 @@ class RobotCommander(Node):
 
         if not plan_result.val == MoveItErrorCodes.SUCCESS:
             self.get_logger().error(f'Unable to plan trajectory. Error code: {plan_result.val}')
-            return False
+            return None
+                
+        return plan.trajectory
+    
+    def general_execute(self, trajectory: RobotTrajectory) -> bool:
             
-        execution: ExecutionStatus =  self.moveit_py.execute(plan.trajectory, controllers=[])
+        execution: ExecutionStatus =  self.moveit_py.execute(trajectory, controllers=[])
         
         if not execution.status == "SUCCEEDED":
             self.get_logger().error(f'Unable to complete trajectory. Error: {execution.status}')
@@ -142,13 +169,13 @@ class RobotCommander(Node):
                 
         return True
     
-    def cartesian_plan_and_execute(self, pose: Pose) -> bool:
+    def generate_cartesian_plan(self, pose: Pose) -> Optional[RobotTrajectory]:
         #TODO: remove hard coding of fanuc_arm for group name
         result = self.plan_cartesian_trajectory("fanuc_arm", pose)
         
         if result.fraction < 1.0:
             self.get_logger().warn(f'Unable to fully compute cartesian path, fraction is {result.fraction}')
-            return False
+            return None
         
         with self.planning_scene_monitor.read_write() as scene:
             scene: PlanningScene
@@ -159,24 +186,18 @@ class RobotCommander(Node):
         # Retime trajectory
         if not trajectory.apply_totg_time_parameterization(1.0, 1.0):
             self.get_logger().warn('Unable to retime trajectory')
-
-        execution: ExecutionStatus =  self.moveit_py.execute(trajectory, controllers=[])
-            
-        if not execution.status == "SUCCEEDED":
-            self.get_logger().error(f'Unable to complete trajectory. Error: {execution.status}')
-            return False
         
-        return True
-
-    def move_to_named_configuration(self, configuration) -> bool:
+        return trajectory
+    
+    def plan_to_named_configuration(self, configuration) -> Optional[RobotTrajectory]:
         if not configuration in self.planning_component.named_target_states:
-            return False
+            return None
         
         self.planning_component.set_goal_state(configuration_name=configuration)
 
-        return self.plan_and_execute()
+        return self.general_plan()
     
-    def move_to_defined_pose(self, pose: Pose) -> bool:
+    def plan_to_defined_pose(self, pose: Pose) -> Optional[RobotTrajectory]:
 
         with self.planning_scene_monitor.read_write() as scene:
             scene: PlanningScene
@@ -191,7 +212,7 @@ class RobotCommander(Node):
         
         self.planning_component.set_goal_state(pose_stamped_msg=goal_pose_stamped, pose_link="fanuc_tool0")
 
-        return self.plan_and_execute()
+        return self.general_plan()
 
     def pick_from_slot(self, slot_name: str) -> bool:
         try:
@@ -204,7 +225,11 @@ class RobotCommander(Node):
         robot_above_table = self.get_joint_value('joint_1') > 0 
 
         if (part_on_conveyor and robot_above_table) or (not part_on_conveyor and not robot_above_table):
-            self.move_to_named_configuration('conveyor_home')
+            plan = self.plan_to_named_configuration('conveyor_home')
+            if plan is None:
+                self.get_logger().error('Unable to plan to conveyor_home')
+                return False
+            self.general_execute(plan)
 
         # Set variables for testing:
         # TODO: recieve parameters from yaml file
@@ -221,7 +246,11 @@ class RobotCommander(Node):
 
         above_slot_robot_pose = build_robot_pose(above_slot_pose)
 
-        self.cartesian_plan_and_execute(above_slot_robot_pose)
+        plan = self.generate_cartesian_plan(above_slot_robot_pose)
+        if plan is None:
+            self.get_logger().error('Unable to plan to above slot')
+            return False
+        self.general_execute(plan)
 
         # Set goal state to pick position
 
@@ -232,7 +261,11 @@ class RobotCommander(Node):
 
         robot_pick_pose = build_robot_pose(pick_pose)
 
-        self.cartesian_plan_and_execute(robot_pick_pose)
+        plan = self.generate_cartesian_plan(robot_pick_pose)
+        if plan is None:
+            self.get_logger().error('Unable to plan to pick pose')
+            return False
+        self.general_execute(plan)
 
         # Close gripper to grab gear
 
@@ -240,7 +273,11 @@ class RobotCommander(Node):
 
         # Move back to above slot
 
-        self.cartesian_plan_and_execute(above_slot_robot_pose)
+        plan = self.generate_cartesian_plan(above_slot_robot_pose)
+        if plan is None:
+            self.get_logger().error('Unable to plan to above slot')
+            return False
+        self.general_execute(plan)
 
         return True
     
@@ -257,7 +294,11 @@ class RobotCommander(Node):
         robot_above_table = self.get_joint_value('joint_1') > 0 
 
         if (part_on_conveyor and robot_above_table) or (not part_on_conveyor and not robot_above_table):
-            self.move_to_named_configuration('conveyor_home')
+            plan = self.plan_to_named_configuration('conveyor_home')
+            if plan is None:
+                self.get_logger().error('Unable to plan to conveyor_home')
+                return False
+            self.general_execute(plan)
 
         # Set variables for testing:
         # TODO: recieve parameters from yaml file
@@ -274,26 +315,38 @@ class RobotCommander(Node):
 
         above_slot_robot_pose = build_robot_pose(above_slot_pose)
 
-        self.cartesian_plan_and_execute(above_slot_robot_pose)
+        plan = self.generate_cartesian_plan(above_slot_robot_pose)
+        if plan is None:
+            self.get_logger().error('Unable to plan to above slot')
+            return False
+        self.general_execute(plan)
 
-        # Set goal state to pick position
+        # Set goal state to place position
 
-        pick_pose: Pose
-        pick_pose = convert_transform_to_pose(transform.transform)
+        place_pose: Pose
+        place_pose = convert_transform_to_pose(transform.transform)
 
-        pick_pose.position.z += place_offset
+        place_pose.position.z += place_offset
 
-        robot_pick_pose = build_robot_pose(pick_pose)
+        robot_place_pose = build_robot_pose(place_pose)
 
-        self.cartesian_plan_and_execute(robot_pick_pose)
+        plan = self.generate_cartesian_plan(robot_place_pose)
+        if plan is None:
+            self.get_logger().error('Unable to plan to place pose')
+            return False
+        self.general_execute(plan)
 
-        # Close gripper to grab gear
+        # Open gripper to drop gear
 
         self.actuate_gripper(False)
 
         # Move back to above slot
 
-        self.cartesian_plan_and_execute(above_slot_robot_pose)
+        plan = self.generate_cartesian_plan(above_slot_robot_pose)
+        if plan is None:
+            self.get_logger().error('Unable to plan to above slot')
+            return False
+        self.general_execute(plan)
 
         return True
 
