@@ -66,7 +66,9 @@ namespace fanuc_hardware {
     }
 
     activated_ = true;
-
+    
+    thread_running_ = true;
+    communication_thread_ = std::thread(&FanucHardwareInterface::background_comm_loop, this);
     return hardware_interface::CallbackReturn::SUCCESS;
   }
 
@@ -81,29 +83,17 @@ namespace fanuc_hardware {
 
   hardware_interface::return_type FanucHardwareInterface::read(const rclcpp::Time& time, const rclcpp::Duration& period)
   {
-    (void)time;
-    (void)period;
+    if (!activated_) return hardware_interface::return_type::OK;
 
-    if (!activated_){
-      return hardware_interface::return_type::OK;
-    }
-
-    update_from_robot_controller();
-
-    if(current_status_.should_stop()){
-      RCLCPP_INFO(get_logger(), "Should stop true, deactivating fanuc driver");
-      return hardware_interface::return_type::DEACTIVATE;
-    }
-
-    auto joint_data = current_joint_position_.get_joint_data();
-
-    joint_data[2] += joint_data[1];
-
-    for (int i = 0; i < num_robot_joints_; i++)
+    // Just copy the data. No waiting!
     {
-      hw_positions_[i] = joint_data[i];
+      std::lock_guard<std::mutex> lock(data_mutex_);
+      hw_positions_ = latest_positions_;
+      
+      if(robot_status_stop_){
+        return hardware_interface::return_type::DEACTIVATE;
+      }
     }
-
     return hardware_interface::return_type::OK;
   }
 
@@ -117,6 +107,26 @@ namespace fanuc_hardware {
 
     return hardware_interface::return_type::OK;
   }
+
+  void FanucHardwareInterface::background_comm_loop() {
+    while (thread_running_) {
+        update_from_robot_controller(); 
+
+        auto joint_data = current_joint_position_.get_joint_data();
+        
+        // Re-applying your original transform logic correctly:
+        joint_data[2] += joint_data[1];
+
+        {
+            std::lock_guard<std::mutex> lock(data_mutex_);
+            for (int i = 0; i < num_robot_joints_; i++) {
+                hw_positions_[i] = joint_data[i];
+            }
+            robot_status_stop_ = current_status_.should_stop();
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
 
   std::vector<hardware_interface::StateInterface> FanucHardwareInterface::export_state_interfaces()
   {

@@ -38,6 +38,9 @@ class FanucJointTrajectoryController : public controller_interface::ControllerIn
   ~FanucJointTrajectoryController();
 
  private:
+  std::mutex action_mutex_;
+  bool ready_to_send_points_{false};
+
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const FollowJointTrajectory::Goal> goal);

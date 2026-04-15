@@ -84,7 +84,7 @@ def launch_setup(context, *args, **kwargs):
 
         nodes_to_start.append(move_group_node)
         nodes_to_start.append(robot_commander)
-        nodes_to_start.append(rviz_node)
+        # nodes_to_start.append(rviz_node)
    
     return nodes_to_start
 

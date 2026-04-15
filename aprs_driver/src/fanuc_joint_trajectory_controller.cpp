@@ -65,8 +65,10 @@ namespace fanuc_controller {
     const rclcpp::Duration&) 
   {
     if (received_goal_) {
-      send_traj_points_thread = std::thread(&FanucJointTrajectoryController::send_trajectory_points, this);
+      std::lock_guard<std::mutex> lock(action_mutex_);
+      ready_to_send_points_ = true; 
       received_goal_ = false;
+      send_traj_points_thread = std::thread(&FanucJointTrajectoryController::send_trajectory_points, this);
     }
 
     if (finished_sending_points_) {

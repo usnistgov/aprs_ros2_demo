@@ -74,7 +74,7 @@
     <joint name="motoman_left_finger_joint" type="prismatic">
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
       <parent link="motoman_gripper_link" />
-      <child link="motoman_left_finger" />
+      <child link="motoman_left_finger" />is_estopped
       <axis xyz="0 -1 0" />
       <limit lower="0.0" upper="0.02" effort="1000" velocity="1000"/>
     </joint>
