@@ -75,6 +75,8 @@ namespace motoman_hardware {
 
     activated_ = true;
 
+    thread_running_ = true;
+    communication_thread_ = std::thread(&MotomanHardwareInterface::background_comm_loop, this);
     return hardware_interface::CallbackReturn::SUCCESS;
   }
 
@@ -89,29 +91,14 @@ namespace motoman_hardware {
 
   hardware_interface::return_type MotomanHardwareInterface::read(const rclcpp::Time& time, const rclcpp::Duration& period)
   {
-    (void)time;
-    (void)period;
-
-    if (!activated_){
-      return hardware_interface::return_type::OK;
-    }
-
-    update_from_robot_controller();
-
-    if(current_status_.should_stop()){
-      RCLCPP_INFO(get_logger(), "Should stop true, deactivating motoman driver");
-      return hardware_interface::return_type::DEACTIVATE;
-    }
-
-    auto joint_positions = current_joint_feedback_.get_joint_positions();
-    auto joint_velocities = current_joint_feedback_.get_joint_accelerations();
-    auto joint_accelerations = current_joint_feedback_.get_joint_accelerations();
-
-    for (int i = 0; i < num_robot_joints_; i++)
+    if (!activated_) return hardware_interface::return_type::OK;
     {
-      hw_positions_[i] = joint_positions[i];
-      hw_velocities_[i] = joint_velocities[i];
-      hw_accelerations_[i] = joint_accelerations[i];
+      std::lock_guard<std::mutex> lock(data_mutex_);
+      hw_positions_ = latest_positions_;
+      
+      if(robot_status_stop_){
+        return hardware_interface::return_type::DEACTIVATE;
+      }
     }
 
     return hardware_interface::return_type::OK;
@@ -145,6 +132,29 @@ namespace motoman_hardware {
     }
 
     return state_interfaces;
+  }
+
+  void MotomanHardwareInterface::background_comm_loop() {
+    while (thread_running_) {
+      update_from_robot_controller(); 
+      
+      auto joint_positions = current_joint_feedback_.get_joint_positions();
+      auto joint_velocities = current_joint_feedback_.get_joint_accelerations();
+      auto joint_accelerations = current_joint_feedback_.get_joint_accelerations();
+      
+      {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        for (int i = 0; i < num_robot_joints_; i++)
+        {
+          hw_positions_[i] = joint_positions[i];
+          hw_velocities_[i] = joint_velocities[i];
+          hw_accelerations_[i] = joint_accelerations[i];
+        }
+        robot_status_stop_ = current_status_.should_stop();
+      }
+      
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
   }
 
   std::vector<hardware_interface::CommandInterface> MotomanHardwareInterface::export_command_interfaces() 

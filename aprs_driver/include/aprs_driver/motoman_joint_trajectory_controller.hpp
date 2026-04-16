@@ -36,6 +36,17 @@ class MotomanJointTrajectoryController : public controller_interface::Controller
   ~MotomanJointTrajectoryController();
 
  private:
+  std::thread worker_thread_;
+  std::atomic<bool> thread_running_{false};
+  std::mutex action_mutex_;
+    
+  // Logic for the thread
+  void run_trajectory_execution();
+    
+  // Flag to tell the thread to start working
+  std::atomic<bool> start_execution_{false};
+  bool ready_to_send_points_{false};
+
   rclcpp_action::GoalResponse handle_goal(
     const rclcpp_action::GoalUUID & uuid,
     std::shared_ptr<const FollowJointTrajectory::Goal> goal);

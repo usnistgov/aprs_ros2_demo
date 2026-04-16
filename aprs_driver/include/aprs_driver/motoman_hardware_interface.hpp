@@ -46,6 +46,15 @@ namespace motoman_hardware {
     rclcpp::Logger get_logger();
     void update_from_robot_controller();
 
+    std::thread communication_thread_;
+    std::atomic<bool> thread_running_{false};
+    std::mutex data_mutex_;
+    
+    std::vector<double> latest_positions_;
+    bool robot_status_stop_{false};
+    
+    void background_comm_loop();
+
     std::vector<double> hw_commands_;
     std::vector<double> hw_positions_;
     std::vector<double> hw_velocities_;
