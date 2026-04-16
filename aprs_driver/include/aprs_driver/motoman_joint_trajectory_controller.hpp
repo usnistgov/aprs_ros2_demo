@@ -12,6 +12,10 @@
 #include <control_msgs/action/follow_joint_trajectory.hpp>
 #include <std_msgs/msg/bool.hpp>
 
+#include <thread>  
+#include <mutex>   
+#include <atomic>  
+
 #include <aprs_driver/simple_messages.hpp>
 #include <aprs_driver/network_utilities.hpp>
 

@@ -273,3 +273,7 @@ namespace motoman_controller {
   }
 
 }
+
+#include "pluginlib/class_list_macros.hpp"
+
+PLUGINLIB_EXPORT_CLASS(motoman_controller::MotomanJointTrajectoryController, controller_interface::ControllerInterface)
