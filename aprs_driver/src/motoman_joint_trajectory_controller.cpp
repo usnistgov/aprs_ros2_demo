@@ -3,7 +3,30 @@
 
 namespace motoman_controller {
 
-  // ... (Configurations stay the same)
+  controller_interface::InterfaceConfiguration MotomanJointTrajectoryController::command_interface_configuration() const
+  {
+    controller_interface::InterfaceConfiguration config;
+    config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
+
+    for (std::string name : joint_names_) {
+      config.names.push_back(name + "/position");
+    }
+
+    return config;
+  }
+
+  controller_interface::InterfaceConfiguration MotomanJointTrajectoryController::state_interface_configuration() const 
+  {
+    controller_interface::InterfaceConfiguration config;
+    
+    config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
+
+    for (std::string name : joint_names_) {
+      config.names.push_back(name + "/position");
+    }
+
+    return config;
+  }
 
   controller_interface::return_type MotomanJointTrajectoryController::update(
     const rclcpp::Time&,
@@ -126,7 +149,29 @@ namespace motoman_controller {
   }
 
   CallbackReturn MotomanJointTrajectoryController::on_activate(const rclcpp_lifecycle::State& /*state*/) {
-    // ... (Your existing socket connection and START_TRAJ_MODE logic here) ...
+    motion_socket_ = socket(AF_INET, SOCK_STREAM, 0);
+    motion_socket_address_.sin_family = AF_INET;
+    motion_socket_address_.sin_port = htons(motion_port_);
+    inet_pton(AF_INET, robot_ip_, &motion_socket_address_.sin_addr);
+
+    int connection_success = connect(motion_socket_, (struct sockaddr *)&motion_socket_address_, sizeof(motion_socket_address_));
+
+    if (connection_success < 0){
+      RCLCPP_INFO(get_node()->get_logger(), "Unable to connect to socket");
+      return CallbackReturn::FAILURE;
+    }
+
+    simple_message::MotoMotionReply reply;
+
+    simple_message::MotoMotionCtrl start_traj_mode_msg("START_TRAJ_MODE");
+    write_to_socket(motion_socket_, start_traj_mode_msg.to_bytes());
+    int length = get_packet_length(motion_socket_);
+    reply.init(read_from_socket(motion_socket_, length));
+
+    if(!reply.is_successful()){
+      RCLCPP_ERROR(get_node()->get_logger(), "\n\nUnable to start trajectory controller");
+      return CallbackReturn::FAILURE;
+    }
 
     thread_running_ = true;
     worker_thread_ = std::thread(&MotomanJointTrajectoryController::run_trajectory_execution, this);
@@ -140,9 +185,91 @@ namespace motoman_controller {
       worker_thread_.join();
     }
 
-    // ... (Your existing STOP_TRAJ_MODE and socket close logic) ...
+    simple_message::MotoMotionCtrl stop_traj_mode_msg("STOP_TRAJ_MODE");
+    write_to_socket(motion_socket_, stop_traj_mode_msg.to_bytes());
+    int length = get_packet_length(motion_socket_);
+    read_from_socket(motion_socket_, length); 
+
+    close(motion_socket_);
+
     return CallbackReturn::SUCCESS;
   }
 
-  // ... (Remainder of the file: on_init, on_configure, handles)
+  CallbackReturn MotomanJointTrajectoryController::on_init() {
+    try
+    {
+      auto_declare<std::vector<std::string>>("joints", {});
+    }
+    catch (const std::exception & e)
+    {
+      fprintf(stderr, "Exception thrown during init stage with message: %s \n", e.what());
+      return CallbackReturn::ERROR;
+    }
+
+    return CallbackReturn::SUCCESS;
+  }
+
+  CallbackReturn MotomanJointTrajectoryController::on_configure(
+    const rclcpp_lifecycle::State&) 
+  {
+    joint_names_ = get_node()->get_parameter("joints").as_string_array();
+
+    if (joint_names_.empty()) {
+      RCLCPP_FATAL(get_node()->get_logger(), "joints parameter not set");
+      return CallbackReturn::FAILURE;
+    }
+
+    // Initialize action server
+    using namespace std::placeholders;
+    action_server_ = rclcpp_action::create_server<control_msgs::action::FollowJointTrajectory>(
+      get_node()->get_node_base_interface(), get_node()->get_node_clock_interface(),
+      get_node()->get_node_logging_interface(), get_node()->get_node_waitables_interface(),
+      std::string(get_node()->get_name()) + "/follow_joint_trajectory",
+      std::bind(&MotomanJointTrajectoryController::handle_goal, this, _1, _2),
+      std::bind(&MotomanJointTrajectoryController::handle_cancel, this, _1),
+      std::bind(&MotomanJointTrajectoryController::handle_accepted, this, _1));
+
+    return CallbackReturn::SUCCESS;
+  }
+
+  rclcpp_action::GoalResponse MotomanJointTrajectoryController::handle_goal(
+    const rclcpp_action::GoalUUID & uuid, 
+    std::shared_ptr<const FollowJointTrajectory::Goal> goal)
+  {
+    (void) uuid;
+    (void) goal;
+    // Check if a goal is being executed
+    if (executing_) {
+      RCLCPP_WARN(get_node()->get_logger(), "Goal already being executed");
+      return rclcpp_action::GoalResponse::REJECT;
+    }
+
+    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+  }
+
+  rclcpp_action::CancelResponse MotomanJointTrajectoryController::handle_cancel(
+    const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle)
+  {
+    (void) goal_handle;
+    cancel_requsted_ = true;
+
+    return rclcpp_action::CancelResponse::ACCEPT;
+  }
+
+  void MotomanJointTrajectoryController::handle_accepted(
+    const std::shared_ptr<GoalHandleFollowJointTrajectory> goal_handle)
+  {
+    int num_points = goal_handle->get_goal()->trajectory.points.size();
+
+    RCLCPP_INFO_STREAM(get_node()->get_logger(), "Executing goal with " << num_points << " points.");
+
+    current_goal_ = goal_handle;
+
+    received_goal_ = true;
+  }
+
+  MotomanJointTrajectoryController::~MotomanJointTrajectoryController(){
+    on_deactivate(rclcpp_lifecycle::State());
+  }
+
 }
