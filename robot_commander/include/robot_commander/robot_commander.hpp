@@ -2,10 +2,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
-#include <moveit/trajectory_processing/time_optimal_trajectory_generation.h>
-#include <moveit/robot_trajectory/robot_trajectory.h>
+#include <moveit/move_group_interface/move_group_interface.hpp>
+#include <moveit/planning_scene_interface/planning_scene_interface.hpp>
+#include <moveit/trajectory_processing/time_optimal_trajectory_generation.hpp>
+#include <moveit/robot_trajectory/robot_trajectory.hpp>
 
 #include "tf2/exceptions.h"
 #include "tf2_ros/transform_listener.h"

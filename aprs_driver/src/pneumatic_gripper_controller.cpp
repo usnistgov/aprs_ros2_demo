@@ -32,7 +32,9 @@ namespace pneumatic_controller {
   controller_interface::return_type PneumaticGripperController::update(const rclcpp::Time&, const rclcpp::Duration&) 
   {
     for (auto& cmd_interface : command_interfaces_) {
-      cmd_interface.set_value(gripper_state_);
+      if (!cmd_interface.set_value(gripper_state_)) {
+        RCLCPP_WARN(get_node()->get_logger(), "Failed to set gripper command value");
+      }
     }
 
     return controller_interface::return_type::OK;

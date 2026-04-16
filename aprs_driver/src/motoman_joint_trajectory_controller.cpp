@@ -38,7 +38,8 @@ namespace motoman_controller {
       }
 
       for (int i = 0; i < int(state_interfaces_.size()); ++i) {
-        joint_errors.push_back(std::abs(goal_positions[i] - state_interfaces_.at(i).get_value()));
+        auto value = state_interfaces_.at(i).get_optional();
+        joint_errors.push_back(std::abs(goal_positions[i] - (value ? value.value() : 0.0)));
       }
 
       if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {
@@ -62,7 +63,8 @@ namespace motoman_controller {
         // 1. CONSTRUCT AND SEND INITIAL POINT
         std::vector<float> current_positions;
         for (int i = 0; i < num_robot_joints_; ++i) {
-            current_positions.push_back(state_interfaces_.at(i).get_value());
+            auto value = state_interfaces_.at(i).get_optional();
+            current_positions.push_back(value ? value.value() : 0.0f);
         }
         
         std::vector<float> zeros(10, 0.0f);
@@ -123,7 +125,7 @@ namespace motoman_controller {
     }
   }
 
-  CallbackReturn MotomanJointTrajectoryController::on_activate(const rclcpp_lifecycle::State& state) {
+  CallbackReturn MotomanJointTrajectoryController::on_activate(const rclcpp_lifecycle::State& /*state*/) {
     // ... (Your existing socket connection and START_TRAJ_MODE logic here) ...
 
     thread_running_ = true;

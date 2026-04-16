@@ -535,7 +535,7 @@ std::pair<bool, moveit_msgs::msg::RobotTrajectory> RobotCommander::plan_cartesia
 
   std::vector<geometry_msgs::msg::Pose> waypoints = {pose};
 
-  double path_fraction = planning_interface_->computeCartesianPath(waypoints, 0.01, 0.0, trajectory);
+  double path_fraction = planning_interface_->computeCartesianPath(waypoints, 0.01, trajectory);
 
   if (path_fraction < 1.0)
   {

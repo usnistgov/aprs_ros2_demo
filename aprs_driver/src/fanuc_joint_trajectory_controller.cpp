@@ -89,8 +89,8 @@ namespace fanuc_controller {
       std::vector<double> joint_errors;
       for (int i = 0; i < int(state_interfaces_.size()); ++i) {
         const auto& position_interface = state_interfaces_.at(i);
-
-        joint_errors.push_back(abs(goal_point_.positions[i] - position_interface.get_value()));
+        auto value = position_interface.get_optional();
+        joint_errors.push_back(abs(goal_point_.positions[i] - (value ? value.value() : 0.0)));
       }
 
       if (*std::max_element(std::begin(joint_errors), std::end(joint_errors)) < position_threshold_) {        
@@ -149,8 +149,8 @@ namespace fanuc_controller {
 
     for (int i = 0; i < int(state_interfaces_.size()); ++i) {
       const auto& position_interface = state_interfaces_.at(i);
-
-      joint_states_.push_back(position_interface.get_value());
+      auto value = position_interface.get_optional();
+      joint_states_.push_back(value ? value.value() : 0.0);
     }
 
     // Connect to motion socket

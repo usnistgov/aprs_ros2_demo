@@ -4,8 +4,11 @@ namespace fanuc_hardware {
  
   hardware_interface::CallbackReturn FanucHardwareInterface::on_init(const hardware_interface::HardwareInfo& info)
   {
-    // Ensure hardware info is structured correctly 
+    // Ensure hardware info is structured correctly
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS) {
+#pragma GCC diagnostic pop
       return hardware_interface::CallbackReturn::ERROR;
     }
 
@@ -81,7 +84,7 @@ namespace fanuc_hardware {
     return hardware_interface::CallbackReturn::SUCCESS;
   }
 
-  hardware_interface::return_type FanucHardwareInterface::read(const rclcpp::Time& time, const rclcpp::Duration& period)
+  hardware_interface::return_type FanucHardwareInterface::read(const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/)
   {
     if (!activated_) return hardware_interface::return_type::OK;
 
