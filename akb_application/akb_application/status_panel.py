@@ -62,22 +62,10 @@ class RobotStatusFrame(ctk.CTkFrame):
 
         self.list_controller_client = self.node.create_client(ListControllers, f"/{robot_name}/controller_manager/list_controllers")
 
-        self.after_call: Optional[str] = None
-
-        # ROS Subscriptions
-        # topic_names = CONTROLLER_STATUS_NAMES[robot_name]
-
-        # state_cb_group = MutuallyExclusiveCallbackGroup()
-        # command_cb_group = MutuallyExclusiveCallbackGroup()
-        # gripper_cb_group = MutuallyExclusiveCallbackGroup()
-
-        # self.node.create_subscription(Bool, topic_names["state"], self.state_cb, 1, callback_group=state_cb_group)
-        # self.node.create_subscription(Bool, topic_names["command"], self.command_cb, 1, callback_group=command_cb_group)
-        # self.node.create_subscription(Bool, topic_names["gripper"], self.gripper_cb, 1, callback_group=gripper_cb_group)
-
-        # self.state_after: Optional[str] = None
-        # self.command_after: Optional[str] = None
-        # self.gripper_after: Optional[str] = None
+        self.call_in_progress = False
+        self.service_timeout_id: Optional[str] = None
+        self.next_check_id: Optional[str] = None
+        self.polling_interval = 5000  # ms between periodic checks
 
         # Widgets
         font = ctk.CTkFont(FONT_FAMILY, TITLE_FONT_SIZE, TITLE_FONT_WEIGHT)
@@ -92,31 +80,53 @@ class RobotStatusFrame(ctk.CTkFrame):
         ControllerStatus(self, "Command", self.statuses['command'], row=3)
         ControllerStatus(self, "Gripper", self.statuses['gripper'], row=4)
 
-        self.call_list_robot_controllers()
+        # Start with a check after a short delay to avoid blocking startup
+        self.after_call = self.after(500, self.call_list_robot_controllers)
         
     def call_list_robot_controllers(self):
-        if not self.list_controller_client.service_is_ready():
-            self.after(250, self.call_list_robot_controllers)
+        # Prevent overlapping calls
+        if self.call_in_progress:
             return
 
+        if not self.list_controller_client.service_is_ready():
+            # Service not ready, retry soon
+            self.after_call = self.after(250, self.call_list_robot_controllers)
+            return
+
+        self.call_in_progress = True
         list_request = ListControllers.Request()
 
         self.future = self.list_controller_client.call_async(list_request)
         self.future.add_done_callback(self.list_controllers_done)
 
+        # Set timeout for this service call
         self.after_call = self.after(1000, self.list_controllers_timeout)
     
     def list_controllers_timeout(self):
+        # Mark as not in progress so we can retry
+        self.call_in_progress = False
+
+        # Cancel the timeout callback ID
+        self.after_call = None
+
+        # Set all statuses to false/inactive
         for status in self.statuses.values():
             status.set(False)
-        
-        self.list_controller_client.remove_pending_request(self.future)
-        self.call_list_robot_controllers()
+
+        # Remove the pending request
+        if hasattr(self, 'future') and self.future:
+            self.list_controller_client.remove_pending_request(self.future)
+
+        # Schedule the next check after a short delay
+        self.after_call = self.after(250, self.call_list_robot_controllers)
     
     def list_controllers_done(self, future: Future):
+        # Cancel any pending timeout for this call
         if self.after_call is not None:
             self.after_cancel(self.after_call)
             self.after_call = None
+
+        self.call_in_progress = False
 
         result: ListControllers.Response = future.result() # type: ignore
 
@@ -137,7 +147,9 @@ class RobotStatusFrame(ctk.CTkFrame):
                         self.statuses['gripper'].set(state)
                 case _:
                     self.node.get_logger().error("Unknown driver found with name: " + controller.name)
-        self.after(250, self.call_list_robot_controllers)
+
+        # Schedule the next periodic check
+        self.after_call = self.after(self.polling_interval, self.call_list_robot_controllers)
 
 class ControllerStatus(ctk.CTkFrame):
     def __init__(self, frame, controller_name: str, status: ctk.BooleanVar, row):
